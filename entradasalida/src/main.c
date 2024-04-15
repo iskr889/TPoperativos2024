@@ -1,5 +1,5 @@
 #include "main.h"
-
+//HOLA
 
 int main(int argc, char* argv[]) {
     t_log* logger = iniciar_logger();
