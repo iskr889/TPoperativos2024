@@ -7,7 +7,11 @@
 #include <commons/string.h>
 #include <commons/config.h>
 #include <readline/readline.h>
+#include <string.h>
 
+#include "server/server.h"
+
+#include "cliente/cliente.h"
 
 t_log* iniciar_logger(void);
 t_config* iniciar_config(void);

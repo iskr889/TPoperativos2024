@@ -1,8 +1,13 @@
 #include "main.h"
 
-int main(int argc, char* argv[]) {
+
+int main(int argc, char* argv[])
+{
+    
     t_log* logger = iniciar_logger();
 	t_config* config = iniciar_config();
+    
+    int puerto_escucha = config_get_int_value(config, "PUERTO_ESCUCHA");
     char *ip_memoria = config_get_string_value(config,"IP_MEMORIA");
     int puerto_memoria = config_get_int_value(config,"PUERTO_MEMORIA");
     char *ip_cpu = config_get_string_value(config,"IP_CPU");
@@ -14,15 +19,37 @@ int main(int argc, char* argv[]) {
     char** instancias_recursos = config_get_array_value(config,"INSTANCIAS_RECURSOS");
     int grado_multiprogramacion = config_get_int_value(config,"GRADO_MULTIPROGRAMACION");
 
+    //inicializar kernel
+
+    //iniciar servidor de kernel
+	int fd_kernel = iniciar_servidor(puerto_escucha, logger, "KERNEL");
+	
+	//conectarme con cpu en modo dispatch
+	int fd_cpu_dispatch = crear_conexion(ip_cpu ,puerto_cpu_dispatch, logger, "CPU DISPATCH");
+    log_info(logger, "[DISPATCH] CONECTADO a CPU");
+
+    //conectarme con cpu en modo interrupt
+    int fd_cpu_interrupt = crear_conexion(ip_cpu ,puerto_cpu_interrupt, logger, "CPU INTERRUPT");
+    log_info(logger, "[INTERRUPT] CONECTADO a CPU");
+
+	//conectarme con memoria
+    int fd_memoria = crear_conexion(ip_memoria, puerto_memoria, logger, "MEMORIA");
+    log_info(logger, "CONECTADO a MEMORIA");
+
+    // esperar conexion de entradaSalida
+    log_info(logger, "[KERNEL] esperando conexion de ENTRADA/SALIDA...");
+    int fd_estradaSalida = esperar_cliente(fd_kernel, logger, "ENTRADA/SALIDA");
     return 0;
 }
 
 
-
 t_config* iniciar_config(void) {
-	t_config* nuevo_config = config_create("kernel.config");
-	if(nuevo_config == NULL) error_exit("Error, create config");
-	return nuevo_config;
+	
+    t_config* nuevo_config = config_create("kernel.config");
+	
+    if(nuevo_config == NULL) error_exit("Error, create config");
+	
+    return nuevo_config;
 }
 
 
