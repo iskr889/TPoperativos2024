@@ -57,19 +57,6 @@ int main(int argc, char* argv[]) {
             //INFO_READ
             //INFO_WRITE
     }
-
-    //Creo conexion con el puerto kernel
-    conexion_kernel = crear_conexion(ip_kernel , puerto_kernel);
-    if(conexion_kernel == -1){
-        log_error(logger, "Error creando socket para %s %s", ip_kernel, puerto_kernel);
-    }
-
-    //Creo conexion con el puerto memoria
-    conexion_memoria = crear_conexion(ip_memoria, puerto_memoria);
-    if(conexion_memoria == -1){
-        log_error(logger, "Error creando socket para %s %s", ip_memoria, puerto_memoria);
-    }
-
     
     return 0;
 }
