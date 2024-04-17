@@ -9,6 +9,13 @@
 #include <readline/readline.h>
 #include <utils/hello.h>
 
+enum INTERFAZ_CASE{
+    STDOUT,
+    STDIN,
+    GENERIC,
+    DIALFS
+} interfaz_code;
+
 t_log* iniciar_logger(void);
 t_config* iniciar_config(void);
 void error_exit(char *);
