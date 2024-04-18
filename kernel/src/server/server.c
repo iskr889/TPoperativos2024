@@ -1,57 +1,109 @@
 #include "server.h"
 
-int iniciar_servidor(int puerto, t_log* logger, char* mensaje)
+int iniciar_servidor(int puerto)
 {
-	int socket_servidor;
+	int socket_servidor, error;
 
-	struct addrinfo hints, *servinfo, *p;
+	struct addrinfo hints, *server_info;
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	getaddrinfo(NULL, string_itoa(puerto), &hints, &servinfo);
-
+	if(getaddrinfo(NULL, string_itoa(puerto), &hints, &server_info))
+		error_exit("Error en getaddrinfo");
 
 	// Creamos el socket de escucha del servidor
-    socket_servidor = socket(servinfo-> ai_family,
-                             servinfo-> ai_socktype,
-                             servinfo-> ai_protocol);
+	socket_servidor = socket(server_info->ai_family,
+							 server_info->ai_socktype,
+							 server_info->ai_protocol);
+
+	if(socket_servidor < 0)
+		error_exit("Error en socket()");
 
 	// Asociamos el socket a un puerto
-    bind(socket_servidor, servinfo->ai_addr, servinfo-> ai_addrlen);
+	if(bind(socket_servidor, server_info->ai_addr, server_info->ai_addrlen))
+		error_exit("Error en bind()");
 
 	// Escuchamos las conexiones entrantes
-    listen(socket_servidor, SOMAXCONN);
+	if(listen(socket_servidor, 1))
+		error_exit("Error en listen()");
 
-	freeaddrinfo(servinfo);
-	log_info(logger, "[%s] listo para escuchar", mensaje);
+	freeaddrinfo(server_info);
 
 	return socket_servidor;
 }
 
-int esperar_cliente(int socket_servidor, t_log* logger, char* cliente)
+int aceptar_clientes(int socket_servidor)
 {
+	int socket_cliente, pid;
 	// Aceptamos un nuevo cliente
-	int socket_cliente = accept(socket_servidor, NULL, NULL);
-	log_info(logger, "Se conecto %s", cliente);
+	while((socket_cliente = accept(socket_servidor, NULL, NULL)) > 0)
+    {     
+		pid = fork();
 
-	return socket_cliente;
+        if(pid == -1)
+		{
+            close(socket_servidor);
+			
+            close(socket_cliente);
+
+            error_exit("Error en fork()");
+        }
+
+        if(pid == 0) // Si entra al if es proceso hijo
+        {
+            close(socket_servidor); // El hijo cierra el fd porque no lo necesita
+
+            handshake_con_cliente(socket_cliente);
+
+            close(socket_cliente);
+
+            return EXIT_SUCCESS;
+        }
+
+		printf("Cliente conectado [PID:%d]", pid);
+        
+        close(socket_cliente); // Cierro el fd del cliente para poder aceptar otra connecion
+    }
+
+    if(socket_cliente < 0)
+		error_exit("Error en accept()");
+
+    close(socket_servidor);
+
+	return EXIT_SUCCESS;
 }
 
-int recibir_operacion(int socket_cliente)
+int handshake_con_cliente(int socket_cliente)
 {
-	int cod_op;
-	if(recv(socket_cliente, &cod_op, sizeof(int), MSG_WAITALL) > 0)
-		return cod_op;
-	else
-	{
+	size_t bytes;
+
+	int32_t handshake;
+	int32_t resultOk = 0;
+	int32_t resultError = -1;
+
+	bytes = recv(socket_cliente, &handshake, sizeof(int32_t), MSG_WAITALL);
+
+	if(bytes < 0) {
 		close(socket_cliente);
 		return -1;
 	}
-}
 
+	if(handshake == 1)
+		bytes = send(socket_cliente, &resultOk, sizeof(int32_t), 0);
+	else
+		bytes = send(socket_cliente, &resultError, sizeof(int32_t), 0);
+
+	if(bytes < 0) {
+		close(socket_cliente);
+		return -1;
+	}
+
+	return EXIT_SUCCESS;
+}
+/*
 void* recibir_buffer(int* size, int socket_cliente)
 {
 	void * buffer;
@@ -91,4 +143,10 @@ t_list* recibir_paquete(int socket_cliente)
 	}
 	free(buffer);
 	return valores;
+}
+*/
+void error_exit(char *message)
+{
+    perror(message);
+    exit(EXIT_FAILURE);
 }

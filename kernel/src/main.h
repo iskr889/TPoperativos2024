@@ -12,8 +12,6 @@
 #include "server/server.h"
 #include "cliente/cliente.h"
 
-typedef char* String;
-
 typedef struct {
     uint16_t puerto_escucha;
     String ip_memoria;
