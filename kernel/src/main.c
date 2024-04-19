@@ -45,6 +45,10 @@ int main(int argc, char* argv[]) {
     // int fd_estradaSalida = esperar_cliente(fd_kernel, logger, "ENTRADA/SALIDA");
 
     // Termino todo y libero los punteros usados
+    close(fd_kernel_server);
+    close(fd_cpu_dispatch);
+    close(fd_cpu_interrupt);
+    close(fd_memoria);
 
     config_destroy(config); // Libera la memoria de config
 
