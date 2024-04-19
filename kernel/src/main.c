@@ -10,24 +10,39 @@ int main(int argc, char* argv[]) {
     
     //inicializar kernel
 
+    // Completar
+
     //iniciar servidor de kernel
-	int fd_kernel = iniciar_servidor(kernel_config->puerto_escucha, logger, "KERNEL");
-	
+	int fd_kernel_server = iniciar_servidor(kernel_config->puerto_escucha);
+
+    if(fd_kernel_server < 0)
+        return ERROR;
+    
+    log_info(logger, "[KERNEL] SERVIDOR INICIADO");
+
+    pthread_t thread_id;
+
+    // Acepto clientes en un thread aparte asi no frena la ejecución del programa
+    if(pthread_create(&thread_id, NULL, thread_aceptar_clientes, &fd_kernel_server) != 0) {
+        perror("No se pudo crear el hilo");
+        return ERROR;
+    }
+
 	//conectarme con cpu en modo dispatch
-	int fd_cpu_dispatch = crear_conexion(kernel_config->ip_cpu ,kernel_config->puerto_cpu_dispatch, logger, "CPU DISPATCH");
-    log_info(logger, "[DISPATCH] CONECTADO a CPU");
+	int fd_cpu_dispatch = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch);
+    log_info(logger, "[KERNEL] CONECTADO A CPU (DISPATCH)");
 
     //conectarme con cpu en modo interrupt
-    int fd_cpu_interrupt = crear_conexion(kernel_config->ip_cpu ,kernel_config->puerto_cpu_interrupt, logger, "CPU INTERRUPT");
-    log_info(logger, "[INTERRUPT] CONECTADO a CPU");
+    int fd_cpu_interrupt = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt);
+    log_info(logger, "[KERNEL] CONECTADO A CPU (INTERRUPT)");
 
 	//conectarme con memoria
-    int fd_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria, logger, "MEMORIA");
-    log_info(logger, "CONECTADO a MEMORIA");
+    int fd_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
+    log_info(logger, "[KERNEL] CONECTADO A MEMORIA");
 
     // esperar conexion de entradaSalida
-    log_info(logger, "[KERNEL] esperando conexion de ENTRADA/SALIDA...");
-    int fd_estradaSalida = esperar_cliente(fd_kernel, logger, "ENTRADA/SALIDA");
+    // log_info(logger, "[KERNEL] esperando conexion de ENTRADA/SALIDA...");
+    // int fd_estradaSalida = esperar_cliente(fd_kernel, logger, "ENTRADA/SALIDA");
 
     // Termino todo y libero los punteros usados
 
@@ -36,34 +51,6 @@ int main(int argc, char* argv[]) {
     free(kernel_config);
 
     return 0;
-}
-
-
-t_config* iniciar_config(void) {
-	
-    t_config* nuevo_config = config_create("kernel.config");
-	
-    if(nuevo_config == NULL)
-        error_exit("Error al tratar de crear kernel.config");
-	
-    return nuevo_config;
-}
-
-
-t_log* iniciar_logger(void) {
-	
-    t_log* nuevo_logger = log_create("kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
-	
-    if(nuevo_logger == NULL)
-        error_exit("Error al tratar de crear kernel.log");
-	
-    return nuevo_logger;
-}
-
-
-void error_exit(char *message) { 
-    perror(message);
-    exit(EXIT_FAILURE);
 }
 
 t_kernel_config* load_kernel_config(t_config* config) { // Liberar kernel_config despues de usar
