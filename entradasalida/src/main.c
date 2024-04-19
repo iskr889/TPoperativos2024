@@ -1,53 +1,60 @@
 #include "main.h"
-//HOLA
+
+/*#include<stdio.h>
+#include<stdlib.h>
+#include<signal.h>
+#include<unistd.h>
+#include<sys/socket.h>
+#include<netdb.h>
+#include<string.h>
+#include<commons/log.h>*/
+//#include "cliente/utils.c"
 
 
 int main(int argc, char* argv[]) {
 
-    char* interfaz_name = "ACA VA EL NOMBRE DE LA INTERFAZ";
+    char *interfaz_name = "Interfaz_STDOUT";
 
     int conexion_kernel = 0;
     int conexion_memoria = 0;
 
-    t_log* logger = iniciar_logger();
+    t_log* logger = iniciar_logger_interfaz(interfaz_name);
 
 	t_config* config = iniciar_config();
 
-    //cargo archivo configuracion
+    t_interfaz_config* config_interfaz = load_interfaz_config(config);
 
-    char *tipo_interfaz = config_get_string_value(config, "TIPO_INTERFAZ");
-    int tiempo_u_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
-    char *ip_kernel = config_get_string_value(config, "IP_KERNEL");
-    char *puerto_kernel = config_get_string_value(config, "PUERTO_KERNEL");
-    char *ip_memoria = config_get_string_value(config, "IP_MEMORIA");
-    int puerto_memoria = config_get_int_value(config, "PUERTO_MEMORIA");
-    char *path_base_dialfs = config_get_string_value(config, "PATH_BASE_DIALFS");
-    int block_size = config_get_int_value(config, "BLOCK_SIZE");
-    int block_count = config_get_int_value(config, "BLOCK_COUNT");
 
-    enum INTERFAZ_CASE code = tipo_interfaz;
+    if (strcmp(config_interfaz->tipo_interfaz, "STDOUT") == 0) {
+            conexion_kernel = crear_conexion(config_interfaz->ip_kernel , config_interfaz->puerto_kernel, logger, "KERNEL");
+            log_info(logger, "Se conecto correctamente a KERNEL");
 
-    switch(code){
-        case STDIN:
-            conexion_kernel = crear_conexion(ip_kernel , puerto_kernel, logger, "KERNEL");
-            conexion_memoria = crear_conexion(ip_memoria, puerto_memoria, logger, "MEMORIA");
-
-            //IO_STDIN_READ
-            //TEXT_STDIN
-
-        case STDOUT:
-            conexion_kernel = crear_conexion(ip_kernel , puerto_kernel, logger, "KERNEL");
-            conexion_memoria = crear_conexion(ip_memoria, puerto_memoria), logger, "MEMORIA";
+            conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria, logger, "MEMORIA");
+            log_info(logger, "Se conecto correctamente a MEMORIA");
 
             //IO_STDOUT_WRITE
             //DIREC_READ
-        case GENERIC:
-            conexion_kernel = crear_conexion(ip_kernel , puerto_kernel, logger, "KERNEL");
+    } else if (strcmp(config_interfaz->tipo_interfaz, "STDIN") == 0) {
+            conexion_kernel = crear_conexion(config_interfaz->ip_kernel , config_interfaz->puerto_kernel, logger, "KERNEL");
+            log_info(logger, "Se conecto correctamente a KERNEL");
+            
+
+            conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria, logger, "MEMORIA");
+            log_info(logger, "Se conecto correctamente a MEMORIA");
+
+            //IO_STDIN_READ
+            //TEXT_STDIN
+    } else if (strcmp(config_interfaz->tipo_interfaz, "GENERIC") == 0) {
+            conexion_kernel = crear_conexion(config_interfaz->ip_kernel , config_interfaz->puerto_kernel, logger, "KERNEL");
+            log_info(logger, "Se conecto correctamente a KERNEL");
 
             //IO_GEN_SLEEP
-        case DIALFS:
-            conexion_kernel = crear_conexion(ip_kernel , puerto_kernel, logger, "KERNEL");
-            conexion_memoria = crear_conexion(ip_memoria, puerto_memoria, logger, "MEMORIA");
+    } else if (strcmp(config_interfaz->tipo_interfaz, "DIALFS") == 0) {
+            conexion_kernel = crear_conexion(config_interfaz->ip_kernel, config_interfaz->puerto_kernel, logger, "KERNEL");
+            log_info(logger, "Se conecto correctamente a KERNEL");
+
+            conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria, logger, "MEMORIA");
+            log_info(logger, "Se conecto correctamente a MEMORIA");
 
             //IO_FS_CREATE
             //IO_FE_DELETE
@@ -57,7 +64,10 @@ int main(int argc, char* argv[]) {
             //INFO_READ
             //INFO_WRITE
     }
-    
+     else {
+        log_info(logger, "EL TIPO de interfaz es incorrecto");
+    }
+
     return 0;
 }
 
@@ -74,45 +84,34 @@ t_log* iniciar_logger(void) {
 	return nuevo_logger;
 }
 
-int crear_conexion(char *ip,  int puerto, t_log* logger, char* nombre_servidor)
-{
-	struct addrinfo hints;
-	struct addrinfo *server_info;
-
-	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = AF_INET;
-	hints.ai_socktype = SOCK_STREAM;
-	hints.ai_flags = AI_PASSIVE;
-
-	getaddrinfo(ip, string_itoa(puerto), &hints, &server_info);
-
-	// Ahora vamos a crear el socket.
-	//int socket_cliente = 0;
-	int socket_cliente = socket(server_info->ai_family,
-								server_info->ai_socktype,
-								server_info->ai_protocol);
-
-	// Ahora que tenemos el socket, vamos a conectarlo
-	
-    
-    int conexion = connect(socket_cliente, server_info->ai_addr, server_info->ai_addrlen);
-    
-    if(conexion == -1 ) {
-        log_error(logger, "Error al conectarse a %s", nombre_servidor);
-        if (errno == ECONNREFUSED) {
-            log_info(logger, "El servidor %s rechazó la conexión\n", nombre_servidor);
-        } else if (errno == ETIMEDOUT) {
-            log_info(logger, "Se agotó el tiempo de espera al intentar conectarse a %s\n", nombre_servidor);
-        }
-        exit(EXIT_FAILURE);
-    }
-
-	log_info(logger, "Se conecto correctamente a %s", nombre_servidor);
-	freeaddrinfo(server_info);
-
-	return socket_cliente;
+t_log* iniciar_logger_interfaz(char *interfaz_name) {
+	t_log* nuevo_logger = log_create("entradasalida.log",interfaz_name,1,LOG_LEVEL_INFO);
+	if(nuevo_logger == NULL) error_exit("Error, create a new log.");
+	return nuevo_logger;
 }
 
 
+
+t_interfaz_config* load_interfaz_config(t_config* config){
+    t_interfaz_config* interfaz_config = malloc(sizeof(t_interfaz_config));
+
+    if(interfaz_config == NULL) {
+        perror("Fallo malloc");
+        exit(EXIT_FAILURE);
+    }
+
+    interfaz_config->tipo_interfaz = config_get_string_value(config, "TIPO_INTERFAZ");
+    interfaz_config->tiempo_u_trabajo = config_get_int_value(config, "TIEMPO_UNIDAD_TRABAJO");
+    interfaz_config->ip_kernel = config_get_string_value(config, "IP_KERNEL");
+    interfaz_config->puerto_kernel = config_get_string_value(config, "PUERTO_KERNEL");
+    interfaz_config->ip_memoria = config_get_string_value(config, "IP_MEMORIA");
+    interfaz_config->puerto_memoria = config_get_int_value(config, "PUERTO_MEMORIA");
+    interfaz_config->path_base_dialfs = config_get_string_value(config, "PATH_BASE_DIALFS");
+    interfaz_config->block_size = config_get_int_value(config, "BLOCK_SIZE");
+    interfaz_config->block_count = config_get_int_value(config, "BLOCK_COUNT");
+
+    
+    return interfaz_config;
+}
 
 void error_exit(char *message) { perror(message); exit(EXIT_FAILURE); }
