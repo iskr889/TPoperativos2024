@@ -42,4 +42,19 @@ int crear_conexion(char *ip,  int puerto, t_log* logger, char* nombre_servidor)
 	return socket_cliente;
 }
 
+int handshake_con_servidor(int socket_servidor){
+	size_t bytes;
 
+	int32_t handshake = 1;
+	int32_t result;
+
+	bytes = send(fd_conexion, &handshake, sizeof(int32_t), 0);
+	bytes = recv(fd_conexion, &result, sizeof(int32_t), MSG_WAITALL);
+
+	if (result == 0) {
+    	return EXIT_SUCCESS;
+	} else {
+    	perror("No se recibio handshake del servidor");
+		return(EXIT_FAILURE);
+	}
+}

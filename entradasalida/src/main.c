@@ -25,36 +25,43 @@ int main(int argc, char* argv[]) {
     t_interfaz_config* config_interfaz = load_interfaz_config(config);
 
 
-    if (strcmp(config_interfaz->tipo_interfaz, "STDOUT") == 0) {
-            conexion_kernel = crear_conexion(config_interfaz->ip_kernel , config_interfaz->puerto_kernel, logger, "KERNEL");
-            log_info(logger, "Se conecto correctamente a KERNEL");
+    conexion_kernel = crear_conexion(config_interfaz->ip_kernel , config_interfaz->puerto_kernel, logger, "KERNEL");
+    log_info(logger, "Se conecto correctamente a KERNEL");
 
+    int handshake_con_servidor(conexion_kernel);
+    log_info(logger, "Se realizo correctamente el handshake");
+
+
+
+    if (strcmp(config_interfaz->tipo_interfaz, "STDOUT") == 0) {
             conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria, logger, "MEMORIA");
             log_info(logger, "Se conecto correctamente a MEMORIA");
+
+            int handshake_con_servidor(conexion_memoria);
+            log_info(logger, "Se realizo correctamente el handshake");
 
             //IO_STDOUT_WRITE
             //DIREC_READ
     } else if (strcmp(config_interfaz->tipo_interfaz, "STDIN") == 0) {
-            conexion_kernel = crear_conexion(config_interfaz->ip_kernel , config_interfaz->puerto_kernel, logger, "KERNEL");
-            log_info(logger, "Se conecto correctamente a KERNEL");
-            
 
             conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria, logger, "MEMORIA");
             log_info(logger, "Se conecto correctamente a MEMORIA");
+
+            int handshake_con_servidor(conexion_memoria);
+            log_info(logger, "Se realizo correctamente el handshake");
 
             //IO_STDIN_READ
             //TEXT_STDIN
     } else if (strcmp(config_interfaz->tipo_interfaz, "GENERIC") == 0) {
-            conexion_kernel = crear_conexion(config_interfaz->ip_kernel , config_interfaz->puerto_kernel, logger, "KERNEL");
-            log_info(logger, "Se conecto correctamente a KERNEL");
 
             //IO_GEN_SLEEP
     } else if (strcmp(config_interfaz->tipo_interfaz, "DIALFS") == 0) {
-            conexion_kernel = crear_conexion(config_interfaz->ip_kernel, config_interfaz->puerto_kernel, logger, "KERNEL");
-            log_info(logger, "Se conecto correctamente a KERNEL");
 
             conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria, logger, "MEMORIA");
             log_info(logger, "Se conecto correctamente a MEMORIA");
+
+            int handshake_con_servidor(conexion_memoria);
+            log_info(logger, "Se realizo correctamente el handshake");
 
             //IO_FS_CREATE
             //IO_FE_DELETE
@@ -113,5 +120,7 @@ t_interfaz_config* load_interfaz_config(t_config* config){
     
     return interfaz_config;
 }
+
+
 
 void error_exit(char *message) { perror(message); exit(EXIT_FAILURE); }

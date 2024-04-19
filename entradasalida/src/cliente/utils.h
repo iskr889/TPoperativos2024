@@ -34,6 +34,7 @@ typedef struct
 
 
 int crear_conexion(char *ip,  int puerto, t_log* logger, char* nombre_servidor);
+int handshake_con_servidor(int socket_servidor);
 /*void enviar_mensaje(char* mensaje, int socket_cliente);
 t_paquete* crear_paquete(void);
 void agregar_a_paquete(t_paquete* paquete, void* valor, int tamanio);
