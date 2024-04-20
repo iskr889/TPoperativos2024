@@ -2,6 +2,9 @@
 t_log* logger;
 
 
+
+
+
 int main(int argc, char* argv[]) {
     logger = iniciar_logger();
 	t_config* config = iniciar_config();
