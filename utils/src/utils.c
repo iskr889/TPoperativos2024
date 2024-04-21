@@ -6,7 +6,7 @@ void error_exit(String message)
     exit(EXIT_FAILURE);
 }
 
-int iniciar_servidor(int puerto)
+int iniciar_servidor(String puerto)
 {
 	struct addrinfo hints, *server_info;
 
@@ -15,7 +15,7 @@ int iniciar_servidor(int puerto)
 	hints.ai_socktype = SOCK_STREAM;
 	hints.ai_flags = AI_PASSIVE;
 
-	if(getaddrinfo(NULL, string_itoa(puerto), &hints, &server_info))
+	if(getaddrinfo(NULL, puerto, &hints, &server_info))
 	{
 		perror("Error en getaddrinfo");
 		freeaddrinfo(server_info);
@@ -127,9 +127,9 @@ void *thread_aceptar_clientes(void *arg)
     return NULL;
 }
 
-t_log* iniciar_logger(void) {
-	
-    t_log* nuevo_logger = log_create("kernel.log", "KERNEL", true, LOG_LEVEL_INFO);
+t_log* iniciar_logger(char *path, char *name) {
+	//"kernel.log"
+    t_log* nuevo_logger = log_create(path, name, true, LOG_LEVEL_INFO);
 	
     if(nuevo_logger == NULL)
         error_exit("Error al tratar de crear kernel.log");
@@ -147,7 +147,7 @@ t_config* iniciar_config(void) {
     return nuevo_config;
 }
 
-int crear_conexion(String ip, int puerto)
+int crear_conexion(String ip, String puerto)
 {
 	struct addrinfo hints, *server_info;
 
@@ -155,9 +155,9 @@ int crear_conexion(String ip, int puerto)
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if(getaddrinfo(ip, string_itoa(puerto), &hints, &server_info))
+	if(getaddrinfo(ip, puerto, &hints, &server_info))
 	{
-		perror("Error en getaddrinfo");
+		perror("Errostring_itoar en getaddrinfo");
 		freeaddrinfo(server_info);
 		return ERROR;
 	}

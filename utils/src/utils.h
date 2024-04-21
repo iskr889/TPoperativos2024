@@ -29,7 +29,7 @@ void error_exit(String message);
 * @fn    Inicia una conexión en un puerto dado
 * @brief Crea un socket y queda escuchando el puerto indicado
 */
-int iniciar_servidor(int puerto);
+int iniciar_servidor(String puerto);
 
 /**
 * @fn    El servidor acepta a los clientes
@@ -53,7 +53,7 @@ void *thread_aceptar_clientes(void *arg);
 * @fn    Inicia un logger
 * @brief Crea un logger y devuelve un puntero a t_log para ser utilizado
 */
-t_log* iniciar_logger(void);
+t_log* iniciar_logger(char *path, char *name);
 
 /**
 * @fn    Inicia un config
@@ -65,7 +65,7 @@ t_config* iniciar_config(void);
 * @fn    Crea una conexion con el servidor
 * @brief El cliente crea una conexion con el servidor en la ip y puerto especificado
 */
-int crear_conexion(String ip, int puerto);
+int crear_conexion(String ip, String puerto);
 
 /**
 * @fn    Handshake del cliente al servidor

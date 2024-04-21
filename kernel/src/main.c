@@ -2,7 +2,7 @@
 
 int main(int argc, char* argv[]) {
 
-    t_log* logger = iniciar_logger();
+    t_log* logger = iniciar_logger("kernel.log", "KERNEL");
 
     t_config* config = iniciar_config();
 
@@ -50,15 +50,17 @@ int main(int argc, char* argv[]) {
     close(fd_cpu_interrupt);
     close(fd_memoria);
 
+    log_destroy(logger);
+
     config_destroy(config); // Libera la memoria de config
 
-    free(kernel_config);
 
+
+    kernel_config_destroy(kernel_config);
     return 0;
 }
 
-t_kernel_config* load_kernel_config(t_config* config) { // Liberar kernel_config despues de usar
-
+t_kernel_config* load_kernel_config(t_config* config) {
     t_kernel_config* kernel_config = malloc(sizeof(t_kernel_config));
     
     if(kernel_config == NULL) {
@@ -66,17 +68,17 @@ t_kernel_config* load_kernel_config(t_config* config) { // Liberar kernel_config
         exit(EXIT_FAILURE);
     }
     
-    kernel_config->puerto_escucha = config_get_int_value(config, "PUERTO_ESCUCHA");
+    kernel_config->puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
 
     kernel_config->ip_memoria = config_get_string_value(config,"IP_MEMORIA");
 
-    kernel_config->puerto_memoria = config_get_int_value(config,"PUERTO_MEMORIA");
+    kernel_config->puerto_memoria = config_get_string_value(config,"PUERTO_MEMORIA");
 
     kernel_config->ip_cpu = config_get_string_value(config,"IP_CPU");
 
-    kernel_config->puerto_cpu_dispatch = config_get_int_value(config,"PUERTO_CPU_DISPATCH");
+    kernel_config->puerto_cpu_dispatch = config_get_string_value(config,"PUERTO_CPU_DISPATCH");
     
-    kernel_config->puerto_cpu_interrupt = config_get_int_value(config,"PUERTO_CPU_INTERRUPT");
+    kernel_config->puerto_cpu_interrupt = config_get_string_value(config,"PUERTO_CPU_INTERRUPT");
 
     kernel_config->algoritmo_planificacion = config_get_string_value(config,"ALGORITMO_PLANIFICACION");
 
@@ -89,4 +91,17 @@ t_kernel_config* load_kernel_config(t_config* config) { // Liberar kernel_config
     kernel_config->grado_multiprogramacion = config_get_int_value(config,"GRADO_MULTIPROGRAMACION");
 
     return kernel_config;
+}
+
+
+
+void kernel_config_destroy(t_kernel_config* kernel_config){
+    for (int i = 0; kernel_config->recursos[i] != NULL; i++)
+        free(kernel_config->recursos[i]);
+    free(kernel_config->recursos);
+
+    for (int i = 0; kernel_config->instancias_recursos[i] != NULL; i++)
+        free(kernel_config->instancias_recursos[i]);
+    free(kernel_config->instancias_recursos);
+    free(kernel_config);
 }
