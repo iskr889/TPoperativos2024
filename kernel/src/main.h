@@ -2,6 +2,9 @@
 #define MAIN_H
 
 #include "../../utils/src/utils.h"
+#include "../../utils/src/conexion.h"
+#include "../../utils/src/server.h"
+#include "../../utils/src/client.h"
 
 typedef struct {
     String   puerto_escucha;

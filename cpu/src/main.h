@@ -13,18 +13,15 @@
 #include <commons/string.h>
 #include <commons/config.h>
 #include <commons/collections/list.h>
-//#include <utils.h>
-//#include "server.h"
+#include "../../utils/src/utils.h"
 
 
-t_log* iniciar_logger(void);
 void terminar_programa(int, t_log*, t_config*);
-int iniciar_servidor(t_log*, char*, char*);
-void error_exit(char *);
 void iterator(char*);
-t_config* iniciar_config(void);
 void get_config_info(t_log*, t_config*);
-int crear_conexion(t_log*, char*, char*); 
+
+
+
 
 typedef struct {
     char *ip_memoria;
@@ -36,6 +33,4 @@ typedef struct {
 } info_config_struct;
 
 info_config_struct info_config;
-
-//extern info_config_struct info_config;
 #endif

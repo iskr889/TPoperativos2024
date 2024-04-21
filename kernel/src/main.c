@@ -2,9 +2,9 @@
 
 int main(int argc, char* argv[]) {
 
-    t_log* logger = iniciar_logger("kernel.log", "KERNEL");
+    t_log* logger = iniciar_logger("kernel.log", "KERNEL",1,LOG_LEVEL_INFO);
 
-    t_config* config = iniciar_config();
+    t_config* config = iniciar_config("kernel.config");
 
     t_kernel_config* kernel_config = load_kernel_config(config);
     
