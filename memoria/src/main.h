@@ -7,15 +7,11 @@
 #include <commons/string.h>
 #include <commons/config.h>
 #include <readline/readline.h>
-#include <utils/hello.h>
 
 //Para el servidor
-#include<sys/socket.h>
-#include<unistd.h>
-#include<netdb.h>
-#include<commons/collections/list.h>
-#include<string.h>
-#include<assert.h>
+#include "/home/utnso/tp-2024-1c-groupSO2024/utils/src/servidor.h"
+#include "../../utils/src/utils.h"
+
 
 
 typedef enum
@@ -25,24 +21,17 @@ typedef enum
 }op_code;
 
 //config
-t_log* iniciar_logger(void);
-t_config* iniciar_config(void);
-void error_exit(char *);
 
-void crear_proceso(void);
-void terminar_proceso(void);
-void acceso_tabla_paginas(void);
-void ajustar_lenght_proceso(void);
-void acceso_espacio_usuario(void);
+typedef struct {
+    String   puerto_escucha;
+    String   tam_memoria;
+    String   tam_pagina;
+    String   path_intrucciones;
+    String   retardo_respuesta;
+} t_memoria_config;
 
-//servidor memoria
-void inicio_server_memoria(void);
-void* recibir_buffer(int*, int);
-int iniciar_servidor(int puerto_escucha, t_log* logger);
-int esperar_cliente(int socket_servidor, t_log* logger);
-t_list* recibir_paquete(int);
-void recibir_mensaje(int);
-int recibir_operacion(int);
-void iterator(char* value);
+
+t_memoria_config* load_memoria_config(t_config* config);
+void memoria_config_destroy(t_memoria_config* memoria_config);
 
 #endif
