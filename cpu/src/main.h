@@ -14,14 +14,11 @@
 #include <commons/config.h>
 #include <commons/collections/list.h>
 #include "../../utils/src/utils.h"
-
+#include "../../utils/src/servidor.h"
 
 void terminar_programa(int, t_log*, t_config*);
 void iterator(char*);
 void get_config_info(t_log*, t_config*);
-
-
-
 
 typedef struct {
     char *ip_memoria;
@@ -32,5 +29,4 @@ typedef struct {
     char *algoritmo_tlb;
 } info_config_struct;
 
-info_config_struct info_config;
 #endif

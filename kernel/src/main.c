@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
 	int fd_kernel_server = iniciar_servidor(kernel_config->puerto_escucha);
 
     if(fd_kernel_server < 0)
-        return ERROR;
+        return EXIT_ERROR;
     
     log_info(logger, "[KERNEL] SERVIDOR INICIADO");
 
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     // Acepto clientes en un thread aparte asi no frena la ejecución del programa
     if(pthread_create(&thread_id, NULL, thread_aceptar_clientes, &fd_kernel_server) != 0) {
         perror("No se pudo crear el hilo");
-        return ERROR;
+        return EXIT_ERROR;
     }
 
 	//conectarme con cpu en modo dispatch
@@ -54,13 +54,13 @@ int main(int argc, char* argv[]) {
 
     config_destroy(config); // Libera la memoria de config
 
-
-
     kernel_config_destroy(kernel_config);
+
     return 0;
 }
 
 t_kernel_config* load_kernel_config(t_config* config) {
+
     t_kernel_config* kernel_config = malloc(sizeof(t_kernel_config));
     
     if(kernel_config == NULL) {
@@ -93,15 +93,19 @@ t_kernel_config* load_kernel_config(t_config* config) {
     return kernel_config;
 }
 
+void kernel_config_destroy(t_kernel_config* kernel_config) {
 
-
-void kernel_config_destroy(t_kernel_config* kernel_config){
     for (int i = 0; kernel_config->recursos[i] != NULL; i++)
         free(kernel_config->recursos[i]);
+
     free(kernel_config->recursos);
 
     for (int i = 0; kernel_config->instancias_recursos[i] != NULL; i++)
         free(kernel_config->instancias_recursos[i]);
+
     free(kernel_config->instancias_recursos);
+
     free(kernel_config);
+
+    return;
 }

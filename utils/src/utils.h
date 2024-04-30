@@ -8,8 +8,8 @@
 #include <commons/log.h>
 #include <commons/string.h>
 
-#define ERROR -1
-#define OK     0
+#define EXIT_ERROR -1
+#define EXIT_OK     0
 
 typedef char* String;
 
@@ -25,5 +25,10 @@ t_log* iniciar_logger(String path, String name, bool is_active_console, t_log_le
 */
 t_config* iniciar_config(String path);
 
+/**
+* @fn    Sale del programa imprimiendo un mensaje con el tipo de error
+* @brief Sale del programa imprimiendo un mensaje con el tipo de error
+*/
+void error_exit(char *message);
 
 #endif

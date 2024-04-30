@@ -9,8 +9,8 @@
 
 #include <string.h> // memset()
 
-#define ERROR -1
-#define OK     0
+#define EXIT_ERROR -1
+#define EXIT_OK     0
 
 typedef char* String;
 

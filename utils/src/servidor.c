@@ -1,5 +1,4 @@
 #include "servidor.h"
-#include <stdio.h>
 
 int iniciar_servidor(String puerto) {
 	struct addrinfo hints, *server_info;
@@ -12,7 +11,7 @@ int iniciar_servidor(String puerto) {
 	if(getaddrinfo(NULL, puerto, &hints, &server_info)) {
 		perror("Error en getaddrinfo");
 		freeaddrinfo(server_info);
-		return ERROR;
+		return EXIT_ERROR;
 	}
 
 	// Creamos el socket de escucha del servidor
@@ -23,21 +22,21 @@ int iniciar_servidor(String puerto) {
 	if(socket_servidor < 0) {
 		perror("Error en socket()");
 		freeaddrinfo(server_info);
-		return ERROR;
+		return EXIT_ERROR;
 	}
 
 	// Asociamos el socket a un puerto
 	if(bind(socket_servidor, server_info->ai_addr, server_info->ai_addrlen)) {
 		perror("Error en bind()");
 		freeaddrinfo(server_info);
-		return ERROR;
+		return EXIT_ERROR;
 	}
 
 	// Escuchamos las conexiones entrantes
 	if(listen(socket_servidor, 1)) {
 		perror("Error en listen()");
 		freeaddrinfo(server_info);
-		return ERROR;
+		return EXIT_ERROR;
 	}
 
 	freeaddrinfo(server_info);
@@ -56,14 +55,14 @@ int aceptar_clientes(int socket_servidor) {
             close(socket_servidor);
             close(socket_cliente);
             perror("Error en fork()");
-			return ERROR;
+			return EXIT_ERROR;
         }
 
         if(pid == 0) { // Si entra al if es proceso hijo
             close(socket_servidor); // El hijo cierra el fd porque no lo necesita
             handshake_con_cliente(socket_cliente);
             close(socket_cliente);
-            exit(OK);
+            exit(EXIT_OK);
         }
 
 		printf("Cliente conectado [PID:%d]", pid);
@@ -72,11 +71,11 @@ int aceptar_clientes(int socket_servidor) {
 
     if(socket_cliente < 0) {
 		perror("Error en accept()");
-		return ERROR;
+		return EXIT_ERROR;
 	}
 
     close(socket_servidor);
-	return OK;
+	return EXIT_OK;
 }
 
 int handshake_con_cliente(int socket_cliente) {
@@ -88,7 +87,7 @@ int handshake_con_cliente(int socket_cliente) {
 	if(recv(socket_cliente, &handshake, sizeof(int32_t), MSG_WAITALL) < 0) {
 		perror("Error en handshake");
 		close(socket_cliente);
-		return ERROR;
+		return EXIT_ERROR;
 	}
 
 	if(handshake == 1)
@@ -99,10 +98,10 @@ int handshake_con_cliente(int socket_cliente) {
 	if(bytes < 0) {
 		perror("Error en handshake");
 		close(socket_cliente);
-		return ERROR;
+		return EXIT_ERROR;
 	}
 
-	return OK;
+	return EXIT_OK;
 }
 
 void *thread_aceptar_clientes(void *arg) {
@@ -110,6 +109,3 @@ void *thread_aceptar_clientes(void *arg) {
     aceptar_clientes(socket_servidor);
     return NULL;
 }
-
-
-

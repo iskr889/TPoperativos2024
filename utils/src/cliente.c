@@ -11,7 +11,7 @@ int crear_conexion(String ip, String puerto) {
 	if(getaddrinfo(ip, puerto, &hints, &server_info)) {
 		perror("Error getaddrinfo");
 		freeaddrinfo(server_info);
-		return ERROR;
+		return EXIT_ERROR;
 	}
 
 	int fd_cliente = socket(server_info->ai_family,
@@ -21,13 +21,13 @@ int crear_conexion(String ip, String puerto) {
 	if(fd_cliente < 0) {
 		perror("Error en socket()");
 		freeaddrinfo(server_info);
-		return ERROR;
+		return EXIT_ERROR;
 	}
     
     if(connect(fd_cliente, server_info->ai_addr, server_info->ai_addrlen) < 0) {
         perror("Error en connect()");
 		freeaddrinfo(server_info);
-		return ERROR;
+		return EXIT_ERROR;
     }
 
 	freeaddrinfo(server_info);
@@ -40,9 +40,9 @@ int handshake_con_servidor(int socket_servidor) {
 	int32_t result;
 
 	if(send(socket_servidor, &handshake, sizeof(int32_t), 0) < 0)
-		return ERROR;
+		return EXIT_ERROR;
 	if(recv(socket_servidor, &result, sizeof(int32_t), MSG_WAITALL) < 0)
-		return ERROR;
+		return EXIT_ERROR;
 
 	return result; // Retorna 0 si el handshake es correcto
 }

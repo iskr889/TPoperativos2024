@@ -1,5 +1,6 @@
 #include "main.h"
 
+info_config_struct info_config;
 
 int main(int argc, char* argv[]) {
 	t_log* logger = iniciar_logger("cpu.log","CPU",1,LOG_LEVEL_INFO);
@@ -21,8 +22,6 @@ void terminar_programa(int conexion, t_log* logger, t_config* config) {
 	close(conexion);
 	config_destroy(config);
 }
-
-
 
 int esperar_user(t_log* logger, int socket_servidor, char* type) {
 	int socket_cliente = accept(socket_servidor, NULL, NULL);

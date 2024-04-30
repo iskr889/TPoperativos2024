@@ -1,17 +1,18 @@
 #include "main.h"
 
 int main(int argc, char* argv[]) {
+
     t_log* logger = iniciar_logger("memoria.log", "MEMORIA",1,LOG_LEVEL_INFO);
 	t_config* config = iniciar_config("memoria.config");
 	t_memoria_config* memoria_config = load_memoria_config(config);
 
 
-//iniciamos servidor
+    //iniciamos servidor
 
-int fd_memoria_server = iniciar_servidor(memoria_config->puerto_escucha);
+    int fd_memoria_server = iniciar_servidor(memoria_config->puerto_escucha);
 
     if(fd_memoria_server < 0)
-        return ERROR;
+        return EXIT_ERROR;
     
     log_info(logger, "[MEMORIA] SERVIDOR INICIADO");
 
@@ -20,7 +21,7 @@ int fd_memoria_server = iniciar_servidor(memoria_config->puerto_escucha);
     // Acepto clientes en un thread 
     if(pthread_create(&thread_id, NULL, thread_aceptar_clientes, &fd_memoria_server) != 0) {
         perror("No se pudo crear el hilo");
-        return ERROR;
+        return EXIT_ERROR;
     }
 
     close(fd_memoria_server);
@@ -31,10 +32,9 @@ int fd_memoria_server = iniciar_servidor(memoria_config->puerto_escucha);
     return 0;
 }
 
-
 //conexiones
-
 t_memoria_config* load_memoria_config(t_config* config) {
+    
     t_memoria_config* memoria_config = malloc(sizeof(t_memoria_config));
     
     if(memoria_config == NULL) {
