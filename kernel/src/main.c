@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
 	// }
 
     // El Kernel iniciar un servidor que escucha por conexiones de las interfaces I/O
-	int fd_kernel_server = escuchar_conexiones_al_modulo("INTERFACES I/O", kernel_config->puerto_escucha, logger);
+	int fd_kernel_server = modulo_escucha_conexiones_de("INTERFACES I/O", kernel_config->puerto_escucha, logger);
 
     // Acepto clientes en un thread aparte asi no frena la ejecución del programa
     pthread_t thread_interfaces;
@@ -113,7 +113,7 @@ int conectarse_a_modulo(String modulo, String ip, String puerto, t_log* logger) 
     return fd_modulo;
 }
 
-int escuchar_conexiones_al_modulo(String otros_modulos, String puerto, t_log* logger) {
+int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* logger) {
 
 	int fd_servidor = iniciar_servidor(puerto);
 

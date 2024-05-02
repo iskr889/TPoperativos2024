@@ -41,7 +41,7 @@ int conectarse_a_modulo(String modulo, String ip, String puerto, t_log* logger);
 * @fn    Queda escuchando por conexiones de otros modulos
 * @brief Crea un servidor y escucha por si uno o mas modulos se conecten a él
 */
-int escuchar_conexiones_al_modulo(String otros_modulos, String puerto, t_log* logger);
+int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* logger);
 
 /**
 * @fn    Atiende las conexiones de otros modulos
