@@ -1,21 +1,10 @@
 #ifndef SERVIDOR_H_
 #define SERVIDOR_H_
 
-#include <stdio.h> // perror()
-#include <stdlib.h> // exit()
+#include "utils.h"
 
-#include <sys/socket.h> // socket(), accept()
-#include <sys/types.h> // socket(), accept()
-#include <netdb.h> // getaddrinfo()
-
-#include <string.h> // memset()
 #include <unistd.h> // fork(), close()
 #include <pthread.h> // pthread_create()
-
-#define EXIT_ERROR -1
-#define EXIT_OK     0
-
-typedef char* String;
 
 /**
 * @fn    Inicia una conexión en un puerto dado
@@ -40,5 +29,17 @@ int handshake_con_cliente(int socket_cliente);
 * @brief Crea un hilo de ejecución nuevo para aceptar clientes y que el servidor pueda continuar su ejecución sin ser bloqueado
 */
 void *thread_aceptar_clientes(void *arg);
+
+/**
+* @fn    Queda escuchando por conexiones de otros modulos
+* @brief Crea un servidor y escucha por si uno o mas modulos se conecten a él
+*/
+int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* logger);
+
+/**
+* @fn    Atiende las conexiones de otros modulos
+* @brief En un hilo distinto atiende la conexion entrante sin bloquear el programa
+*/
+void atender_conexiones_al_modulo(pthread_t *hilo, int fd_servidor);
 
 #endif

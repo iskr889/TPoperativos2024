@@ -1,18 +1,7 @@
 #ifndef CLIENTE_H_
 #define CLIENTE_H_
 
-#include <stdio.h> // perror()
-
-#include <sys/socket.h> // connect()
-#include <sys/types.h> // connect()
-#include <netdb.h> // getaddrinfo()
-
-#include <string.h> // memset()
-
-#define EXIT_ERROR -1
-#define EXIT_OK     0
-
-typedef char* String;
+#include "utils.h"
 
 /**
 * @fn    Crea una conexion con el servidor
@@ -25,5 +14,11 @@ int crear_conexion(String ip, String puerto);
 * @brief Inicia un Handshake entre el servidor y el cliente
 */
 int handshake_con_servidor(int socket_servidor);
+
+/**
+* @fn    Se conecta al modulo especificado
+* @brief Crea una conexión con el modulo especificado por su puerto e ip. Además loguea el proceso.
+*/
+int conectarse_a_modulo(String modulo, String ip, String puerto, t_log* logger);
 
 #endif

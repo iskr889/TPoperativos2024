@@ -109,3 +109,27 @@ void *thread_aceptar_clientes(void *arg) {
     aceptar_clientes(socket_servidor);
     return NULL;
 }
+
+int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* logger) {
+
+	int fd_servidor = iniciar_servidor(puerto);
+
+    if (fd_servidor < 0) {
+        log_error(logger, "NO SE PUDO INICIAR EL SERVIDOR PARA QUE OTROS MODULOS SE CONECTEN");
+        exit(EXIT_FAILURE);
+    }
+    
+    log_info(logger, "SERVIDOR INICIADO... ESPERANDO LA CONEXION DE %s", otros_modulos);
+
+    return fd_servidor;
+}
+
+void atender_conexiones_al_modulo(pthread_t *hilo, int fd_servidor) {
+
+    if (pthread_create(hilo, NULL, thread_aceptar_clientes, &fd_servidor) != 0) {
+        perror("No se pudo crear el hilo para manejar interfaces");
+        exit(EXIT_FAILURE);
+    }
+
+    return;
+}

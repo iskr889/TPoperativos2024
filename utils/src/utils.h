@@ -1,8 +1,13 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <stdio.h> // printf()
+#include <stdlib.h> // exit()
+#include <string.h> // memset()
+
+#include <sys/socket.h> // socket(), accept(), connect()
+#include <sys/types.h> // socket(), accept(), connect()
+#include <netdb.h> // getaddrinfo()
 
 #include <commons/config.h>
 #include <commons/log.h>

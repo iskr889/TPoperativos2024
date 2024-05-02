@@ -31,22 +31,4 @@ t_kernel_config* load_kernel_config(t_config* config);
 */
 void kernel_config_destroy(t_kernel_config* kernel_config);
 
-/**
-* @fn    Se conecta al modulo especificado
-* @brief Crea una conexión con el modulo especificado por su puerto e ip. Además loguea el proceso.
-*/
-int conectarse_a_modulo(String modulo, String ip, String puerto, t_log* logger);
-
-/**
-* @fn    Queda escuchando por conexiones de otros modulos
-* @brief Crea un servidor y escucha por si uno o mas modulos se conecten a él
-*/
-int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* logger);
-
-/**
-* @fn    Atiende las conexiones de otros modulos
-* @brief En un hilo distinto atiende la conexion entrante sin bloquear el programa
-*/
-void atender_conexiones_al_modulo(pthread_t *hilo, int fd_servidor);
-
 #endif

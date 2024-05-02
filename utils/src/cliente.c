@@ -46,3 +46,17 @@ int handshake_con_servidor(int socket_servidor) {
 
 	return result; // Retorna 0 si el handshake es correcto
 }
+
+int conectarse_a_modulo(String modulo, String ip, String puerto, t_log* logger) {
+
+	int fd_modulo = crear_conexion(ip, puerto);
+
+    if (fd_modulo < 0) {
+        log_error(logger, "NO SE PUDO CONECTAR CON EL MODULO %s", modulo);
+        exit(EXIT_FAILURE);
+    }
+
+    log_info(logger, "CONECTADO A %s", modulo);
+
+    return fd_modulo;
+}
