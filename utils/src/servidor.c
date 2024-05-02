@@ -65,7 +65,7 @@ int aceptar_clientes(int socket_servidor) {
             exit(EXIT_OK);
         }
 
-		printf("Cliente conectado [PID:%d]", pid);
+		printf("Cliente conectado [PID:%d]\n", pid);
         close(socket_cliente); // Cierro el fd del cliente para poder aceptar otra connecion
     }
 

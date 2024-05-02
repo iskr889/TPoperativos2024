@@ -1,4 +1,7 @@
 #include "main.h"
+#include <commons/config.h>
+#include <commons/log.h>
+#include <unistd.h>
 
 enum INTERFAZ_CASE{
     STDOUT,
@@ -10,75 +13,25 @@ enum INTERFAZ_CASE{
 
 int main(int argc, char* argv[]) {
 
-    char *interfaz_name = "Interfaz_STDOUT";
+    t_log* logger = iniciar_logger("entradasalida.log", "KERNEL", 1, LOG_LEVEL_INFO);
 
-    int conexion_kernel = 0;
-    int conexion_memoria = 0;
+    t_config* config = iniciar_config("entradasalida.config");
 
-    t_log* logger = iniciar_logger_interfaz(interfaz_name);
+    t_interfaz_config* interfaz_config = load_interfaz_config(config);
 
-	t_config* config = iniciar_config("ioconfig");
+    int conexion_memoria = conectarse_a_modulo("MEMORIA", interfaz_config->ip_memoria, interfaz_config->puerto_memoria, logger);
 
-    t_interfaz_config* config_interfaz = load_interfaz_config(config);
+    int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, logger);
 
+    sleep(10); // TODO: Borrar! Solo sirve para testear rapidamente la conexion entre modulos
 
-    conexion_kernel = crear_conexion(config_interfaz->ip_kernel , config_interfaz->puerto_kernel);
-    log_info(logger, "Se conecto correctamente a KERNEL");
+    close(conexion_kernel);
+    close(conexion_memoria);
+    log_destroy(logger);
+    config_destroy(config);
+    free(interfaz_config);
 
-    // int handshake_con_servidor(conexion_kernel);
-    log_info(logger, "Se realizo correctamente el handshake");
-
-
-
-    if (strcmp(config_interfaz->tipo_interfaz, "STDOUT") == 0) {
-            conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria);
-            log_info(logger, "Se conecto correctamente a MEMORIA");
-
-            // int handshake_con_servidor(conexion_memoria);
-            log_info(logger, "Se realizo correctamente el handshake");
-
-            //IO_STDOUT_WRITE
-            //DIREC_READ
-    } else if (strcmp(config_interfaz->tipo_interfaz, "STDIN") == 0) {
-
-            conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria);
-            log_info(logger, "Se conecto correctamente a MEMORIA");
-
-            // int handshake_con_servidor(conexion_memoria);
-            log_info(logger, "Se realizo correctamente el handshake");
-
-            //IO_STDIN_READ
-            //TEXT_STDIN
-    } else if (strcmp(config_interfaz->tipo_interfaz, "GENERIC") == 0) {
-
-            //IO_GEN_SLEEP
-    } else if (strcmp(config_interfaz->tipo_interfaz, "DIALFS") == 0) {
-
-            conexion_memoria = crear_conexion(config_interfaz->ip_memoria, config_interfaz->puerto_memoria);
-            log_info(logger, "Se conecto correctamente a MEMORIA");
-
-            // int handshake_con_servidor(conexion_memoria);
-            log_info(logger, "Se realizo correctamente el handshake");
-
-            //IO_FS_CREATE
-            //IO_FE_DELETE
-            //IO_FS_TRUNCATE
-            //IO_FS_WRITE
-            //IO_FS_READ
-            //INFO_READ
-            //INFO_WRITE
-    }
-    else {
-        log_info(logger, "EL TIPO de interfaz es incorrecto");
-    }
-
-    return 0;
-}
-
-t_log* iniciar_logger_interfaz(char *interfaz_name) {
-	t_log* nuevo_logger = log_create("entradasalida.log",interfaz_name,1,LOG_LEVEL_INFO);
-	if(nuevo_logger == NULL) error_exit("Error, create a new log.");
-	return nuevo_logger;
+    return EXIT_OK;
 }
 
 t_interfaz_config* load_interfaz_config(t_config* config){

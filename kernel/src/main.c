@@ -13,7 +13,7 @@ int main(int argc, char* argv[]) {
 	// 	exit(EXIT_FAILURE);
 	// }
 
-    // El Kernel iniciar un servidor que escucha por conexiones de las interfaces I/O
+    // El Kernel inicia un servidor que escucha por conexiones de las interfaces I/O
 	int fd_kernel_server = modulo_escucha_conexiones_de("INTERFACES I/O", kernel_config->puerto_escucha, logger);
 
     // Acepto clientes en un thread aparte asi no frena la ejecución del programa
@@ -29,7 +29,9 @@ int main(int argc, char* argv[]) {
 	// El Kernel intenta conectarse con la memoria
     int fd_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, logger);
 
-    // sleep(120); // TODO: Borrar! Solo sirve para testear rapidamente la conexion entre modulos
+    sleep(10); // TODO: Borrar! Solo sirve para testear rapidamente la conexion entre modulos
+
+    pthread_join(thread_interfaces, NULL); // Espero a que el thread creado termine
 
     // Cierro todos lo archivos y libero los punteros usados
     close(fd_kernel_server);
@@ -42,8 +44,6 @@ int main(int argc, char* argv[]) {
     config_destroy(config);
 
     kernel_config_destroy(kernel_config); // Libera todos los punteros de la estructura kernel_config
-
-    pthread_join(thread_interfaces, NULL); // Espero a que el thread creado termine
 
     return EXIT_OK;
 }

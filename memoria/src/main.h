@@ -1,13 +1,6 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <commons/log.h>
-#include <commons/string.h>
-#include <commons/config.h>
-#include <readline/readline.h>
-
 //Para el servidor
 #include "../../utils/src/servidor.h"
 #include "../../utils/src/utils.h"

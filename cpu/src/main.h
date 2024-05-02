@@ -1,22 +1,11 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <assert.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <netdb.h>
-#include <readline/readline.h>
-#include <commons/log.h>
-#include <commons/string.h>
-#include <commons/config.h>
-#include <commons/collections/list.h>
 #include "../../utils/src/utils.h"
 #include "../../utils/src/servidor.h"
+#include "../../utils/src/cliente.h"
 
-void terminar_programa(int, t_log*, t_config*);
+void terminar_programa(int, int, t_log*, t_config*);
 void iterator(char*);
 void get_config_info(t_log*, t_config*);
 

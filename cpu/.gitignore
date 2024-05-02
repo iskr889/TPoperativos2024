@@ -15,4 +15,4 @@ obj/
 !.vscode/settings.json
 !.vscode/tasks.json
 
-\cpu.config
+# \cpu.config

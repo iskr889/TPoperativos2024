@@ -3,23 +3,39 @@
 info_config_struct info_config;
 
 int main(int argc, char* argv[]) {
-	t_log* logger = iniciar_logger("cpu.log","CPU",1,LOG_LEVEL_INFO);
+	t_log* logger = iniciar_logger("cpu.log", "CPU", 1, LOG_LEVEL_INFO);
 	t_config* config = iniciar_config("cpu.config");
 	get_config_info(logger, config);
-	int dispatch_server = iniciar_servidor(info_config.puerto_escucha_dispath);
-	int interrupt_server = iniciar_servidor(info_config.puerto_escucha_interrupt);
-	
-	log_info(logger, "Servers Loaded");
-	//crear_conexion(info_config.ip_memoria, info_config.puerto_memoria);
-	
-	terminar_programa(dispatch_server, logger, config);
 
-    return 0;
+	// El Kernel inicia un servidor que escucha por conexiones de la CPU (DISPATCH)
+	int dispatch_server = modulo_escucha_conexiones_de("CPU (DISPATCH)", info_config.puerto_escucha_dispath, logger);
+	// El Kernel inicia un servidor que escucha por conexiones de la CPU (INTERRUPT)
+	int interrupt_server = modulo_escucha_conexiones_de("CPU (INTERRUPT)", info_config.puerto_escucha_interrupt, logger);
+	
+	// Acepto clientes en un thread aparte asi no frena la ejecución del programa
+    pthread_t thread_cpu_dispatch, thread_cpu_interrupt;
+    atender_conexiones_al_modulo(&thread_cpu_dispatch, dispatch_server);
+    atender_conexiones_al_modulo(&thread_cpu_interrupt, interrupt_server);
+
+	// El Kernel intenta conectarse con la memoria
+    int fd_memoria = conectarse_a_modulo("MEMORIA", info_config.ip_memoria, info_config.puerto_memoria, logger);
+
+    sleep(10); // TODO: Borrar! Solo sirve para testear rapidamente la conexion entre modulos
+
+    pthread_join(thread_cpu_dispatch, NULL);
+	pthread_join(interrupt_server, NULL);
+
+	close(fd_memoria);
+	
+	terminar_programa(dispatch_server, interrupt_server, logger, config);
+
+    return EXIT_OK;
 }
 
-void terminar_programa(int conexion, t_log* logger, t_config* config) {
+void terminar_programa(int dispatch_server, int interrupt_server, t_log* logger, t_config* config) {
 	log_destroy(logger);
-	close(conexion);
+	close(dispatch_server);
+	close(interrupt_server);
 	config_destroy(config);
 }
 

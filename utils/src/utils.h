@@ -4,6 +4,7 @@
 #include <stdio.h> // printf()
 #include <stdlib.h> // exit()
 #include <string.h> // memset()
+#include <unistd.h> // fork(), close()
 
 #include <sys/socket.h> // socket(), accept(), connect()
 #include <sys/types.h> // socket(), accept(), connect()
@@ -12,6 +13,11 @@
 #include <commons/config.h>
 #include <commons/log.h>
 #include <commons/string.h>
+#include <commons/collections/list.h>
+
+#include <readline/readline.h>
+#include <assert.h>
+#include <pthread.h> // pthread_create()
 
 #define EXIT_ERROR -1
 #define EXIT_OK     0

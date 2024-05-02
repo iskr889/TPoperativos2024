@@ -3,9 +3,6 @@
 
 #include "utils.h"
 
-#include <unistd.h> // fork(), close()
-#include <pthread.h> // pthread_create()
-
 /**
 * @fn    Inicia una conexión en un puerto dado
 * @brief Crea un socket y queda escuchando el puerto indicado

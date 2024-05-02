@@ -15,4 +15,4 @@ obj/
 !.vscode/settings.json
 !.vscode/tasks.json
 
-\entradasalida.config
+#\entradasalida.config

@@ -1,33 +1,28 @@
 #include "main.h"
+#include <pthread.h>
+#include <unistd.h>
 
 int main(int argc, char* argv[]) {
 
-    t_log* logger = iniciar_logger("memoria.log", "MEMORIA",1,LOG_LEVEL_INFO);
+    t_log* logger = iniciar_logger("memoria.log", "MEMORIA", 1, LOG_LEVEL_INFO);
 	t_config* config = iniciar_config("memoria.config");
 	t_memoria_config* memoria_config = load_memoria_config(config);
 
+    // Iniciamos servidor escuchando por conexiones de CPU, KERNEL e INTERFACES
+    int fd_memoria_server = modulo_escucha_conexiones_de("CPU, KERNEL e INTERFACES", memoria_config->puerto_escucha, logger);
 
-    //iniciamos servidor
+    // Acepto clientes en un thread aparte asi no frena la ejecución del programa
+    pthread_t thread_memoria;
+    atender_conexiones_al_modulo(&thread_memoria, fd_memoria_server);
 
-    int fd_memoria_server = iniciar_servidor(memoria_config->puerto_escucha);
+    sleep(10); // TODO: Borrar! Solo sirve para testear rapidamente la conexion entre modulos
 
-    if(fd_memoria_server < 0)
-        return EXIT_ERROR;
-    
-    log_info(logger, "[MEMORIA] SERVIDOR INICIADO");
-
-    pthread_t thread_id;
-
-    // Acepto clientes en un thread 
-    if(pthread_create(&thread_id, NULL, thread_aceptar_clientes, &fd_memoria_server) != 0) {
-        perror("No se pudo crear el hilo");
-        return EXIT_ERROR;
-    }
+    pthread_join(thread_memoria, NULL);
 
     close(fd_memoria_server);
 	log_destroy(logger);
     config_destroy(config); // Libera la memoria de config
-
+    free(memoria_config);
     
     return 0;
 }
