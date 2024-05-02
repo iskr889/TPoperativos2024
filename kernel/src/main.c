@@ -2,49 +2,36 @@
 
 int main(int argc, char* argv[]) {
 
-    t_log* logger = iniciar_logger("kernel.log", "KERNEL",1,LOG_LEVEL_INFO);
+    t_log* logger = iniciar_logger("kernel.log", "KERNEL", 1, LOG_LEVEL_INFO);
 
     t_config* config = iniciar_config("kernel.config");
 
     t_kernel_config* kernel_config = load_kernel_config(config);
-    
-    //inicializar kernel
 
-    // Completar
+    // if (argc < 2) {
+	// 	log_error(logger, "CANTIDAD INCORRECTA DE ARGUMENTOS");
+	// 	exit(EXIT_FAILURE);
+	// }
 
-    //iniciar servidor de kernel
-	int fd_kernel_server = iniciar_servidor(kernel_config->puerto_escucha);
-
-    if(fd_kernel_server < 0)
-        return EXIT_ERROR;
-    
-    log_info(logger, "[KERNEL] SERVIDOR INICIADO");
-
-    pthread_t thread_id;
+    // El Kernel iniciar un servidor que escucha por conexiones de las interfaces I/O
+	int fd_kernel_server = escuchar_conexiones_al_modulo("INTERFACES I/O", kernel_config->puerto_escucha, logger);
 
     // Acepto clientes en un thread aparte asi no frena la ejecución del programa
-    if(pthread_create(&thread_id, NULL, thread_aceptar_clientes, &fd_kernel_server) != 0) {
-        perror("No se pudo crear el hilo");
-        return EXIT_ERROR;
-    }
+    pthread_t thread_interfaces;
+    atender_conexiones_al_modulo(&thread_interfaces, fd_kernel_server);
 
-	//conectarme con cpu en modo dispatch
-	int fd_cpu_dispatch = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch);
-    log_info(logger, "[KERNEL] CONECTADO A CPU (DISPATCH)");
+	// El Kernel intenta conectarse con la CPU en el puerto Dispatch
+	int fd_cpu_dispatch = conectarse_a_modulo("CPU (DISPATCH)", kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch, logger);
 
-    //conectarme con cpu en modo interrupt
-    int fd_cpu_interrupt = crear_conexion(kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt);
-    log_info(logger, "[KERNEL] CONECTADO A CPU (INTERRUPT)");
+    // El Kernel intenta conectarse con la CPU en el puerto Interrupt
+    int fd_cpu_interrupt = conectarse_a_modulo("CPU (INTERRUPT)", kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt, logger);
 
-	//conectarme con memoria
-    int fd_memoria = crear_conexion(kernel_config->ip_memoria, kernel_config->puerto_memoria);
-    log_info(logger, "[KERNEL] CONECTADO A MEMORIA");
+	// El Kernel intenta conectarse con la memoria
+    int fd_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, logger);
 
-    // esperar conexion de entradaSalida
-    // log_info(logger, "[KERNEL] esperando conexion de ENTRADA/SALIDA...");
-    // int fd_estradaSalida = esperar_cliente(fd_kernel, logger, "ENTRADA/SALIDA");
+    // sleep(120); // TODO: Borrar! Solo sirve para testear rapidamente la conexion entre modulos
 
-    // Termino todo y libero los punteros usados
+    // Cierro todos lo archivos y libero los punteros usados
     close(fd_kernel_server);
     close(fd_cpu_dispatch);
     close(fd_cpu_interrupt);
@@ -52,18 +39,20 @@ int main(int argc, char* argv[]) {
 
     log_destroy(logger);
 
-    config_destroy(config); // Libera la memoria de config
+    config_destroy(config);
 
-    kernel_config_destroy(kernel_config);
+    kernel_config_destroy(kernel_config); // Libera todos los punteros de la estructura kernel_config
 
-    return 0;
+    pthread_join(thread_interfaces, NULL); // Espero a que el thread creado termine
+
+    return EXIT_OK;
 }
 
 t_kernel_config* load_kernel_config(t_config* config) {
 
     t_kernel_config* kernel_config = malloc(sizeof(t_kernel_config));
     
-    if(kernel_config == NULL) {
+    if (kernel_config == NULL) {
         perror("Fallo malloc");
         exit(EXIT_FAILURE);
     }
@@ -106,6 +95,44 @@ void kernel_config_destroy(t_kernel_config* kernel_config) {
     free(kernel_config->instancias_recursos);
 
     free(kernel_config);
+
+    return;
+}
+
+int conectarse_a_modulo(String modulo, String ip, String puerto, t_log* logger) {
+
+	int fd_modulo = crear_conexion(ip, puerto);
+
+    if (fd_modulo < 0) {
+        log_error(logger, "NO SE PUDO CONECTAR CON EL MODULO %s", modulo);
+        exit(EXIT_FAILURE);
+    }
+
+    log_info(logger, "CONECTADO A %s", modulo);
+
+    return fd_modulo;
+}
+
+int escuchar_conexiones_al_modulo(String otros_modulos, String puerto, t_log* logger) {
+
+	int fd_servidor = iniciar_servidor(puerto);
+
+    if (fd_servidor < 0) {
+        log_error(logger, "NO SE PUDO INICIAR EL SERVIDOR PARA QUE OTROS MODULOS SE CONECTEN");
+        exit(EXIT_FAILURE);
+    }
+    
+    log_info(logger, "SERVIDOR INICIADO... ESPERANDO LA CONEXION DE %s", otros_modulos);
+
+    return fd_servidor;
+}
+
+void atender_conexiones_al_modulo(pthread_t *hilo, int fd_servidor) {
+
+    if (pthread_create(hilo, NULL, thread_aceptar_clientes, &fd_servidor) != 0) {
+        perror("No se pudo crear el hilo para manejar interfaces");
+        exit(EXIT_FAILURE);
+    }
 
     return;
 }
