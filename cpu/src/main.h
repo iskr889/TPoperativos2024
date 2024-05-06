@@ -5,17 +5,19 @@
 #include "../../utils/src/servidor.h"
 #include "../../utils/src/cliente.h"
 
-void terminar_programa(int, int, t_log*, t_config*);
-void iterator(char*);
-void get_config_info(t_log*, t_config*);
+/**
+* @fn    Carga la configuración en la estructura cpu_config
+* @brief Carga los valores correspondiente en la estructura cpu_config
+*/
+void load_cpu_config(t_config* config);
 
 typedef struct {
-    char *ip_memoria;
-    char *puerto_memoria;
-    char *puerto_escucha_dispath;
-    char *puerto_escucha_interrupt;
-    char *cantidad_entradas;
-    char *algoritmo_tlb;
-} info_config_struct;
+    String ip_memoria;
+    String puerto_memoria;
+    String puerto_escucha_dispath;
+    String puerto_escucha_interrupt;
+    uint64_t cantidad_entradas;
+    String algoritmo_tlb;
+} t_cpu_config;
 
 #endif
