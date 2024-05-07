@@ -1,7 +1,5 @@
 #include "servidor.h"
 
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
 int iniciar_servidor(String puerto) {
 	struct addrinfo hints, *server_info;
 
@@ -141,11 +139,14 @@ void* thread_handshake_con_cliente(void* fd_cliente) {
 	free(fd_cliente);
 	if(error < 0)
 		exit(EXIT_ERROR);
+	pthread_exit(NULL);
 	return NULL;
 }
 
 void *thread_aceptar_clientes(void *socket_servidor) {
     aceptar_clientes(*(int*)socket_servidor);
+	free(socket_servidor);
+	pthread_exit(NULL);
     return NULL;
 }
 
@@ -164,8 +165,16 @@ int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* log
 }
 
 void atender_conexiones_al_modulo(pthread_t *hilo, int fd_servidor) {
+	int* fd_servidor_p = malloc(sizeof(int));
 
-    if (pthread_create(hilo, NULL, thread_aceptar_clientes, &fd_servidor) != 0) {
+	if (fd_servidor_p == NULL) {
+		perror("Error en malloc()");
+		exit(EXIT_ERROR);
+	}
+
+	*fd_servidor_p = fd_servidor;
+
+    if (pthread_create(hilo, NULL, thread_aceptar_clientes, fd_servidor_p) != 0) {
         perror("No se pudo crear el hilo para manejar interfaces");
         exit(EXIT_FAILURE);
     }
