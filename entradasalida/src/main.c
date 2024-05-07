@@ -1,12 +1,12 @@
 #include "main.h"
 
-typedef enum {
-    STDOUT,
-    STDIN,
-    GENERIC,
-    DIALFS,
-    ERROR
-} interfaz_t ; 
+// typedef enum {
+//     STDOUT,
+//     STDIN,
+//     GENERIC,
+//     DIALFS,
+//     ERROR
+// } interfaz_t ; 
 
 int main(int argc, char* argv[]) {
 
@@ -17,10 +17,10 @@ int main(int argc, char* argv[]) {
     log_info(logger, "Archivo de configuración cargado correctamente");
 
     // La interfaz intenta conectarse con la memoria
-    int conexion_memoria = conectarse_a_modulo("MEMORIA", interfaz_config->ip_memoria, interfaz_config->puerto_memoria, logger);
+    int conexion_memoria = conectarse_a_modulo("MEMORIA", interfaz_config->ip_memoria, interfaz_config->puerto_memoria, GENERIC, logger);
 
     // La interfaz intenta conectarse con el kernel
-    int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, logger);
+    int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, GENERIC, logger);
 
     close(conexion_kernel);
     close(conexion_memoria);

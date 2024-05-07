@@ -1,5 +1,7 @@
 #include "servidor.h"
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int iniciar_servidor(String puerto) {
 	struct addrinfo hints, *server_info;
 
@@ -25,6 +27,12 @@ int iniciar_servidor(String puerto) {
 		return EXIT_ERROR;
 	}
 
+	uint32_t enable = 1;
+	if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(uint32_t)) < 0) {
+		perror("Error en setsockopt()");
+		return EXIT_ERROR;
+	}
+
 	// Asociamos el socket a un puerto
 	if(bind(socket_servidor, server_info->ai_addr, server_info->ai_addrlen)) {
 		perror("Error en bind()");
@@ -45,57 +53,81 @@ int iniciar_servidor(String puerto) {
 }
 
 int aceptar_clientes(int socket_servidor) {
-	int socket_cliente, pid;
 
-	// Aceptamos un nuevo cliente
-	while((socket_cliente = accept(socket_servidor, NULL, NULL)) > 0) {     
-		pid = fork();
+	while(1) {
 
-        if(pid < 0) {
-            close(socket_servidor);
-            close(socket_cliente);
-            perror("Error en fork()");
-			return EXIT_ERROR;
+        pthread_t thread;
+        int* socket_cliente = malloc(sizeof(int));
+
+        if (socket_cliente == NULL) {
+            perror("Error en malloc()");
+            return EXIT_ERROR;
         }
 
-        if(pid == 0) { // Si entra al if es proceso hijo
-            close(socket_servidor); // El hijo cierra el fd porque no lo necesita
-            handshake_con_cliente(socket_cliente);
-            close(socket_cliente);
-            exit(EXIT_OK);
+        *socket_cliente = accept(socket_servidor, NULL, NULL);
+
+        if (*socket_cliente < 0) {
+            perror("Error en accept()");
+            free(socket_cliente); // Libera la memoria en caso de error
+            continue;
         }
 
-		printf("Cliente conectado [PID:%d]\n", pid);
-        close(socket_cliente); // Cierro el fd del cliente para poder aceptar otra connecion
+        if (pthread_create(&thread, NULL, thread_handshake_con_cliente, socket_cliente)) {
+            perror("Error en pthread_create()");
+            close(*socket_cliente); // Cierro el socket del cliente en caso de error
+            free(socket_cliente); // Libera la memoria en caso de error
+            continue;
+        }
+
+        pthread_detach(thread);
     }
 
-    if(socket_cliente < 0) {
-		perror("Error en accept()");
-		return EXIT_ERROR;
-	}
-
     close(socket_servidor);
+
 	return EXIT_OK;
 }
 
 int handshake_con_cliente(int socket_cliente) {
-	size_t bytes;
-	int32_t handshake;
-	int32_t resultOk = 0;
-	int32_t resultError = -1;
+	modulos_t handshake;
+	int32_t resultado = 0;
 
-	if(recv(socket_cliente, &handshake, sizeof(int32_t), MSG_WAITALL) < 0) {
+	if(recv(socket_cliente, &handshake, sizeof(modulos_t), MSG_WAITALL) < 0) {
 		perror("Error en handshake");
 		close(socket_cliente);
 		return EXIT_ERROR;
 	}
 
-	if(handshake == 1)
-		bytes = send(socket_cliente, &resultOk, sizeof(int32_t), 0);
-	else
-		bytes = send(socket_cliente, &resultError, sizeof(int32_t), 0);
+	switch (handshake) {
+		case MEMORIA:
+			puts("Memoria conectada!\n");
+			break;
+		case CPU:
+			puts("CPU conectada!\n");
+			break;
+		case KERNEL:
+			puts("KERNEL conectado!\n");
+			break;
+		case GENERIC:
+			puts("Interfaz GENERIC conectada!\n");
+			break;
+		case STDIN:
+			puts("Interfaz STDIN conectada!\n");
+			break;
+		case STDOUT:
+			puts("Interfaz STDOUT conectada!\n");
+			break;
+		case DIALFS:
+			puts("Interfaz DIALFS conectada!\n");
+			break;
+		default:
+			puts("Error!\n");
+			exit(EXIT_ERROR);
+	}
 
-	if(bytes < 0) {
+	if(handshake == ERROR)
+		resultado = EXIT_ERROR;
+
+	if(send(socket_cliente, &resultado, sizeof(int32_t), 0) < 0) {
 		perror("Error en handshake");
 		close(socket_cliente);
 		return EXIT_ERROR;
@@ -104,9 +136,16 @@ int handshake_con_cliente(int socket_cliente) {
 	return EXIT_OK;
 }
 
-void *thread_aceptar_clientes(void *arg) {
-    int socket_servidor = *(int *)arg;
-    aceptar_clientes(socket_servidor);
+void* thread_handshake_con_cliente(void* fd_cliente) {
+	int error = handshake_con_cliente(*(int*)fd_cliente);
+	free(fd_cliente);
+	if(error < 0)
+		exit(EXIT_ERROR);
+	return NULL;
+}
+
+void *thread_aceptar_clientes(void *socket_servidor) {
+    aceptar_clientes(*(int*)socket_servidor);
     return NULL;
 }
 

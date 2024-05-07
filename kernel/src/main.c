@@ -1,5 +1,4 @@
 #include "main.h"
-#include <commons/log.h>
 
 int main(int argc, char* argv[]) {
 
@@ -22,13 +21,13 @@ int main(int argc, char* argv[]) {
     atender_conexiones_al_modulo(&thread_interfaces, fd_kernel_server);
 
     // El Kernel intenta conectarse con la CPU en el puerto Dispatch
-    int fd_cpu_dispatch = conectarse_a_modulo("CPU (PUERTO DISPATCH)", kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch, logger);
+    int fd_cpu_dispatch = conectarse_a_modulo("CPU (PUERTO DISPATCH)", kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch, KERNEL, logger);
 
     // El Kernel intenta conectarse con la CPU en el puerto Interrupt
-    int fd_cpu_interrupt = conectarse_a_modulo("CPU (PUERTO INTERRUPT)", kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt, logger);
+    int fd_cpu_interrupt = conectarse_a_modulo("CPU (PUERTO INTERRUPT)", kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt, KERNEL, logger);
 
     // El Kernel intenta conectarse con la memoria
-    int fd_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, logger);
+    int fd_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, KERNEL, logger);
 
     pthread_join(thread_interfaces, NULL); // Espero a que el thread creado termine
 

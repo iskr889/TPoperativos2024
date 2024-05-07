@@ -22,8 +22,14 @@ int aceptar_clientes(int socket_servidor);
 int handshake_con_cliente(int socket_cliente);
 
 /**
+* @fn    Nuevo hilo para efectuar el handshake con el cliente
+* @brief Se ejecuta un hilo de ejecución para efectuar el handshake con el cliente y que el servidor pueda continuar la atención a otros clientes
+*/
+void* thread_handshake_con_cliente(void* fd_cliente);
+
+/**
 * @fn    Nuevo hilo para aceptar cliente
-* @brief Crea un hilo de ejecución nuevo para aceptar clientes y que el servidor pueda continuar su ejecución sin ser bloqueado
+* @brief Se ejecuta un hilo de ejecución para aceptar clientes y que el servidor pueda continuar su ejecución sin ser bloqueado
 */
 void *thread_aceptar_clientes(void *arg);
 

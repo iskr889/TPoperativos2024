@@ -24,6 +24,17 @@
 
 typedef char* String;
 
+typedef enum {
+    MEMORIA,
+    CPU,
+    KERNEL,
+    GENERIC,
+    STDIN,
+    STDOUT,
+    DIALFS,
+    ERROR
+} modulos_t ; 
+
 /**
 * @fn    Inicia un logger
 * @brief Crea un logger y devuelve un puntero a t_log para ser utilizado

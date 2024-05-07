@@ -35,11 +35,10 @@ int crear_conexion(String ip, String puerto) {
 	return fd_cliente;
 }
 
-int handshake_con_servidor(int socket_servidor) {
-	int32_t handshake = 1;
+int handshake_con_servidor(int socket_servidor, modulos_t handshake) {
 	int32_t result;
 
-	if(send(socket_servidor, &handshake, sizeof(int32_t), 0) < 0)
+	if(send(socket_servidor, &handshake, sizeof(modulos_t), 0) < 0)
 		return EXIT_ERROR;
 	if(recv(socket_servidor, &result, sizeof(int32_t), MSG_WAITALL) < 0)
 		return EXIT_ERROR;
@@ -47,7 +46,7 @@ int handshake_con_servidor(int socket_servidor) {
 	return result; // Retorna 0 si el handshake es correcto
 }
 
-int conectarse_a_modulo(String modulo, String ip, String puerto, t_log* logger) {
+int conectarse_a_modulo(String modulo, String ip, String puerto, modulos_t tipo, t_log* logger) {
 
 	int fd_modulo = crear_conexion(ip, puerto);
 
@@ -57,6 +56,11 @@ int conectarse_a_modulo(String modulo, String ip, String puerto, t_log* logger) 
     }
 
     log_info(logger, "CONECTADO A %s", modulo);
+
+	if(handshake_con_servidor(fd_modulo, tipo) == 0)
+		log_info(logger, "HANDSHAKE EXITOSO");
+	else
+	 	log_error(logger, "HANDSHAKE INVALIDO");
 
     return fd_modulo;
 }
