@@ -1,5 +1,4 @@
 #include "main.h"
-#include <unistd.h>
 
 int main(int argc, char* argv[]) {
 
@@ -15,8 +14,6 @@ int main(int argc, char* argv[]) {
     // Acepto clientes en un thread aparte asi no frena la ejecución del programa
     pthread_t thread_memoria;
     atender_conexiones_al_modulo(&thread_memoria, fd_memoria_server);
-
-    sleep(1);
 
     pthread_join(thread_memoria, NULL);
 
