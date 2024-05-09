@@ -5,7 +5,6 @@
 #include <stdlib.h> // exit()
 #include <string.h> // memset()
 #include <unistd.h> // fork(), close()
-#include <cstdint> // uint32_t, etc...
 
 #include <sys/socket.h> // socket(), accept(), connect()
 #include <sys/types.h> // socket(), accept(), connect()

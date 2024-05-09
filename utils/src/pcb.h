@@ -20,11 +20,11 @@ typedef struct {
     uint32_t edx;
     uint32_t si;
     uint32_t di;
-} t_cpu_reg;
+} cpu_reg_t;
 
 typedef struct {
     uint16_t pid;        // ID del proceso
     uint16_t quantum;    // Tiempo para RR y VRR
-    t_cpu_reg registros; // Registros de la CPU
+    cpu_reg_t registros; // Registros de la CPU
     estados_t estado;    // Estado del proceso
-} t_pcb;
+} pcb_t;
