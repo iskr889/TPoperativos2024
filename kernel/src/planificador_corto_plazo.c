@@ -1,10 +1,11 @@
+/*
 #include "../../utils/src/utils.h"
 #include "../../utils/src/pcb.h"
 
 
 t_list* cola_ready;
 
-t_pcb* pcb;
+pcb_t* pcb;
 
 while(1){
 
@@ -21,19 +22,9 @@ while(1){
             eliminar_pcb(pcb);
             eliminar_paquete(paquete);
 
-
-
-
-
-
-
         break;
 
     }
 
-
-
-
-
-
 }
+*/
