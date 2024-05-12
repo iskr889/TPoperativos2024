@@ -1,4 +1,5 @@
 #include "main.h"
+#include "consola.h"
 
 int main(int argc, char* argv[]) {
 
@@ -7,11 +8,6 @@ int main(int argc, char* argv[]) {
     t_kernel_config* kernel_config = load_kernel_config(config);
 
     log_info(logger, "Archivo de configuración cargado correctamente");
-
-    // if (argc < 2) {
-    //     log_error(logger, "CANTIDAD INCORRECTA DE ARGUMENTOS");
-    //     exit(EXIT_FAILURE);
-    // }
 
     // El Kernel inicia un servidor que escucha por conexiones de las interfaces I/O
     int fd_kernel_server = modulo_escucha_conexiones_de("INTERFACES I/O", kernel_config->puerto_escucha, logger);
@@ -29,7 +25,9 @@ int main(int argc, char* argv[]) {
     // El Kernel intenta conectarse con la memoria
     int fd_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, KERNEL, logger);
 
-    pthread_join(thread_interfaces, NULL); // Espero a que el thread creado termine
+    consola_kernel();
+
+    // pthread_join(thread_interfaces, NULL); // Espero a que el thread creado termine
 
     // Cierro todos lo archivos y libero los punteros usados
     close(fd_kernel_server);
@@ -40,7 +38,9 @@ int main(int argc, char* argv[]) {
     config_destroy(config);
     kernel_config_destroy(kernel_config); // Libera todos los punteros de la estructura kernel_config
 
-    return EXIT_OK;
+    puts("Cerrando Kernel...");
+
+    exit(EXIT_OK);
 }
 
 t_kernel_config* load_kernel_config(t_config* config) {
