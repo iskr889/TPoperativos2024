@@ -1,22 +1,41 @@
 #include "consola.h"
 
-void exec_script(const String script_name) {
-    if (script_name == NULL) {
+void mensaje_de_bienvenida() {
+    printf("---------------------------------------------------------------------------\n");
+    printf("|                  Bienvenido a la Consola de Comandos!                   |\n");
+    printf("---------------------------------------------------------------------------\n");
+    printf("| Podes utilizar los siguientes comandos para controlar el sistema:       |\n");
+    printf("|    EJECUTAR_SCRIPT <PATH>    - Ejecuta un script de instrucciones       |\n");
+    printf("|    INICIAR_PROCESO <PATH>    - Inicia un nuevo proceso                  |\n");
+    printf("|    FINALIZAR_PROCESO <PATH>  - Termina un proceso existente             |\n");
+    printf("|    DETENER_PLANIFICACION     - Detiene la planificación de proceso      |\n");
+    printf("|    INICIAR_PLANIFICACION     - Reanuda la planificación de procesos     |\n");
+    printf("|    MULTIPROGRAMACION         - Modifica el grado de multiprogramación   |\n");
+    printf("|    PROCESO_ESTADO            - Lista los procesos por estado            |\n");
+    printf("---------------------------------------------------------------------------\n");
+    printf("| Escribe 'exit' para salir de la consola.                                |\n");
+    printf("| Escribe 'help' para imprimir este mensaje nuevamente.                   |\n");
+    printf("---------------------------------------------------------------------------\n");
+    printf("\n> ");
+}
+
+void ejecutar_script(const String path) {
+    if (path == NULL) {
         puts("Script invalido!");
         return;
     }
-    printf("Ejecutando script: %s\n", script_name);
+    printf("Ejecutando script: %s\n", path);
 }
 
-void init_process(const String process_name) {
-    if (process_name == NULL) {
+void iniciar_proceso(const String path) {
+    if (path == NULL) {
         puts("Proceso invalido!");
         return;
     }
-    printf("Iniciando proceso: %s\n", process_name);
+    printf("Iniciando proceso: %s\n", path);
 }
 
-void kill_process(const String str_pid) {
+void finalizar_proceso(const String str_pid) {
     if (str_pid == NULL) {
         puts("PID INVALIDO!");
         return;
@@ -25,25 +44,34 @@ void kill_process(const String str_pid) {
     printf("Deteniendo proceso: %d\n", pid);
 }
 
-void resume_scheduling(const String arg) {
-    if (arg != NULL) {
-        puts("El comando no deberia terner argumentos adicionales!");
+void iniciar_planificacion(const String s) {
+    if (s != NULL) {
+        puts("El comando no deberia contener argumentos!");
         return;
     }
     puts("Reanudando planificador");
 }
 
-void stop_scheduling(const String arg) {
-    if (arg != NULL) {
-        puts("El comando no deberia terner argumentos adicionales!");
+void detener_planificacion(const String s) {
+    if (s != NULL) {
+        puts("El comando no deberia contener argumentos!");
         return;
     }
     puts("Deteniendo planificador");
 }
 
-void list_processes(const String arg) {
-    if (arg != NULL) {
-        puts("El comando no deberia terner argumentos adicionales!");
+void multiprogramacion(const String valor) {
+    if (valor == NULL) {
+        puts("VALOR INVALIDO!");
+        return;
+    }
+    int multiprogramacion = atoi(valor); // Modificar o usar strtol()
+    printf("Cambiando multiprogramacion a %d\n", multiprogramacion);
+}
+
+void proceso_estado(const String s) {
+    if (s != NULL) {
+        puts("El comando no deberia contener argumentos adicionales!");
         return;
     }
     puts("Listando procesos...");
@@ -53,22 +81,27 @@ void list_processes(const String arg) {
 void manejar_comando(const String comando) {
 
     String cmd = strtok(comando, " ");
+
     String arg = strtok(NULL, " ");
 
-    if (strcmp(cmd, "EJECUTAR_SCRIPT") == 0) {
-        exec_script(arg);
+    if (cmd == NULL) {
+        printf(">>Ingresar un comando!\n");
+    } else if (strcmp(cmd, "EJECUTAR_SCRIPT") == 0) {
+        ejecutar_script(arg);
     } else if (strcmp(cmd, "INICIAR_PROCESO") == 0) {
-        init_process(arg);
+        iniciar_proceso(arg);
     } else if (strcmp(cmd, "FINALIZAR_PROCESO") == 0) {
-        kill_process(arg);
+        finalizar_proceso(arg);
     } else if (strcmp(cmd, "DETENER_PLANIFICACION") == 0) {
-        resume_scheduling(arg);
+        detener_planificacion(arg);
     } else if (strcmp(cmd, "INICIAR_PLANIFICACION") == 0) {
-        stop_scheduling(arg);
+        iniciar_planificacion(arg);
+    } else if (strcmp(cmd, "MULTIPROGRAMACION") == 0) {
+        multiprogramacion(arg);
     } else if (strcmp(cmd, "PROCESO_ESTADO") == 0) {
-        list_processes(arg);
+        proceso_estado(arg);
     } else {
-        printf("Comando no reconocido.\n");
+        printf(">>Comando no reconocido!\n");
     }
 }
 
@@ -77,24 +110,29 @@ void* thread_consola(void* arg) {
 
     char* command = NULL;
     size_t len = 0;
-    ssize_t nread;
 
-    printf("Consola: ");
+    mensaje_de_bienvenida();
 
-    while ((nread = getline(&command, &len, stdin)) != -1) { // Reemplazar por do-while
-        if (command[nread - 1] == '\n')
-            command[nread - 1] = '\0'; // Eliminar el salto de línea
+    while (getline(&command, &len, stdin) != -1) {
+
+        command[strcspn(command, "\r\n")] = '\0'; // Elimina \r y \n del comando
+
         if (strcmp(command, "exit") == 0)
             break;
+
+        if (strcmp(command, "help") == 0) {
+            mensaje_de_bienvenida();
+            continue;
+        }
+
         manejar_comando(command);
-        printf("Consola: ");
+
+        printf("> ");
     }
 
-    puts("Saliendo de la consola...");
+    puts("\nSaliendo de la consola...");
 
     free(command); // No olvidar liberar la memoria asignada por getline
-
-    pthread_exit(NULL);
 
     return NULL;
 }
@@ -110,7 +148,7 @@ int consola_kernel() {
         exit(EXIT_FAILURE);
     }
 
-    pthread_detach(hilo);
+    pthread_join(hilo, NULL);
 
     return EXIT_OK;
 }
