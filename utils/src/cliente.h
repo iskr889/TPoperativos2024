@@ -11,7 +11,7 @@ int crear_conexion(String ip, String puerto);
 
 /**
 * @fn    Handshake del cliente al servidor
-* @brief Inicia un Handshake entre el servidor y el cliente
+* @brief Inicia un Handshake entre el servidor y el cliente, retorna -1 en caso de error
 */
 int handshake_con_servidor(int socket_servidor, modulos_t handshake);
 

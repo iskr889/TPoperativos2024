@@ -56,10 +56,12 @@ int conectarse_a_modulo(String modulo, String ip, String puerto, modulos_t tipo,
 
     log_info(logger, "CONECTADO A %s", modulo);
 
-    if(handshake_con_servidor(fd_modulo, tipo) == 0)
-        log_info(logger, "HANDSHAKE EXITOSO");
-    else
+    if(handshake_con_servidor(fd_modulo, tipo)) {
         log_error(logger, "HANDSHAKE INVALIDO");
+        exit(EXIT_FAILURE);
+    }
+
+    log_info(logger, "HANDSHAKE EXITOSO");
 
     return fd_modulo;
 }

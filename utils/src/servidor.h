@@ -45,4 +45,10 @@ int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* log
 */
 void atender_conexiones_al_modulo(pthread_t *hilo, int fd_servidor);
 
+/**
+* @fn    Espera los comandos del modulo conectado
+* @brief Luego del handshake el thread queda esperando por comandos al servidor
+*/
+void esperar_comandos(modulos_t modulo, int socket_cliente);
+
 #endif

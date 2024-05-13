@@ -25,7 +25,7 @@ int iniciar_servidor(String puerto) {
         return EXIT_ERROR;
     }
 
-    uint32_t enable = 1;
+    uint32_t enable = 1; // Habilita el reusar address en el socket
     if (setsockopt(socket_servidor, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(uint32_t)) < 0) {
         perror("Error en setsockopt()");
         return EXIT_ERROR;
@@ -87,50 +87,27 @@ int aceptar_clientes(int socket_servidor) {
 }
 
 int handshake_con_cliente(int socket_cliente) {
-    modulos_t handshake;
-    int32_t resultado = 0;
+    modulos_t modulo_conectado = ERROR;
+    int32_t rta_handshake = 0;
 
-    if(recv(socket_cliente, &handshake, sizeof(modulos_t), MSG_WAITALL) < 0) {
+    if(recv(socket_cliente, &modulo_conectado, sizeof(modulos_t), MSG_WAITALL) < 0) {
         perror("Error en handshake");
         close(socket_cliente);
         return EXIT_ERROR;
     }
 
-    switch (handshake) {
-        case MEMORIA:
-            puts("Memoria conectada!\n");
-            break;
-        case CPU:
-            puts("CPU conectada!\n");
-            break;
-        case KERNEL:
-            puts("KERNEL conectado!\n");
-            break;
-        case GENERIC:
-            puts("Interfaz GENERIC conectada!\n");
-            break;
-        case STDIN:
-            puts("Interfaz STDIN conectada!\n");
-            break;
-        case STDOUT:
-            puts("Interfaz STDOUT conectada!\n");
-            break;
-        case DIALFS:
-            puts("Interfaz DIALFS conectada!\n");
-            break;
-        default:
-            puts("Error!\n");
-            exit(EXIT_ERROR);
-    }
+    if(modulo_conectado < 0 || modulo_conectado >= ERROR)
+        rta_handshake = -1;
 
-    if(handshake == ERROR)
-        resultado = EXIT_ERROR;
+    ssize_t bytes_send = send(socket_cliente, &rta_handshake, sizeof(int32_t), 0);
 
-    if(send(socket_cliente, &resultado, sizeof(int32_t), 0) < 0) {
+    if(bytes_send < 0 || rta_handshake != 0) {
         perror("Error en handshake");
         close(socket_cliente);
         return EXIT_ERROR;
     }
+
+    esperar_comandos(modulo_conectado, socket_cliente);
 
     return EXIT_OK;
 }
@@ -184,4 +161,35 @@ void atender_conexiones_al_modulo(pthread_t *hilo, int fd_servidor) {
     }
 
     return;
+}
+
+void esperar_comandos(modulos_t modulo, int socket_cliente) {
+
+    switch (modulo) {
+        case MEMORIA:
+            puts("Memoria conectada, esperando...\n");
+            break;
+        case CPU:
+            puts("CPU conectada, esperando...\n");
+            // manejar_comandos_de_cpu(socket_cliente); Esta funcion va a estar en #include "../../cpu/src/main.h" 
+            break;
+        case KERNEL:
+            puts("KERNEL conectado, esperando...\n");
+            break;
+        case GENERIC:
+            puts("Interfaz GENERIC conectada, esperando...\n");
+            break;
+        case STDIN:
+            puts("Interfaz STDIN conectada, esperando...\n");
+            break;
+        case STDOUT:
+            puts("Interfaz STDOUT conectada, esperando...\n");
+            break;
+        case DIALFS:
+            puts("Interfaz DIALFS conectada, esperando...\n");
+            break;
+        default:
+            puts("Error!\n");
+            exit(EXIT_ERROR);
+    }
 }
