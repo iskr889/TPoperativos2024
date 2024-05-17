@@ -86,17 +86,18 @@ int aceptar_clientes(int socket_servidor) {
     return EXIT_OK;
 }
 
+// Este handshake se ejecuta en un hilo que es creado despues del accept() y es unico por cada modulo conectado
 int handshake_con_cliente(int socket_cliente) {
-    modulos_t modulo_conectado = ERROR;
+    handshake_t tipo_handshake = HANDSHAKE_ERROR; // Esto es un enum que identifica el tipo de conexión
     int32_t rta_handshake = 0;
 
-    if(recv(socket_cliente, &modulo_conectado, sizeof(modulos_t), MSG_WAITALL) < 0) {
+    if(recv(socket_cliente, &tipo_handshake, sizeof(handshake_t), MSG_WAITALL) < 0) {
         perror("Error en handshake");
         close(socket_cliente);
         return EXIT_ERROR;
     }
-
-    if(modulo_conectado < 0 || modulo_conectado >= ERROR)
+    // tipo_handshake deberia leer un enum distinto dependiendo del modulo cliente que se conecto asi podemos identificarlo
+    if(tipo_handshake < 0 || tipo_handshake >= HANDSHAKE_ERROR)
         rta_handshake = -1;
 
     ssize_t bytes_send = send(socket_cliente, &rta_handshake, sizeof(int32_t), 0);
@@ -106,8 +107,8 @@ int handshake_con_cliente(int socket_cliente) {
         close(socket_cliente);
         return EXIT_ERROR;
     }
-
-    esperar_comandos(modulo_conectado, socket_cliente);
+    // No salgo del hilo para no perder el socket_cliente y manejo los comandos según el modulo conectado
+    manejar_comandos(tipo_handshake, socket_cliente);
 
     return EXIT_OK;
 }
@@ -129,7 +130,7 @@ void *thread_aceptar_clientes(void *socket_servidor) {
     return NULL;
 }
 
-int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* logger) {
+int modulo_escucha_conexiones_de(String nombre_modulos, String puerto, t_log* logger) {
 
     int fd_servidor = iniciar_servidor(puerto);
 
@@ -138,7 +139,7 @@ int modulo_escucha_conexiones_de(String otros_modulos, String puerto, t_log* log
         exit(EXIT_FAILURE);
     }
     
-    log_info(logger, "SERVIDOR INICIADO... ESPERANDO LA CONEXION DE %s", otros_modulos);
+    log_info(logger, "SERVIDOR INICIADO... ESPERANDO LA CONEXION DE %s", nombre_modulos);
 
     return fd_servidor;
 }
@@ -163,33 +164,48 @@ void atender_conexiones_al_modulo(pthread_t *hilo, int fd_servidor) {
     return;
 }
 
-void esperar_comandos(modulos_t modulo, int socket_cliente) {
+// Dentro de cada case en vez de un printf se ejecutaria una función distinta dependiendo del tipo de handshake
+void manejar_comandos(handshake_t handshake, int socket_cliente) {
 
-    switch (modulo) {
-        case MEMORIA:
-            puts("Memoria conectada, esperando...\n");
+    switch (handshake) {
+        case CPU_CON_MEMORIA:
+            puts("CPU conectada con la MEMORIA\n");
             break;
-        case CPU:
-            puts("CPU conectada, esperando...\n");
-            // manejar_comandos_de_cpu(socket_cliente); Esta funcion va a estar en #include "../../cpu/src/main.h" 
+        case KERNEL_CON_MEMORIA:
+            puts("KERNEL conectado con la MEMORIA\n");
             break;
-        case KERNEL:
-            puts("KERNEL conectado, esperando...\n");
+        case GENERIC_CON_MEMORIA:
+            puts("Interfaz GENERICA conectada con la MEMORIA\n");
             break;
-        case GENERIC:
-            puts("Interfaz GENERIC conectada, esperando...\n");
+        case STDIN_CON_MEMORIA:
+            puts("Interfaz STDIN conectada con la MEMORIA\n");
             break;
-        case STDIN:
-            puts("Interfaz STDIN conectada, esperando...\n");
+        case STDOUT_CON_MEMORIA:
+            puts("Interfaz STDOUT conectada con la MEMORIA\n");
             break;
-        case STDOUT:
-            puts("Interfaz STDOUT conectada, esperando...\n");
+        case DIALFS_CON_MEMORIA:
+            puts("Interfaz DIALFS conectada con la MEMORIA\n");
             break;
-        case DIALFS:
-            puts("Interfaz DIALFS conectada, esperando...\n");
+        case KERNEL_CON_CPU_DISPATCH:
+            puts("KERNEL conectado con la CPU DISPATCH\n");
+            break;
+        case KERNEL_CON_CPU_INTERRUPT:
+            puts("KERNEL conectado con la CPU INTERRUPT\n");
+            break;
+        case GENERIC_CON_KERNEL:
+            puts("Interfaz GENERICA conectada con el KERNEL\n");
+            break;
+        case STDIN_CON_KERNEL:
+            puts("Interfaz STDIN conectada con el KERNEL\n");
+            break;
+        case STDOUT_CON_KERNEL:
+            puts("Interfaz STDOUT conectada con el KERNEL\n");
+            break;
+        case DIALFS_CON_KERNEL:
+            puts("Interfaz DIALFS conectada con el KERNEL\n");
             break;
         default:
-            puts("Error!\n");
+            puts("Error al tratar de identificar el handshake!\n");
             exit(EXIT_ERROR);
     }
 }

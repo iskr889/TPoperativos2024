@@ -17,10 +17,10 @@ int main(int argc, char* argv[]) {
     log_info(logger, "Archivo de configuración cargado correctamente");
 
     // La interfaz intenta conectarse con la memoria
-    int conexion_memoria = conectarse_a_modulo("MEMORIA", interfaz_config->ip_memoria, interfaz_config->puerto_memoria, GENERIC, logger);
+    int conexion_memoria = conectarse_a_modulo("MEMORIA", interfaz_config->ip_memoria, interfaz_config->puerto_memoria, GENERIC_CON_MEMORIA, logger);
 
     // La interfaz intenta conectarse con el kernel
-    int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, GENERIC, logger);
+    int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, GENERIC_CON_KERNEL, logger);
 
     close(conexion_kernel);
     close(conexion_memoria);

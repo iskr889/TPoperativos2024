@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
     atender_conexiones_al_modulo(&thread_cpu_interrupt, interrupt_server);
 
     // El Kernel intenta conectarse con la memoria
-    int fd_memoria = conectarse_a_modulo("MEMORIA", cpu_config.ip_memoria, cpu_config.puerto_memoria, CPU, logger);
+    int fd_memoria = conectarse_a_modulo("MEMORIA", cpu_config.ip_memoria, cpu_config.puerto_memoria, CPU_CON_MEMORIA, logger);
 
     pthread_join(thread_cpu_dispatch, NULL);
     pthread_join(thread_cpu_interrupt, NULL);

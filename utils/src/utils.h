@@ -25,15 +25,20 @@
 typedef char* String;
 
 typedef enum {
-    MEMORIA,
-    CPU,
-    KERNEL,
-    GENERIC,
-    STDIN,
-    STDOUT,
-    DIALFS,
-    ERROR
-} modulos_t ; 
+        CPU_CON_MEMORIA,
+     KERNEL_CON_MEMORIA,
+    GENERIC_CON_MEMORIA,
+      STDIN_CON_MEMORIA,
+     STDOUT_CON_MEMORIA,
+     DIALFS_CON_MEMORIA,
+     KERNEL_CON_CPU_DISPATCH,
+     KERNEL_CON_CPU_INTERRUPT,
+    GENERIC_CON_KERNEL,
+      STDIN_CON_KERNEL,
+     STDOUT_CON_KERNEL,
+     DIALFS_CON_KERNEL,
+    HANDSHAKE_ERROR
+} handshake_t ; // Handshake especifico entre modulos
 
 /**
 * @fn    Inicia un logger
