@@ -13,12 +13,12 @@ int crear_conexion(String ip, String puerto);
 * @fn    Handshake del cliente al servidor
 * @brief Inicia la comunicación enviando un tipo de handshake unico, retorna -1 en caso de error
 */
-int handshake_con_servidor(int socket_servidor, handshake_t handshake);
+int handshake_con_servidor(int socket_servidor, conexion_t handshake);
 
 /**
 * @fn    Se conecta al modulo especificado
 * @brief Crea una conexión con el modulo especificado por su puerto e ip. Además loguea el proceso.
 */
-int conectarse_a_modulo(String nombre_servidor, String ip, String puerto, handshake_t handshake, t_log* logger);
+int conectarse_a_modulo(String nombre_servidor, String ip, String puerto, conexion_t handshake, t_log* logger);
 
 #endif

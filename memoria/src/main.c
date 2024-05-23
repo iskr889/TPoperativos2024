@@ -1,4 +1,5 @@
 #include "main.h"
+#include "memory_interface_handler.h"
 
 int main(int argc, char* argv[]) {
 
@@ -11,11 +12,11 @@ int main(int argc, char* argv[]) {
     // Iniciamos servidor escuchando por conexiones de CPU, KERNEL e INTERFACES
     int fd_memoria_server = modulo_escucha_conexiones_de("CPU, KERNEL e INTERFACES", memoria_config->puerto_escucha, logger);
 
-    // Acepto clientes en un thread aparte asi no frena la ejecución del programa
-    pthread_t thread_memoria;
-    atender_conexiones_al_modulo(&thread_memoria, fd_memoria_server);
+    conexionId_t* conexion_cpu = esperar_conexion_de(CPU_CON_MEMORIA, fd_memoria_server);
+    conexionId_t* conexion_kernel = esperar_conexion_de(KERNEL_CON_MEMORIA, fd_memoria_server);
 
-    pthread_join(thread_memoria, NULL);
+    // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
+    manejador_de_interfaces(fd_memoria_server);
 
     // Cierro todos lo archivos y libero los punteros usados
     close(fd_memoria_server);
@@ -23,7 +24,7 @@ int main(int argc, char* argv[]) {
     config_destroy(config);
     free(memoria_config);
     
-    return EXIT_OK;
+    return OK;
 }
 
 t_memoria_config* load_memoria_config(t_config* config) {

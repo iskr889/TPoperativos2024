@@ -26,5 +26,5 @@ t_config* iniciar_config(String path) {
 
 void error_exit(char *message) { 
     perror(message);
-    exit(EXIT_ERROR);
+    exit(ERROR);
 }

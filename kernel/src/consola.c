@@ -150,5 +150,5 @@ int consola_kernel() {
 
     pthread_join(hilo, NULL);
 
-    return EXIT_OK;
+    return OK;
 }

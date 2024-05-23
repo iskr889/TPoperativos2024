@@ -1,4 +1,5 @@
 #include "cliente.h"
+#include "utils.h"
 
 int crear_conexion(String ip, String puerto) {
     struct addrinfo hints, *server_info;
@@ -10,7 +11,7 @@ int crear_conexion(String ip, String puerto) {
     if(getaddrinfo(ip, puerto, &hints, &server_info)) {
         perror("Error getaddrinfo");
         freeaddrinfo(server_info);
-        return EXIT_ERROR;
+        return ERROR;
     }
 
     int fd_cliente = socket(server_info->ai_family,
@@ -20,13 +21,13 @@ int crear_conexion(String ip, String puerto) {
     if(fd_cliente < 0) {
         perror("Error en socket()");
         freeaddrinfo(server_info);
-        return EXIT_ERROR;
+        return ERROR;
     }
     
     if(connect(fd_cliente, server_info->ai_addr, server_info->ai_addrlen) < 0) {
         perror("Error en connect()");
         freeaddrinfo(server_info);
-        return EXIT_ERROR;
+        return ERROR;
     }
 
     freeaddrinfo(server_info);
@@ -34,18 +35,18 @@ int crear_conexion(String ip, String puerto) {
     return fd_cliente;
 }
 
-int handshake_con_servidor(int socket_servidor, handshake_t handshake) {
+int handshake_con_servidor(int socket_servidor, conexion_t handshake) {
     int32_t result;
 
-    if(send(socket_servidor, &handshake, sizeof(handshake_t), 0) < 0)
-        return EXIT_ERROR;
+    if(send(socket_servidor, &handshake, sizeof(conexion_t), 0) < 0)
+        return ERROR;
     if(recv(socket_servidor, &result, sizeof(int32_t), MSG_WAITALL) < 0)
-        return EXIT_ERROR;
+        return ERROR;
 
     return result; // Retorna 0 si el handshake es correcto
 }
 
-int conectarse_a_modulo(String nombre_servidor, String ip, String puerto, handshake_t handshake, t_log* logger) {
+int conectarse_a_modulo(String nombre_servidor, String ip, String puerto, conexion_t handshake, t_log* logger) {
 
     int fd_modulo = crear_conexion(ip, puerto);
 

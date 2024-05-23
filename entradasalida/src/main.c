@@ -28,7 +28,7 @@ int main(int argc, char* argv[]) {
     config_destroy(config);
     free(interfaz_config);
 
-    return EXIT_OK;
+    return OK;
 }
 
 t_interfaz_config* load_interfaz_config(t_config* config){

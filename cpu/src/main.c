@@ -10,21 +10,16 @@ int main(int argc, char* argv[]) {
 
     log_info(logger, "Archivo de configuración cargado correctamente");
 
+    // El Kernel intenta conectarse con la memoria
+    int fd_memoria = conectarse_a_modulo("MEMORIA", cpu_config.ip_memoria, cpu_config.puerto_memoria, CPU_CON_MEMORIA, logger);
+
     // La CPU inicia un servidor que escucha por conexiones del Kernel a la CPU (DISPATCH)
     int dispatch_server = modulo_escucha_conexiones_de("KERNEL (PUERTO DISPATCH)", cpu_config.puerto_escucha_dispath, logger);
     // La CPU inicia un servidor que escucha por conexiones del Kernel a la CPU (INTERRUPT)
     int interrupt_server = modulo_escucha_conexiones_de("KERNEL (PUERTO INTERRUPT)", cpu_config.puerto_escucha_interrupt, logger);
 
-    // Acepto clientes en un thread aparte asi no frena la ejecución del programa
-    pthread_t thread_cpu_dispatch, thread_cpu_interrupt;
-    atender_conexiones_al_modulo(&thread_cpu_dispatch, dispatch_server);
-    atender_conexiones_al_modulo(&thread_cpu_interrupt, interrupt_server);
-
-    // El Kernel intenta conectarse con la memoria
-    int fd_memoria = conectarse_a_modulo("MEMORIA", cpu_config.ip_memoria, cpu_config.puerto_memoria, CPU_CON_MEMORIA, logger);
-
-    pthread_join(thread_cpu_dispatch, NULL);
-    pthread_join(thread_cpu_interrupt, NULL);
+    conexionId_t* conexion_dispatch = esperar_conexion_de(KERNEL_CON_CPU_DISPATCH, dispatch_server);
+    conexionId_t* conexion_interrupt = esperar_conexion_de(KERNEL_CON_CPU_INTERRUPT, interrupt_server);
 
     // Cierro todos lo archivos y libero los punteros usados
     close(fd_memoria);
@@ -33,7 +28,7 @@ int main(int argc, char* argv[]) {
     log_destroy(logger);
     config_destroy(config);
 
-    return EXIT_OK;
+    return OK;
 }
 
 void load_cpu_config(t_config* config) {

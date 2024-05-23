@@ -19,8 +19,8 @@
 #include <assert.h>
 #include <pthread.h> // pthread_create()
 
-#define EXIT_ERROR -1
-#define EXIT_OK     0
+#define ERROR -1
+#define OK     0
 
 typedef char* String;
 
@@ -38,7 +38,12 @@ typedef enum {
      STDOUT_CON_KERNEL,
      DIALFS_CON_KERNEL,
     HANDSHAKE_ERROR
-} handshake_t ; // Handshake especifico entre modulos
+} conexion_t ; // Tipo de conexión especifico entre modulos
+
+typedef struct {
+    int fd_conexion;
+    conexion_t tipo_de_conexion;
+} conexionId_t ; // Para identificar el tipo de conexion entre modulos
 
 /**
 * @fn    Inicia un logger

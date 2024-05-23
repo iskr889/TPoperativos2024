@@ -1,7 +1,7 @@
 #ifndef CONSOLA_H
 #define CONSOLA_H
 
-#include "../../utils/src/utils.h"
+#include "main.h"
 
 #define BUFF_SIZE 64
 
