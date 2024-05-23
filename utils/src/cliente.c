@@ -1,5 +1,4 @@
 #include "cliente.h"
-#include "utils.h"
 
 int crear_conexion(String ip, String puerto) {
     struct addrinfo hints, *server_info;
@@ -40,7 +39,7 @@ int handshake_con_servidor(int socket_servidor, conexion_t handshake) {
 
     if(send(socket_servidor, &handshake, sizeof(conexion_t), 0) < 0)
         return ERROR;
-    if(recv(socket_servidor, &result, sizeof(int32_t), MSG_WAITALL) < 0)
+    if(recv(socket_servidor, &result, sizeof(result), MSG_WAITALL) < 0)
         return ERROR;
 
     return result; // Retorna 0 si el handshake es correcto
@@ -58,11 +57,11 @@ int conectarse_a_modulo(String nombre_servidor, String ip, String puerto, conexi
     log_info(logger, "CONECTADO A %s", nombre_servidor);
 
     if(handshake_con_servidor(fd_modulo, handshake)) {
-        log_error(logger, "HANDSHAKE INVALIDO");
+        log_error(logger, "HANDSHAKE CON %s INVALIDO!", nombre_servidor);
         exit(EXIT_FAILURE);
     }
 
-    log_info(logger, "HANDSHAKE EXITOSO");
+    log_info(logger, "HANDSHAKE CON %s EXITOSO!", nombre_servidor);
 
     return fd_modulo;
 }

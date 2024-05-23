@@ -1,6 +1,6 @@
 #include "servidor.h"
 
-int modulo_escucha_conexiones_de(String nombre_modulos, String puerto, t_log* logger) {
+int escuchar_conexiones_de(String nombre_modulos, String puerto, t_log* logger) {
 
     int fd_servidor = iniciar_servidor(puerto);
 
@@ -64,38 +64,26 @@ int iniciar_servidor(String puerto) {
     return socket_servidor;
 }
 
-conexionId_t *esperar_conexion_de(conexion_t tipo, int socket_servidor) {
-        
-    conexionId_t *conexion = malloc(sizeof(conexionId_t));
-
-    if (conexion == NULL) {
-        perror("Error en malloc()");
-        return NULL;
-    }
+int esperar_conexion_de(conexion_t tipo_de_conexion, int socket_servidor) {
 
     int socket_cliente = accept(socket_servidor, NULL, NULL);
 
     if (socket_cliente < 0) {
         perror("Error en accept()");
         close(socket_servidor);
-        free(conexion);
-        return NULL;
+        return ERROR;
     }
 
     conexion_t handshake = handshake_con_cliente(socket_cliente);
 
-    if (handshake == HANDSHAKE_ERROR || handshake != tipo) {
+    if (handshake != tipo_de_conexion) {
         perror("Error en handshake!");
         close(socket_cliente);
         close(socket_servidor);
-        free(conexion);
-        return NULL;
+        return ERROR;
     }
 
-    conexion->fd_conexion = socket_cliente;
-    conexion->tipo_de_conexion = handshake;
-
-    return conexion;
+    return socket_cliente;
 }
 
 conexion_t handshake_con_cliente(int socket_cliente) {

@@ -108,29 +108,17 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
 void manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     switch (handshake) {
-        case GENERIC_CON_KERNEL:
-            puts("Interfaz GENERICA conectada con el KERNEL\n");
-            break;
-        case STDIN_CON_KERNEL:
-            puts("Interfaz STDIN conectada con el KERNEL\n");
-            break;
-        case STDOUT_CON_KERNEL:
-            puts("Interfaz STDOUT conectada con el KERNEL\n");
-            break;
-        case DIALFS_CON_KERNEL:
-            puts("Interfaz DIALFS conectada con el KERNEL\n");
-            break;
         case GENERIC_CON_MEMORIA:
-            puts("Interfaz GENERICA conectada con el MEMORIA\n");
+            puts("Interfaz GENERICA conectada con la MEMORIA\n");
             break;
         case STDIN_CON_MEMORIA:
-            puts("Interfaz STDIN conectada con el MEMORIA\n");
+            puts("Interfaz STDIN conectada con la MEMORIA\n");
             break;
         case STDOUT_CON_MEMORIA:
-            puts("Interfaz STDOUT conectada con el MEMORIA\n");
+            puts("Interfaz STDOUT conectada con la MEMORIA\n");
             break;
         case DIALFS_CON_MEMORIA:
-            puts("Interfaz DIALFS conectada con el MEMORIA\n");
+            puts("Interfaz DIALFS conectada con la MEMORIA\n");
             break;
         default:
             puts("Error al tratar de identificar el handshake!\n");

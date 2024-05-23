@@ -7,7 +7,7 @@
 * @fn    Queda escuchando por conexiones de otros modulos
 * @brief Crea un servidor y escucha el puerto indicado por conexiones entrantes
 */
-int modulo_escucha_conexiones_de(String nombre_modulos, String puerto, t_log* logger);
+int escuchar_conexiones_de(String nombre_modulos, String puerto, t_log* logger);
 
 /**
 * @fn    Inicia una servidor en el puerto indicado
@@ -17,9 +17,9 @@ int iniciar_servidor(String puerto);
 
 /**
 * @fn    Espera conexión de un modulo
-* @brief Espera la conexión del modulo especificado por conexion_t tipo al servidor
+* @brief Espera la conexión del modulo especificado por "conexion_t tipo_de_conexion" al servidor
 */
-conexionId_t *esperar_conexion_de(conexion_t tipo, int socket_servidor);
+int esperar_conexion_de(conexion_t tipo_de_conexion, int socket_servidor);
 
 /**
 * @fn    Handshake del servidor al cliente

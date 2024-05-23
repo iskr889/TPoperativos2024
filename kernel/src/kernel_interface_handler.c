@@ -120,18 +120,6 @@ void manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         case DIALFS_CON_KERNEL:
             puts("Interfaz DIALFS conectada con el KERNEL\n");
             break;
-        case GENERIC_CON_MEMORIA:
-            puts("Interfaz GENERICA conectada con el MEMORIA\n");
-            break;
-        case STDIN_CON_MEMORIA:
-            puts("Interfaz STDIN conectada con el MEMORIA\n");
-            break;
-        case STDOUT_CON_MEMORIA:
-            puts("Interfaz STDOUT conectada con el MEMORIA\n");
-            break;
-        case DIALFS_CON_MEMORIA:
-            puts("Interfaz DIALFS conectada con el MEMORIA\n");
-            break;
         default:
             puts("Error al tratar de identificar el handshake!\n");
             exit(ERROR);

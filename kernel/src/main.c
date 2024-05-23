@@ -11,29 +11,29 @@ int main(int argc, char* argv[]) {
     log_info(logger, "Archivo de configuración cargado correctamente");
 
     // El Kernel intenta conectarse con la memoria
-    int fd_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, KERNEL_CON_MEMORIA, logger);
+    int conexion_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, KERNEL_CON_MEMORIA, logger);
 
     // El Kernel intenta conectarse con la CPU en el puerto Dispatch
-    int fd_cpu_dispatch = conectarse_a_modulo("CPU (PUERTO DISPATCH)", kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch, KERNEL_CON_CPU_DISPATCH, logger);
+    int conexion_dispatch = conectarse_a_modulo("CPU (PUERTO DISPATCH)", kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch, KERNEL_CON_CPU_DISPATCH, logger);
 
     // El Kernel intenta conectarse con la CPU en el puerto Interrupt
-    int fd_cpu_interrupt = conectarse_a_modulo("CPU (PUERTO INTERRUPT)", kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt, KERNEL_CON_CPU_INTERRUPT, logger);
+    int conexion_interrupt = conectarse_a_modulo("CPU (PUERTO INTERRUPT)", kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt, KERNEL_CON_CPU_INTERRUPT, logger);
 
     // El Kernel inicia un servidor que escucha por conexiones de las interfaces I/O
-    int fd_kernel_server = modulo_escucha_conexiones_de("INTERFACES I/O", kernel_config->puerto_escucha, logger);
+    int kernel_server = escuchar_conexiones_de("INTERFACES I/O", kernel_config->puerto_escucha, logger);
 
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
-    manejador_de_interfaces(fd_kernel_server);
+    manejador_de_interfaces(kernel_server);
 
     consola_kernel();
 
     // pthread_join(thread_interfaces, NULL); // Espero a que el thread creado termine
 
     // Cierro todos lo archivos y libero los punteros usados
-    close(fd_kernel_server);
-    close(fd_cpu_dispatch);
-    close(fd_cpu_interrupt);
-    close(fd_memoria);
+    close(kernel_server);
+    close(conexion_dispatch);
+    close(conexion_interrupt);
+    close(conexion_memoria);
     log_destroy(logger);
     config_destroy(config);
     kernel_config_destroy(kernel_config); // Libera todos los punteros de la estructura kernel_config

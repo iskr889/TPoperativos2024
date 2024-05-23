@@ -11,18 +11,33 @@ int main(int argc, char* argv[]) {
     log_info(logger, "Archivo de configuración cargado correctamente");
 
     // El Kernel intenta conectarse con la memoria
-    int fd_memoria = conectarse_a_modulo("MEMORIA", cpu_config.ip_memoria, cpu_config.puerto_memoria, CPU_CON_MEMORIA, logger);
+    int conexion_memoria = conectarse_a_modulo("MEMORIA", cpu_config.ip_memoria, cpu_config.puerto_memoria, CPU_CON_MEMORIA, logger);
 
     // La CPU inicia un servidor que escucha por conexiones del Kernel a la CPU (DISPATCH)
-    int dispatch_server = modulo_escucha_conexiones_de("KERNEL (PUERTO DISPATCH)", cpu_config.puerto_escucha_dispath, logger);
+    int dispatch_server = escuchar_conexiones_de("KERNEL (PUERTO DISPATCH)", cpu_config.puerto_escucha_dispath, logger);
     // La CPU inicia un servidor que escucha por conexiones del Kernel a la CPU (INTERRUPT)
-    int interrupt_server = modulo_escucha_conexiones_de("KERNEL (PUERTO INTERRUPT)", cpu_config.puerto_escucha_interrupt, logger);
+    int interrupt_server = escuchar_conexiones_de("KERNEL (PUERTO INTERRUPT)", cpu_config.puerto_escucha_interrupt, logger);
 
-    conexionId_t* conexion_dispatch = esperar_conexion_de(KERNEL_CON_CPU_DISPATCH, dispatch_server);
-    conexionId_t* conexion_interrupt = esperar_conexion_de(KERNEL_CON_CPU_INTERRUPT, interrupt_server);
+    // La CPU espera que el KERNEL se conecte al puerto Dispatch
+    int conexion_dispatch = esperar_conexion_de(KERNEL_CON_CPU_DISPATCH, dispatch_server);
+
+    if(conexion_dispatch < 0)
+        log_error(logger, "MODULO KERNEL NO PUDO CONECTARSE CON CPU DISPATCH!");
+    else
+        log_info(logger, "MODULO KERNEL CONECTO CON CPU DISPATCH EXITOSAMENTE!");
+
+    // La CPU espera que el KERNEL se conecte al puerto Inrerrupt
+    int conexion_interrupt = esperar_conexion_de(KERNEL_CON_CPU_INTERRUPT, interrupt_server);
+
+    if(conexion_interrupt < 0)
+        log_error(logger, "MODULO KERNEL NO PUDO CONECTARSE CON CPU INTERRUPT!");
+    else
+        log_info(logger, "MODULO KERNEL CONECTO CON CPU INTERRUPT EXITOSAMENTE!");
+
+    sleep(30);
 
     // Cierro todos lo archivos y libero los punteros usados
-    close(fd_memoria);
+    close(conexion_memoria);
     close(dispatch_server);
     close(interrupt_server);
     log_destroy(logger);
