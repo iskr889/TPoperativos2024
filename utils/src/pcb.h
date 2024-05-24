@@ -45,4 +45,4 @@ scheduler_t* init_scheduler();
 
 void destroy_scheduler(scheduler_t *scheduler);
 
-pcb_t* iniciar_proceso(uint16_t pid, uint16_t quantum);
+pcb_t* crear_proceso(uint16_t pid, uint16_t quantum);

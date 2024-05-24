@@ -28,9 +28,10 @@ void destroy_scheduler(scheduler_t *scheduler) {
 }
 
 // Crear un nuevo PCB
-pcb_t* iniciar_proceso(uint16_t pid, uint16_t quantum) {
+pcb_t* crear_proceso(uint16_t pid, uint16_t quantum) {
     pcb_t *proceso = malloc(sizeof(pcb_t));
     if (proceso == NULL) {
+        perror("Error en malloc()");
         return NULL; // Fallo en la asignación de memoria
     }
     proceso->pid = pid;

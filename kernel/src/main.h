@@ -4,6 +4,7 @@
 #include "../../utils/src/utils.h"
 #include "../../utils/src/servidor.h"
 #include "../../utils/src/cliente.h"
+#include "../../utils/src/pcb.h"
 
 typedef struct {
     String   puerto_escucha;
@@ -30,5 +31,11 @@ t_kernel_config* load_kernel_config(t_config* config);
 * @brief Hace un free de la memoria solicitada incluido las variables de recursos e instancias_recursos
 */
 void kernel_config_destroy(t_kernel_config* kernel_config);
+
+/**
+* @fn    Crea un proceso y lo pone en New
+* @brief Crea un proceso y lo pone en New
+*/
+void iniciar_proceso(const String path);
 
 #endif

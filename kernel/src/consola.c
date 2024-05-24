@@ -1,4 +1,12 @@
 #include "consola.h"
+#include <stdint.h>
+#include <errno.h>
+
+extern t_kernel_config* kernel_config;
+extern t_log* info_logger;
+extern t_log* extra_logger;
+
+uint16_t numero_de_procesos = 0;
 
 void mensaje_de_bienvenida() {
     printf("---------------------------------------------------------------------------\n");
@@ -28,11 +36,23 @@ void ejecutar_script(const String path) {
 }
 
 void iniciar_proceso(const String path) {
+
     if (path == NULL) {
         puts("Proceso invalido!");
         return;
     }
+
     printf("Iniciando proceso: %s\n", path);
+
+    pcb_t *pcb = crear_proceso(++numero_de_procesos, kernel_config->quantum);
+
+    if(pcb == NULL) {
+        log_error(extra_logger, "No se pudo crear el PCB para %s", path);
+        return;
+    }
+
+    //
+
 }
 
 void finalizar_proceso(const String str_pid) {
@@ -61,12 +81,27 @@ void detener_planificacion(const String s) {
 }
 
 void multiprogramacion(const String valor) {
+
     if (valor == NULL) {
-        puts("VALOR INVALIDO!");
+        log_error(extra_logger, "Ingresar un valor de multiprogramacion no nulo!");
         return;
     }
-    int multiprogramacion = atoi(valor); // Modificar o usar strtol()
-    printf("Cambiando multiprogramacion a %d\n", multiprogramacion);
+
+    char *resto;
+
+    errno = 0;
+
+    long multiprogramacion = strtol(valor, &resto, 10);
+
+    if (errno != 0 || resto == valor || *resto != '\0' || multiprogramacion <= 0 || multiprogramacion > UINT16_MAX) {
+        log_error(extra_logger, "Ingresar un grado de multiprogramacion valido! Entre 1 y %d", UINT16_MAX);
+        return;
+    }
+
+    kernel_config->grado_multiprogramacion = multiprogramacion;
+
+    log_info(info_logger, "Cambiando multiprogramacion a %d\n", kernel_config->grado_multiprogramacion);
+
 }
 
 void proceso_estado(const String s) {
@@ -132,7 +167,7 @@ void* thread_consola(void* arg) {
 
     puts("\nSaliendo de la consola...");
 
-    free(command); // No olvidar liberar la memoria asignada por getline
+    free(command); // Liberar la memoria asignada por getline
 
     return NULL;
 }
