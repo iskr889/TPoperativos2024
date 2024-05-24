@@ -63,4 +63,24 @@ t_config* iniciar_config(String path);
 */
 void error_exit(char *message);
 
+
+
+typedef struct {
+    uint32_t size; // Tamaño del payload
+    uint32_t offset; // Desplazamiento dentro del payload
+    void* stream; // Payload
+} t_buffer;
+
+typedef struct {
+	uint8_t codigo_operacion;
+	t_buffer* buffer;
+} t_paquete;
+
+
+typedef enum {
+	MENSAJE,
+  PCB,
+  PAQUETE,
+}operacion_generic;
+
 #endif
