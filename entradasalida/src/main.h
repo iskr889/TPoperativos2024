@@ -4,8 +4,15 @@
 #include "../../utils/src/cliente.h"
 #include "../../utils/src/utils.h"
 
-t_log* logger;
+t_log *logger;
+
 typedef struct{
+    int tamanio_instruccion;
+    char *instruccion;
+    int u_trabajo;
+}t_instruccion_generica;
+typedef struct
+{
     String tipo_interfaz;
     uint64_t tiempo_u_trabajo;
     String ip_kernel;
@@ -16,6 +23,7 @@ typedef struct{
     uint64_t block_size;
     uint64_t block_count;
 } t_interfaz_config;
+
 
 // /**
 // * @fn    Carga la configuración en la estructura interfaz_config
@@ -30,14 +38,13 @@ t_interfaz_config *load_generic_config(t_config *config);
 void io_gen_sleep(int unidades_trabajo);
 
 /*** FUNCIONES AUXILIARES ***/
-char *recibir_instruccion(int fd);
-int obtener_unidades_trabajo(int fd);
 t_interfaz_config *crear_interfaz_config();
-char *obtener_interfaz(char* ruta);
+char *obtener_interfaz(char *ruta);
+t_instruccion_generica *recibir_instruccion(int fd);
 
 /*** INTERFACES **/
-void interfaz_generica(char* nombre, char *ruta);
-//terminar
+void interfaz_generica(char *nombre, char *ruta);
+// terminar
 void interfaz_stdin(char *nombre, char *ruta);
 void interfaz_stdout(char *nombre, char *ruta);
 void interfaz_dialFS(char *nombre, char *ruta);
