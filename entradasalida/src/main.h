@@ -4,8 +4,7 @@
 #include "../../utils/src/cliente.h"
 #include "../../utils/src/utils.h"
 
-t_log *logger;
-
+extern logger;
 typedef struct{
     int tamanio_instruccion;
     char *instruccion;
@@ -43,9 +42,9 @@ char *obtener_interfaz(char *ruta);
 t_instruccion_generica *recibir_instruccion(int fd);
 
 /*** INTERFACES **/
-void interfaz_generica(char *nombre, char *ruta);
+void interfaz_generica(char *ruta);
 // terminar
-void interfaz_stdin(char *nombre, char *ruta);
-void interfaz_stdout(char *nombre, char *ruta);
-void interfaz_dialFS(char *nombre, char *ruta);
+void interfaz_stdin(char *ruta);
+void interfaz_stdout(char *ruta);
+void interfaz_dialFS(char *ruta);
 #endif

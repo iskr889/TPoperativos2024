@@ -1,36 +1,36 @@
 #include "main.h"
 
+t_log *logger;
+
 int main(int argc, char *argv[])
 {
+    
+    if(argc != 3){
+        log_warning(logger, "Ingrese correctamente los argumentos");
+        return -1;
+    }
+    // char *ruta = argv[2];
+    // char *nombre = argv[1];
 
-    char *ruta = "/home/utnso/Desktop/tp-2024-1c-groupSO2024/entradasalida/entradasalida.config"; // ruta de config
-    char *nombre = "GENERIC";                                                                     // nombre
+    logger = iniciar_logger("entradaSalida.log",argv[1], 1, LOG_LEVEL_INFO);
 
-    logger = iniciar_logger("entradaSalida.log", nombre, 1, LOG_LEVEL_INFO);
-
-    char *t_interfaz = obtener_interfaz(ruta);
-
-    // t_config* config = iniciar_config(ruta);
-    // char *interfaz = config_get_string_value(config, "TIPO_INTERFAZ");
-    // t_interfaz = malloc(strlen(interfaz));
-    // strcpy(t_interfaz, interfaz);
-    // config_destroy(config);
+    char *t_interfaz = obtener_interfaz(argv[2]);
 
     if (strcmp(t_interfaz, "GENERIC") == 0)
     {
-        interfaz_generica(nombre, ruta);
+        interfaz_generica(argv[2]);
     }
     else if (strcmp(t_interfaz, "STDIN") == 0)
     {
-        interfaz_stdin(nombre, ruta);
+        interfaz_stdin(argv[2]);
     }
     else if (strcmp(t_interfaz, "STDOUT") == 0)
     {
-        interfaz_stdout(nombre, ruta);
+        interfaz_stdout(argv[2]);
     }
     else if (strcmp(t_interfaz, "DialFS") == 0)
     {
-        interfaz_dialFS(nombre, ruta);
+        interfaz_dialFS(argv[2]);
     }
     else
     {
@@ -38,11 +38,6 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // // terminar programa
-    // close(conexion_kernel);
-    // close(conexion_memoria);
-    // log_destroy(logger);
-    // free(interfaz_config);
     log_destroy(logger);
 
     return OK;
@@ -119,7 +114,7 @@ t_instruccion_generica *recibir_instruccion(int socket_cliente)
     return instrucciones;
 }
 
-void interfaz_generica(char *nombre, char *ruta)
+void interfaz_generica(char *ruta)
 {
 
     t_config *config = iniciar_config(ruta);
@@ -166,6 +161,6 @@ void interfaz_generica(char *nombre, char *ruta)
     }
 }
 
-void interfaz_stdin(char *nombre, char *ruta) {}
-void interfaz_stdout(char *nombre, char *ruta) {}
-void interfaz_dialFS(char *nombre, char *ruta) {}
+void interfaz_stdin(char *ruta) {}
+void interfaz_stdout(char *ruta) {}
+void interfaz_dialFS(char *ruta) {}
