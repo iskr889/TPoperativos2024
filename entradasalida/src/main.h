@@ -3,8 +3,6 @@
 
 #include "../../utils/src/cliente.h"
 #include "../../utils/src/utils.h"
-
-extern logger;
 typedef struct{
     int tamanio_instruccion;
     char *instruccion;

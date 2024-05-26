@@ -4,15 +4,16 @@ t_log *logger;
 
 int main(int argc, char *argv[])
 {
-    
-    if(argc != 3){
+
+    if (argc != 3)
+    {
         log_warning(logger, "Ingrese correctamente los argumentos");
         return -1;
     }
     // char *ruta = argv[2];
     // char *nombre = argv[1];
 
-    logger = iniciar_logger("entradaSalida.log",argv[1], 1, LOG_LEVEL_INFO);
+    logger = iniciar_logger("entradaSalida.log", argv[1], 1, LOG_LEVEL_INFO);
 
     char *t_interfaz = obtener_interfaz(argv[2]);
 
@@ -39,6 +40,9 @@ int main(int argc, char *argv[])
     }
 
     log_destroy(logger);
+    //free(logger);
+    free(obtener_interfaz);
+
 
     return OK;
 }
@@ -114,6 +118,7 @@ t_instruccion_generica *recibir_instruccion(int socket_cliente)
     return instrucciones;
 }
 
+// arreglar: estoy perdiendo memoria cada vez que ejecuto una instrucccion
 void interfaz_generica(char *ruta)
 {
 
@@ -145,16 +150,26 @@ void interfaz_generica(char *ruta)
                 close(conexion_kernel);
                 config_destroy(config);
                 free(generic_config);
+                free(instruccion->instruccion);
+                free(instruccion);
 
                 exit(EXIT_SUCCESS);
             }
 
             io_gen_sleep(instruccion->u_trabajo);
             log_info(logger, "Instruccion completada con exito!");
+            free(instruccion->instruccion);
+            free(instruccion);
         }
         else
         {
             log_error(logger, "La instruccion recibida no es valida!");
+
+            close(conexion_kernel);
+            config_destroy(config);
+            free(generic_config);
+            free(instruccion->instruccion);
+            free(instruccion);
 
             exit(EXIT_FAILURE);
         }
