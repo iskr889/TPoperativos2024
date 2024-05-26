@@ -1,6 +1,7 @@
 #include "main.h"
 #include "consola.h"
 #include "kernel_interface_handler.h"
+#include "scheduler.h"
 
 t_kernel_config* kernel_config;
 t_log* info_logger;
@@ -12,6 +13,8 @@ int main(int argc, char* argv[]) {
     kernel_config = load_kernel_config(config);
     info_logger = iniciar_logger("kernel.log", "KERNEL", 1, LOG_LEVEL_INFO);
     extra_logger = iniciar_logger("kernel_debug.log", "KERNEL", 1, LOG_LEVEL_DEBUG);
+
+    init_scheduler();
 
     log_info(extra_logger, "Archivo de configuración cargado correctamente");
 

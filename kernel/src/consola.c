@@ -1,10 +1,13 @@
 #include "consola.h"
+#include "scheduler.h"
 #include <stdint.h>
 #include <errno.h>
 
 extern t_kernel_config* kernel_config;
 extern t_log* info_logger;
 extern t_log* extra_logger;
+
+extern scheduler_t *scheduler;
 
 uint16_t numero_de_procesos = 0;
 
@@ -51,7 +54,11 @@ void iniciar_proceso(const String path) {
         return;
     }
 
-    //
+    char str_pid[8];
+
+    snprintf(str_pid, sizeof(str_pid), "%d", pcb->pid);
+
+    dictionary_put(scheduler->procesos, str_pid, pcb);
 
 }
 
@@ -109,7 +116,42 @@ void proceso_estado(const String s) {
         puts("El comando no deberia contener argumentos adicionales!");
         return;
     }
-    puts("Listando procesos...");
+    puts("Listando procesos...\n");
+
+    t_list* lista_de_procesos = dictionary_elements(scheduler->procesos);
+
+    list_iterate(lista_de_procesos, imprimir_proceso);
+
+    list_clean(lista_de_procesos);
+
+    return;
+}
+
+// Función para imprimir el PID y el estado de un proceso
+void imprimir_proceso(void* proceso) {
+    pcb_t* pcb = (pcb_t*)proceso;
+    char estado[8];
+    switch (pcb->estado) {
+        case NEW:
+            strcpy(estado, "NEW");
+            break;
+        case READY:
+            strcpy(estado, "READY");
+            break;
+        case EXEC:
+            strcpy(estado, "EXEC");
+            break;
+        case BLOCKED:
+            strcpy(estado, "BLOCKED");
+            break;
+        case EXIT:
+            strcpy(estado, "EXIT");
+            break;
+        default:
+            strcpy(estado, "UNKNOWN");
+            break;
+    }
+    printf("[PID: %d | ESTADO: %s]\n", pcb->pid, estado);
 }
 
 // Función para el manejo de comandos
