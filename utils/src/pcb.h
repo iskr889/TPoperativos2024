@@ -1,8 +1,4 @@
 #include "utils.h"
-#include <commons/collections/dictionary.h>
-#include <commons/collections/list.h>
-#include <commons/collections/node.h>
-#include <commons/collections/queue.h>
 
 typedef enum {
     NEW,
@@ -33,28 +29,4 @@ typedef struct {
     estados_t estado;    // Estado del proceso
 } pcb_t;
 
-typedef struct {
-    t_queue *cola_new;
-    t_queue *cola_ready;
-    pcb_t *execute;
-    t_dictionary *colas_blocked;
-    t_queue *cola_exit;
-} scheduler_t;
-
-
-
-scheduler_t* init_scheduler();
-
-void destroy_scheduler(scheduler_t *scheduler);
-
-pcb_t* iniciar_proceso(uint16_t pid, uint16_t quantum);
-
-
-pcb_t* recibir_pcb(int socket_cliente);
-t_paquete* recibir_paquete(int socket_cliente);
-pcb_t* deserializar_pcb(t_buffer* buffer);
-void* serializar_paquete_pcb(t_paquete* paquete, int* size);
-t_buffer* crear_buffer_pcb(pcb_t pcb);
-t_paquete* crear_paquete_pcb(pcb_t pcb);
-void enviar_pcb(t_paquete* paquete_pcb, int socket_cliente);
-void imprimir_pcb(pcb_t* pcb);
+pcb_t* crear_proceso(uint16_t pid, uint16_t quantum);

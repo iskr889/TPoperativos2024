@@ -1,5 +1,7 @@
 #include "kernel_interface_handler.h"
 
+extern t_log* extra_logger;
+
 void manejador_de_interfaces(int fd_servidor) {
 
     pthread_t thread_interfaces;
@@ -109,19 +111,19 @@ void manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     switch (handshake) {
         case GENERIC_CON_KERNEL:
-            puts("Interfaz GENERICA conectada con el KERNEL\n");
+            log_info(extra_logger, "Interfaz GENERICA conectada con el KERNEL");
             break;
         case STDIN_CON_KERNEL:
-            puts("Interfaz STDIN conectada con el KERNEL\n");
+            log_info(extra_logger, "Interfaz STDIN conectada con el KERNEL");
             break;
         case STDOUT_CON_KERNEL:
-            puts("Interfaz STDOUT conectada con el KERNEL\n");
+            log_info(extra_logger, "Interfaz STDOUT conectada con el KERNEL");
             break;
         case DIALFS_CON_KERNEL:
-            puts("Interfaz DIALFS conectada con el KERNEL\n");
+            log_info(extra_logger, "Interfaz DIALFS conectada con el KERNEL");
             break;
         default:
-            puts("Error al tratar de identificar el handshake!\n");
+            log_error(extra_logger, "Error al tratar de identificar el handshake!");
             exit(ERROR);
     }
 }

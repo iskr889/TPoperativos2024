@@ -12,12 +12,20 @@
 void mensaje_de_bienvenida();
 
 void ejecutar_script(const String path);
+
 void iniciar_proceso(const String path);
+
 void finalizar_proceso(const String pid);
+
 void iniciar_planificacion(const String _);
+
 void detener_planificacion(const String _);
+
 void multiprogramacion(const String valor);
+
 void proceso_estado(const String _);
+
+void imprimir_proceso(void* proceso);
 
 /**
 * @fn    Recibe un comando y lo maneja
