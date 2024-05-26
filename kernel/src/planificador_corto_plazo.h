@@ -1,10 +1,10 @@
-#ifndef PLANIFICADORCORTOPLAZO_H_
-#define PLANIFICADORCORTOPLAZO_H_
+// #ifndef PLANIFICADORCORTOPLAZO_H_
+// #define PLANIFICADORCORTOPLAZO_H_
 
-#include "main.h"
+// #include "main.h"
 
-void* dispatcher();
-void* thread_hilo_quantum();
+// void* dispatcher();
+// void* thread_hilo_quantum();
 
 
-#endif
+// #endif
