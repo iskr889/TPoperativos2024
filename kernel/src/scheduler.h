@@ -9,11 +9,11 @@
 
 typedef struct {
     t_dictionary *procesos;
-    t_queue *cola_new;
-    t_queue *cola_ready;
+    t_list *cola_new;
+    t_list *cola_ready;
     pcb_t *proceso_ejecutando;
     t_dictionary *colas_blocked;
-    t_queue *cola_exit;
+    t_list *cola_exit;
     pthread_mutex_t mutex_procesos;
     pthread_mutex_t mutex_new;
     pthread_mutex_t mutex_ready;
@@ -40,6 +40,10 @@ void proceso_exec_a_ready();
 
 void cola_blocked_a_ready(char* nombre_cola);
 
-void proceso_a_exit(pcb_t* proceso, t_queue* cola_actual, pthread_mutex_t* mutex_cola_actual);
+void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_cola_actual);
+
+void list_push(t_list* queue, void* element);
+
+void* list_pop(t_list* queue);
 
 #endif
