@@ -30,3 +30,19 @@ typedef struct {
 } pcb_t;
 
 pcb_t* crear_proceso(uint16_t pid, uint16_t quantum);
+
+void enviar_pcb(t_paquete* paquete_pcb, int socket_cliente);
+
+t_paquete* crear_paquete_pcb(pcb_t pcb);
+
+t_buffer* crear_buffer_pcb(pcb_t pcb);
+
+void* serializar_paquete_pcb(t_paquete* paquete, int* size);
+
+pcb_t* deserializar_pcb(t_buffer* buffer);
+
+t_paquete* recibir_paquete(int socket_cliente);
+
+pcb_t* recibir_pcb(int socket_cliente);
+
+void imprimir_pcb(pcb_t* pcb);

@@ -17,8 +17,6 @@ pcb_t* crear_proceso(uint16_t pid, uint16_t quantum) {
     return proceso;
 }
 
-
-
 void enviar_pcb(t_paquete* paquete_pcb, int socket_cliente) {
     int size;
     void* a_enviar = serializar_paquete_pcb(paquete_pcb, &size);
@@ -99,7 +97,6 @@ pcb_t* recibir_pcb(int socket_cliente) {
     return pcb;
 }
 
-
 void imprimir_pcb(pcb_t* pcb) {
     printf("PID: %d\n", pcb->pid);
     printf("Quantum: %d\n", pcb->quantum);
@@ -110,8 +107,6 @@ void imprimir_pcb(pcb_t* pcb) {
     printf("  SI: %d, DI: %d\n", pcb->registros.si, pcb->registros.di);
     printf("Estado: %d\n", pcb->estado);
 }
-
-
 
 //ENVIAR PCB
     // pcb_t mi_pcb = {
