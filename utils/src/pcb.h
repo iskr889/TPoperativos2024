@@ -1,4 +1,5 @@
 #include "utils.h"
+#include "serializacion.h"
 
 typedef enum {
     NEW,
@@ -31,18 +32,12 @@ typedef struct {
 
 pcb_t* crear_proceso(uint16_t pid, uint16_t quantum);
 
-void enviar_pcb(t_paquete* paquete_pcb, int socket_cliente);
+payload_t *pcb_serializar(pcb_t *pcb); // Liberar payload_t despues de terminar de usar
 
-t_paquete* crear_paquete_pcb(pcb_t pcb);
-
-t_buffer* crear_buffer_pcb(pcb_t pcb);
-
-void* serializar_paquete_pcb(t_paquete* paquete, int* size);
-
-pcb_t* deserializar_pcb(t_buffer* buffer);
-
-t_paquete* recibir_paquete(int socket_cliente);
-
-pcb_t* recibir_pcb(int socket_cliente);
+pcb_t *pcb_deserializar(payload_t *payload); // Liberar pcb_t despues de terminar de usar
 
 void imprimir_pcb(pcb_t* pcb);
+
+void send_pcb(int socket, pcb_t *pcb);
+
+pcb_t *receive_pcb(int socket);

@@ -40,11 +40,6 @@ typedef enum {
     HANDSHAKE_ERROR
 } conexion_t ; // Tipo de conexión especifico entre modulos
 
-typedef struct {
-    int fd_conexion;
-    conexion_t tipo_de_conexion;
-} conexionId_t ; // Para identificar el tipo de conexion entre modulos
-
 /**
 * @fn    Inicia un logger
 * @brief Crea un logger y devuelve un puntero a t_log para ser utilizado
@@ -62,25 +57,5 @@ t_config* iniciar_config(String path);
 * @brief Sale del programa imprimiendo un mensaje con el tipo de error
 */
 void error_exit(char *message);
-
-
-
-typedef struct {
-    uint32_t size; // Tamaño del payload
-    uint32_t offset; // Desplazamiento dentro del payload
-    void* stream; // Payload
-} t_buffer;
-
-typedef struct {
-	uint8_t codigo_operacion;
-	t_buffer* buffer;
-} t_paquete;
-
-
-typedef enum {
-	MENSAJE,
-  PCB,
-  PAQUETE,
-}operacion_generic;
 
 #endif

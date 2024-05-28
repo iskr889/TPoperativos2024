@@ -1,4 +1,5 @@
 #include "pcb.h"
+#include "serializacion.h"
 
 // Crear un nuevo PCB
 pcb_t* crear_proceso(uint16_t pid, uint16_t quantum) {
@@ -17,107 +18,85 @@ pcb_t* crear_proceso(uint16_t pid, uint16_t quantum) {
     return proceso;
 }
 
-void enviar_pcb(t_paquete* paquete_pcb, int socket_cliente) {
-    int size;
-    void* a_enviar = serializar_paquete_pcb(paquete_pcb, &size);
-    send(socket_cliente, a_enviar, size, 0);
-    free(a_enviar);
-    free(paquete_pcb->buffer->stream);
-    free(paquete_pcb->buffer);
-    free(paquete_pcb);
+payload_t *pcb_serializar(pcb_t *pcb) {
+    // Calcula el tamaño total necesario para serializar pcb_t
+    uint32_t total_size = sizeof(uint16_t) * 2 +  // pid, quantum
+                          sizeof(uint32_t) * 7 +  // registros de CPU: pc, eax, ebx, ecx, edx, si, di
+                          sizeof(uint8_t)  * 4 +  // registros de CPU: ax, bx, cx, dx
+                          sizeof(estados_t);      // estado
+
+    payload_t *payload = payload_create(total_size);
+
+    payload_add(payload, &pcb->pid, sizeof(uint16_t));
+    payload_add(payload, &pcb->quantum, sizeof(uint16_t));
+    payload_add(payload, &pcb->registros.pc, sizeof(uint32_t));
+    payload_add(payload, &pcb->registros.ax, sizeof(uint8_t));
+    payload_add(payload, &pcb->registros.bx, sizeof(uint8_t));
+    payload_add(payload, &pcb->registros.cx, sizeof(uint8_t));
+    payload_add(payload, &pcb->registros.dx, sizeof(uint8_t));
+    payload_add(payload, &pcb->registros.eax, sizeof(uint32_t));
+    payload_add(payload, &pcb->registros.ebx, sizeof(uint32_t));
+    payload_add(payload, &pcb->registros.ecx, sizeof(uint32_t));
+    payload_add(payload, &pcb->registros.edx, sizeof(uint32_t));
+    payload_add(payload, &pcb->registros.si, sizeof(uint32_t));
+    payload_add(payload, &pcb->registros.di, sizeof(uint32_t));
+    payload_add(payload, &pcb->estado, sizeof(estados_t));
+
+    return payload;
 }
 
-t_paquete* crear_paquete_pcb(pcb_t pcb) {
-	t_paquete* paquete = malloc(sizeof(t_paquete));
-	paquete->codigo_operacion = PCB;
-	paquete->buffer = crear_buffer_pcb(pcb);
-	return paquete;
-}
+pcb_t *pcb_deserializar(payload_t *payload) {
+    pcb_t *pcb = malloc(sizeof(pcb_t));
 
-t_buffer* crear_buffer_pcb(pcb_t pcb) {
-	t_buffer* buffer = malloc(sizeof(t_buffer));
-	buffer->size = sizeof(uint16_t) * 2 + sizeof(cpu_reg_t) + sizeof(estados_t);
-	buffer->offset = 0;
-	buffer->stream = malloc(buffer->size);
-	memcpy(buffer->stream + buffer->offset, &pcb.pid, sizeof(uint16_t));
-	buffer->offset += sizeof(uint16_t);
-	memcpy(buffer->stream + buffer->offset, &pcb.quantum, sizeof(uint16_t));
-	buffer->offset += sizeof(uint16_t);
-	memcpy(buffer->stream + buffer->offset, &pcb.registros, sizeof(cpu_reg_t));
-	buffer->offset += sizeof(cpu_reg_t);
-	memcpy(buffer->stream + buffer->offset, &pcb.estado, sizeof(estados_t));
-	buffer->offset += sizeof(estados_t);
-	return buffer;
-}
-
-void* serializar_paquete_pcb(t_paquete* paquete, int* size) {
-    *size = sizeof(uint8_t) + sizeof(uint32_t) + paquete->buffer->size;
-    void* a_enviar = malloc(*size);
-    int offset = 0;
-    memcpy(a_enviar + offset, &(paquete->codigo_operacion), sizeof(uint8_t));
-    offset += sizeof(uint8_t);
-    memcpy(a_enviar + offset, &(paquete->buffer->size), sizeof(uint32_t));
-    offset += sizeof(uint32_t);
-    memcpy(a_enviar + offset, paquete->buffer->stream, paquete->buffer->size);
-    return a_enviar;
-}
-
-pcb_t* deserializar_pcb(t_buffer* buffer) {
-    pcb_t* pcb = malloc(sizeof(pcb_t));
-    void* stream = buffer->stream;
-    memcpy(&(pcb->pid), stream, sizeof(uint16_t));
-    stream += sizeof(uint16_t);
-    memcpy(&(pcb->quantum), stream, sizeof(uint16_t));
-    stream += sizeof(uint16_t);
-    memcpy(&(pcb->registros), stream, sizeof(cpu_reg_t));
-    stream += sizeof(cpu_reg_t);
-    memcpy(&(pcb->estado), stream, sizeof(estados_t));
-    return pcb;
-}
-
-t_paquete* recibir_paquete(int socket_cliente) {
-    t_paquete* paquete = malloc(sizeof(t_paquete));
-    t_buffer* buffer = malloc(sizeof(t_buffer));
-    recv(socket_cliente, &(paquete->codigo_operacion), sizeof(uint8_t), 0);
-    recv(socket_cliente, &(buffer->size), sizeof(uint32_t), 0);
-    buffer->stream = malloc(buffer->size);
-    recv(socket_cliente, buffer->stream, buffer->size, 0);
-
-    paquete->buffer = buffer;
-    return paquete;
-}
-
-pcb_t* recibir_pcb(int socket_cliente) {
-    t_paquete* paquete_pcb = recibir_paquete(socket_cliente);
-    pcb_t* pcb = deserializar_pcb(paquete_pcb->buffer);
-    free(paquete_pcb->buffer->stream);
-    free(paquete_pcb->buffer);
-    free(paquete_pcb);
+    payload->offset = 0;
+    payload_read(payload, &pcb->pid, sizeof(uint16_t));
+    payload_read(payload, &pcb->quantum, sizeof(uint16_t));
+    payload_read(payload, &pcb->registros.pc, sizeof(uint32_t));
+    payload_read(payload, &pcb->registros.ax, sizeof(uint8_t));
+    payload_read(payload, &pcb->registros.bx, sizeof(uint8_t));
+    payload_read(payload, &pcb->registros.cx, sizeof(uint8_t));
+    payload_read(payload, &pcb->registros.dx, sizeof(uint8_t));
+    payload_read(payload, &pcb->registros.eax, sizeof(uint32_t));
+    payload_read(payload, &pcb->registros.ebx, sizeof(uint32_t));
+    payload_read(payload, &pcb->registros.ecx, sizeof(uint32_t));
+    payload_read(payload, &pcb->registros.edx, sizeof(uint32_t));
+    payload_read(payload, &pcb->registros.si, sizeof(uint32_t));
+    payload_read(payload, &pcb->registros.di, sizeof(uint32_t));
+    payload_read(payload, &pcb->estado, sizeof(estados_t));
 
     return pcb;
 }
 
 void imprimir_pcb(pcb_t* pcb) {
+    puts("Imprimiendo pcb...\n");
     printf("PID: %d\n", pcb->pid);
     printf("Quantum: %d\n", pcb->quantum);
     printf("Registros:\n");
-    printf("  PC: %d\n", pcb->registros.pc);
-    printf("  AX: %d, BX: %d, CX: %d, DX: %d\n", pcb->registros.ax, pcb->registros.bx, pcb->registros.cx, pcb->registros.dx);
-    printf("  EAX: %d, EBX: %d, ECX: %d, EDX: %d\n", pcb->registros.eax, pcb->registros.ebx, pcb->registros.ecx, pcb->registros.edx);
-    printf("  SI: %d, DI: %d\n", pcb->registros.si, pcb->registros.di);
+    printf("\tPC: %d\n", pcb->registros.pc);
+    printf("\tAX: %d, BX: %d, CX: %d, DX: %d\n", pcb->registros.ax, pcb->registros.bx, pcb->registros.cx, pcb->registros.dx);
+    printf("\tEAX: %d, EBX: %d, ECX: %d, EDX: %d\n", pcb->registros.eax, pcb->registros.ebx, pcb->registros.ecx, pcb->registros.edx);
+    printf("\tSI: %d, DI: %d\n", pcb->registros.si, pcb->registros.di);
     printf("Estado: %d\n", pcb->estado);
 }
 
-//ENVIAR PCB
-    // pcb_t mi_pcb = {
-    //     .pid = 1234,
-    //     .quantum = 5,
-    //     .registros = { .pc = 1000, .ax = 1, .bx = 2, .cx = 3, .dx = 4, .eax = 100, .ebx = 200, .ecx = 300, .edx = 400, .si = 500, .di = 600 },
-    //     .estado = READY
-    // };
-    // t_paquete* paquete_pcb = crear_paquete_pcb(mi_pcb);
-    // enviar_pcb(paquete_pcb, conexion_dispatch);
+void send_pcb(int socket, pcb_t *pcb) {
+    payload_t *payload = pcb_serializar(pcb);
+    paquete_t *paquete = crear_paquete(1, payload); // 1 es un ejemplo de código de operación
+    if(enviar_paquete(socket, paquete) != OK)
+        exit(EXIT_FAILURE);
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
 
-    // pcb_t* pcb_recibido = recibir_pcb(socket_kernel);
-    // imprimir_pcb(pcb_recibido);
-    // free(pcb_recibido);
+pcb_t *receive_pcb(int socket) {
+    paquete_t *paquete = recibir_paquete(socket);
+    if(paquete == NULL)
+        exit(EXIT_FAILURE);
+    pcb_t *pcb = pcb_deserializar(paquete->payload);
+    payload_destroy(paquete->payload);
+    liberar_paquete(paquete);
+
+    imprimir_pcb(pcb);
+
+    return pcb;
+}
