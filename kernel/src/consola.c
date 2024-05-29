@@ -124,6 +124,8 @@ void proceso_estado(const String s) {
 
     list_clean(lista_de_procesos);
 
+    list_destroy(lista_de_procesos);
+
     return;
 }
 
@@ -194,8 +196,10 @@ void* thread_consola(void* arg) {
 
         command[strcspn(command, "\r\n")] = '\0'; // Elimina \r y \n del comando
 
-        if (strcmp(command, "exit") == 0)
+        if (strcmp(command, "exit") == 0) {
+            destroy_scheduler(scheduler);
             break;
+        }
 
         if (strcmp(command, "help") == 0) {
             mensaje_de_bienvenida();

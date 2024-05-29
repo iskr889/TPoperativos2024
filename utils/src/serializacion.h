@@ -33,10 +33,10 @@ void payload_add(payload_t *payload, void *data, uint32_t size);
 void payload_read(payload_t *payload, void *data, uint32_t size);
 
 // Agrega string al payload con un uint32_t adelante indicando su longitud
-void payload_add_string(payload_t *payload, uint32_t length, char *string);
+void payload_add_string(payload_t *payload, String string);
 
 // Lee un string y su longitud del payload y avanza el offset
-char *payload_read_string(payload_t *payload, uint32_t *length);
+String payload_read_string(payload_t *payload);
 
 // Crea un paquete con el codigo de operación a enviar
 paquete_t *crear_paquete(uint8_t codigo_operacion, payload_t *buffer);

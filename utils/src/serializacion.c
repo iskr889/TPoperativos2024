@@ -41,15 +41,17 @@ void payload_read(payload_t *payload, void *data, uint32_t size) {
     payload->offset += size;
 }
 
-void payload_add_string(payload_t *payload, uint32_t length, String string) {
-	payload_add(payload, &length, sizeof(uint32_t));
+void payload_add_string(payload_t *payload, String string) {
+    uint32_t length = strlen(string) + 1; // Tengo en cuenta el '\0'
+    payload_add(payload, &length, sizeof(length));
     payload_add(payload, string, length);
 }
 
-String payload_read_string(payload_t *payload, uint32_t *length) {
-	payload_read(payload, length, sizeof(uint32_t));
-    String string = malloc(*length);
-    payload_read(payload, string, *length);
+String payload_read_string(payload_t *payload) {
+    uint32_t length;
+    payload_read(payload, &length, sizeof(length));
+    String string = malloc(length);
+    payload_read(payload, string, length);
     return string;
 }
 
