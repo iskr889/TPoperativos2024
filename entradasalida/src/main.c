@@ -117,30 +117,20 @@ void io_gen_sleep(int unidades_trabajo) {
     usleep(unidades_trabajo * 1000);
 }
 
-t_instruccion_generica *recibir_instruccion(int socket_cliente) {
-    t_instruccion_generica *instrucciones = malloc(sizeof(t_instruccion_generica));
-    int tamanio;
-    int u_trabajo;
-    void *buffer;
-
-    recv(socket_cliente, &tamanio, sizeof(int), MSG_WAITALL);
-    instrucciones->instruccion = malloc(tamanio + 1);
-    buffer = malloc(tamanio);
-    recv(socket_cliente, buffer, tamanio, MSG_WAITALL);
-    memcpy(instrucciones->instruccion, buffer, tamanio);
-    instrucciones->instruccion[tamanio] = '\0';
-    free(buffer);
-    recv(socket_cliente, &u_trabajo, sizeof(int), MSG_WAITALL);
-    instrucciones->u_trabajo = u_trabajo;
-    return instrucciones;
-}
-
 int enviar_nombre(String nombre, int socket) {
-    int len = strlen(nombre) + 1;
-    if(send(socket, nombre, len, 0) != len) {
-        perror("Error al tratar de enviar el nombre de la interfaz");
-        return ERROR;
-    }
+
+    payload_t *payload = payload_create(sizeof(uint32_t) + strlen(nombre) + 1);
+
+    payload_add_string(payload, nombre);
+
+    paquete_t *paquete = crear_paquete(0, payload);
+
+    if(enviar_paquete(socket, paquete) != OK)
+        exit(EXIT_FAILURE);
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+    
     return OK;
 }
 

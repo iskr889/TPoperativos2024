@@ -1,6 +1,7 @@
 #include "kernel_interface_handler.h"
 
 extern t_log* extra_logger;
+t_dictionary *interfaces;
 
 void manejador_de_interfaces(int fd_servidor) {
 
@@ -108,10 +109,11 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
 
 // Dentro de cada case en vez de un printf se ejecutaria una función distinta dependiendo del tipo de handshake
 void manejar_interfaz(conexion_t handshake, int socket_interfaz) {
-
+    String nombre;
     switch (handshake) {
         case GENERIC_CON_KERNEL:
-            log_info(extra_logger, "Interfaz GENERICA conectada con el KERNEL");
+            nombre = recibir_nombre(socket_interfaz);
+            log_info(extra_logger, "Interfaz GENERICA conectada con el KERNEL [%s]", nombre);
             break;
         case STDIN_CON_KERNEL:
             log_info(extra_logger, "Interfaz STDIN conectada con el KERNEL");
@@ -126,4 +128,20 @@ void manejar_interfaz(conexion_t handshake, int socket_interfaz) {
             log_error(extra_logger, "Error al tratar de identificar el handshake!");
             exit(ERROR);
     }
+    free(nombre);
+}
+
+String recibir_nombre(int socket) {
+
+    paquete_t *paquete = recibir_paquete(socket);
+
+    if(paquete == NULL)
+        exit(EXIT_FAILURE);
+
+    String nombre = payload_read_string(paquete->payload);
+
+    payload_destroy(paquete->payload);
+    liberar_paquete(paquete);
+
+    return nombre;
 }

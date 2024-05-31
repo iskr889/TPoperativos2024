@@ -3,6 +3,11 @@
 
 #include "main.h"
 
+typedef struct {
+    String nombre;
+    int socket;
+} interfaz_t;
+
 /**
 * @fn    Maneja las conexiones de las interfaces
 * @brief En un hilo distinto atiende multiples conexiones de interfaces sin bloquear el programa
@@ -38,5 +43,7 @@ int handshake_con_interfaz(int socket_interfaz);
 * @brief Maneja la interfaz conectada según el tipo
 */
 void manejar_interfaz(conexion_t handshake, int socket_interfaz);
+
+String recibir_nombre(int socket);
 
 #endif

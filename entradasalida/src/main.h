@@ -3,12 +3,7 @@
 
 #include "../../utils/src/cliente.h"
 #include "../../utils/src/utils.h"
-
-typedef struct {
-    int tamanio_instruccion;
-    char *instruccion;
-    int u_trabajo;
-} t_instruccion_generica;
+#include "../../utils/src/serializacion.h"
 
 typedef struct {
     String tipo_interfaz;
@@ -44,7 +39,6 @@ void io_config_destroy();
 void io_gen_sleep(int unidades_trabajo);
 
 /*** FUNCIONES AUXILIARES ***/
-t_instruccion_generica *recibir_instruccion(int fd);
 int enviar_nombre(String nombre, int socket);
 
 /*** INTERFACES **/
