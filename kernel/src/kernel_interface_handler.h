@@ -3,9 +3,16 @@
 
 #include "main.h"
 
+typedef enum {
+    GENERIC,
+    STDIN,
+    STDOUT,
+    DIALFS
+} tipo_io_t;
+
 typedef struct {
-    String nombre;
     int socket;
+    tipo_io_t tipo;
 } interfaz_t;
 
 /**

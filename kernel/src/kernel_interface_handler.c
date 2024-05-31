@@ -28,8 +28,10 @@ void manejador_de_interfaces(int fd_servidor) {
 }
 
 void *thread_aceptar_interfaces(void *socket_servidor) {
+    interfaces = dictionary_create();
     aceptar_interfaces(*(int*)socket_servidor);
     free(socket_servidor);
+    dictionary_destroy_and_destroy_elements(interfaces, free);
     pthread_exit(NULL);
     return NULL;
 }
@@ -113,6 +115,11 @@ void manejar_interfaz(conexion_t handshake, int socket_interfaz) {
     switch (handshake) {
         case GENERIC_CON_KERNEL:
             nombre = recibir_nombre(socket_interfaz);
+            interfaz_t *interfaz = malloc(sizeof(interfaz_t));
+            interfaz->socket = socket_interfaz;
+            interfaz->tipo = GENERIC;
+            dictionary_put(interfaces, nombre, interfaz); // Guardo la conexión en un diccionario y uso el nombre de la interfaz como key
+            putchar('\n');
             log_info(extra_logger, "Interfaz GENERICA conectada con el KERNEL [%s]", nombre);
             break;
         case STDIN_CON_KERNEL:
