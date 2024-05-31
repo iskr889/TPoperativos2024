@@ -40,6 +40,18 @@ typedef enum {
     HANDSHAKE_ERROR
 } conexion_t ; // Tipo de conexión especifico entre modulos
 
+typedef enum {
+    IO_GEN_SLEEP,
+    IO_STDIN_READ,
+    IO_STDOUT_WRITE,
+    IO_FS_CREATE,
+    IO_FS_DELETE,
+    IO_FS_TRUNCATE,
+    IO_FS_WRITE,
+    IO_FS_READ,
+    IO_ERROR
+} instrucciones_t ; // Tipo de conexión especifico entre modulos
+
 /**
 * @fn    Inicia un logger
 * @brief Crea un logger y devuelve un puntero a t_log para ser utilizado

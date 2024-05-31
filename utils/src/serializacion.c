@@ -55,7 +55,7 @@ String payload_read_string(payload_t *payload) {
     return string;
 }
 
-paquete_t *crear_paquete(uint8_t codigo_operacion, payload_t *payload) {
+paquete_t *crear_paquete(int codigo_operacion, payload_t *payload) {
     paquete_t *paquete = malloc(sizeof(paquete_t));
     paquete->operacion = codigo_operacion;
     paquete->payload = payload;

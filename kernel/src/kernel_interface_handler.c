@@ -119,17 +119,19 @@ void manejar_interfaz(conexion_t handshake, int socket_interfaz) {
             interfaz->socket = socket_interfaz;
             interfaz->tipo = GENERIC;
             dictionary_put(interfaces, nombre, interfaz); // Guardo la conexión en un diccionario y uso el nombre de la interfaz como key
-            putchar('\n');
-            log_info(extra_logger, "Interfaz GENERICA conectada con el KERNEL [%s]", nombre);
+            log_debug(extra_logger, "Interfaz GENERICA conectada con el KERNEL [%s]", nombre);
+            printf("\n> ");
+            fflush(stdout);
+            send_io_gen_sleep(socket_interfaz, 1000); // TODO: Aca no va esto, solo para testear por ahora
             break;
         case STDIN_CON_KERNEL:
-            log_info(extra_logger, "Interfaz STDIN conectada con el KERNEL");
+            log_debug(extra_logger, "Interfaz STDIN conectada con el KERNEL");
             break;
         case STDOUT_CON_KERNEL:
-            log_info(extra_logger, "Interfaz STDOUT conectada con el KERNEL");
+            log_debug(extra_logger, "Interfaz STDOUT conectada con el KERNEL");
             break;
         case DIALFS_CON_KERNEL:
-            log_info(extra_logger, "Interfaz DIALFS conectada con el KERNEL");
+            log_debug(extra_logger, "Interfaz DIALFS conectada con el KERNEL");
             break;
         default:
             log_error(extra_logger, "Error al tratar de identificar el handshake!");
@@ -151,4 +153,19 @@ String recibir_nombre(int socket) {
     liberar_paquete(paquete);
 
     return nombre;
+}
+
+void send_io_gen_sleep(int socket, uint32_t tiempo) {
+
+    payload_t *payload = payload_create(sizeof(uint32_t));
+
+    payload_add(payload, &tiempo, sizeof(uint32_t));
+
+    paquete_t *paquete = crear_paquete(IO_GEN_SLEEP, payload);
+
+    if(enviar_paquete(socket, paquete) != OK)
+        exit(EXIT_FAILURE);
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
 }

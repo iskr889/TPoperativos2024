@@ -39,7 +39,7 @@ void payload_add_string(payload_t *payload, String string);
 String payload_read_string(payload_t *payload);
 
 // Crea un paquete con el codigo de operación a enviar
-paquete_t *crear_paquete(uint8_t codigo_operacion, payload_t *buffer);
+paquete_t *crear_paquete(int codigo_operacion, payload_t *buffer);
 
 // Libera el paquete creado
 void liberar_paquete(paquete_t *paquete);

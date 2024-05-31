@@ -51,6 +51,16 @@ int handshake_con_interfaz(int socket_interfaz);
 */
 void manejar_interfaz(conexion_t handshake, int socket_interfaz);
 
+/**
+* @fn    Espera recibir el nombre de la interfaz conectada
+* @brief Recibe el nombre de la interfaz conectada
+*/
 String recibir_nombre(int socket);
+
+/**
+* @fn    Envia IO_GEN_SLEEP
+* @brief Envia la instrucción IO_GEN_SLEEP a la interfaz generica conectada
+*/
+void send_io_gen_sleep(int socket, uint32_t tiempo);
 
 #endif

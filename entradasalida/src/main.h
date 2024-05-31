@@ -5,6 +5,8 @@
 #include "../../utils/src/utils.h"
 #include "../../utils/src/serializacion.h"
 
+#define TIEMPO_UNIDAD_DE_TRABAJO(x) usleep(1000 * x)
+
 typedef struct {
     String tipo_interfaz;
     uint32_t tiempo_u_trabajo;
@@ -15,6 +17,7 @@ typedef struct {
     String path_base_dialfs;
     uint32_t block_size;
     uint32_t block_count;
+    uint32_t retraso_compactacion;
 } t_interfaz_config;
 
 /**
@@ -39,7 +42,9 @@ void io_config_destroy();
 void io_gen_sleep(int unidades_trabajo);
 
 /*** FUNCIONES AUXILIARES ***/
-int enviar_nombre(String nombre, int socket);
+void enviar_nombre(String nombre, int socket);
+
+void generic_procesar_instrucciones(int socket);
 
 /*** INTERFACES **/
 void interfaz_generica(String nombre);

@@ -93,6 +93,13 @@ t_interfaz_config* load_io_config() {
     else
         interfaz_config->block_count = 0;
 
+    String retraso_compactacion = config_get_string_value(config, "RETRASO_COMPACTACION");
+
+    if (retraso_compactacion != NULL)
+        interfaz_config->retraso_compactacion = atoi(retraso_compactacion);
+    else
+        interfaz_config->retraso_compactacion = 0;
+
     return interfaz_config;
 }
 
@@ -113,25 +120,23 @@ void io_gen_sleep(int unidades_trabajo) {
         log_error(logger, "Unidades de trabajo invalidas!");
         exit(EXIT_FAILURE);
     }
-    log_info(logger, "Operacion: IO_GEN_SLEEP");
-    usleep(unidades_trabajo * 1000);
+    log_info(logger, "Operacion: IO_GEN_SLEEP %dms", unidades_trabajo);
+    TIEMPO_UNIDAD_DE_TRABAJO(unidades_trabajo);
 }
 
-int enviar_nombre(String nombre, int socket) {
+void enviar_nombre(String nombre, int socket) {
 
     payload_t *payload = payload_create(sizeof(uint32_t) + strlen(nombre) + 1);
 
     payload_add_string(payload, nombre);
 
-    paquete_t *paquete = crear_paquete(0, payload);
+    paquete_t *paquete = crear_paquete(0, payload); // El op code no importa en este caso
 
     if(enviar_paquete(socket, paquete) != OK)
         exit(EXIT_FAILURE);
 
     payload_destroy(payload);
     liberar_paquete(paquete);
-    
-    return OK;
 }
 
 void interfaz_generica(String nombre) {
@@ -140,25 +145,31 @@ void interfaz_generica(String nombre) {
 
     enviar_nombre(nombre, conexion_kernel);
 
-    // while (1) {
+    while(1)
+        generic_procesar_instrucciones(conexion_kernel);
 
-    //     log_info(logger, ">> Esperando instruccion...");
-
-    //     t_instruccion_generica *instruccion = recibir_instruccion(conexion_kernel);
-
-    //     if (strcmp(instruccion->instruccion, "IO_GEN_SLEEP") == 0) {
-    //         io_gen_sleep(instruccion->u_trabajo);
-    //         free(instruccion->instruccion);
-    //         free(instruccion);
-    //     } else {
-    //         log_error(logger, "La instruccion recibida no es valida!");
-    //         close(conexion_kernel);
-    //         free(instruccion->instruccion);
-    //         free(instruccion);
-    //         break;
-    //     }
-    // }
     close(conexion_kernel);
+}
+
+void generic_procesar_instrucciones(int socket) {
+    paquete_t *paquete = recibir_paquete(socket);
+
+    if(paquete == NULL)
+        exit(EXIT_FAILURE);
+
+    if(paquete->operacion != IO_GEN_SLEEP) {
+        log_error(logger, "Instruccion recibida por el kernel no reconocida!");
+        return;
+    }
+
+    uint32_t tiempo_sleep;
+
+    payload_read(paquete->payload, &tiempo_sleep, sizeof(uint32_t));
+
+    payload_destroy(paquete->payload);
+    liberar_paquete(paquete);
+
+    io_gen_sleep(tiempo_sleep);
 }
 
 void interfaz_stdin(String nombre) {
