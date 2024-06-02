@@ -3,14 +3,15 @@
 #include "kernel_interface_handler.h"
 #include "scheduler.h"
 
+t_config* config;
 t_kernel_config* kernel_config;
 t_log* info_logger;
 t_log* extra_logger;
+int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_server;
 
 int main(int argc, char* argv[]) {
 
-    t_config* config = iniciar_config("kernel.config");
-    kernel_config = load_kernel_config(config);
+    kernel_config = load_kernel_config("kernel.config");
     info_logger = iniciar_logger("kernel.log", "KERNEL", 1, LOG_LEVEL_INFO);
     extra_logger = iniciar_logger("kernel_debug.log", "KERNEL", 1, LOG_LEVEL_DEBUG);
 
@@ -19,40 +20,37 @@ int main(int argc, char* argv[]) {
     log_info(extra_logger, "Archivo de configuración cargado correctamente");
 
     // El Kernel intenta conectarse con la memoria
-    int conexion_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, KERNEL_CON_MEMORIA, extra_logger);
+    conexion_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, KERNEL_CON_MEMORIA, extra_logger);
 
     // El Kernel intenta conectarse con la CPU en el puerto Dispatch
-    int conexion_dispatch = conectarse_a_modulo("CPU (PUERTO DISPATCH)", kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch, KERNEL_CON_CPU_DISPATCH, extra_logger);
+    conexion_dispatch = conectarse_a_modulo("CPU (PUERTO DISPATCH)", kernel_config->ip_cpu, kernel_config->puerto_cpu_dispatch, KERNEL_CON_CPU_DISPATCH, extra_logger);
 
     // El Kernel intenta conectarse con la CPU en el puerto Interrupt
-    int conexion_interrupt = conectarse_a_modulo("CPU (PUERTO INTERRUPT)", kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt, KERNEL_CON_CPU_INTERRUPT, extra_logger);
+    conexion_interrupt = conectarse_a_modulo("CPU (PUERTO INTERRUPT)", kernel_config->ip_cpu, kernel_config->puerto_cpu_interrupt, KERNEL_CON_CPU_INTERRUPT, extra_logger);
 
     // El Kernel inicia un servidor que escucha por conexiones de las interfaces I/O
-    int kernel_server = escuchar_conexiones_de("INTERFACES I/O", kernel_config->puerto_escucha, extra_logger);
+    kernel_server = escuchar_conexiones_de("INTERFACES I/O", kernel_config->puerto_escucha, extra_logger);
 
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(kernel_server);
 
     consola_kernel();
 
-    // pthread_join(thread_interfaces, NULL); // Espero a que el thread creado termine
+    liberar_kernel();
 
-    // Cierro todos lo archivos y libero los punteros usados
-    close(kernel_server);
-    close(conexion_dispatch);
-    close(conexion_interrupt);
-    close(conexion_memoria);
-    log_destroy(extra_logger);
-    log_destroy(info_logger);
-    config_destroy(config);
-    kernel_config_destroy(kernel_config); // Libera todos los punteros de la estructura kernel_config
-
-    puts("Cerrando Kernel...");
+    puts("\nCerrando Kernel...");
 
     exit(OK);
 }
 
-t_kernel_config* load_kernel_config(t_config* config) {
+t_kernel_config* load_kernel_config(String path) {
+
+    config = iniciar_config(path);
+
+    if(config == NULL) {
+        fprintf(stderr, "Config invalido!\n");
+        exit(EXIT_FAILURE);
+    }
 
     t_kernel_config* kernel_config = malloc(sizeof(t_kernel_config));
     
@@ -60,7 +58,7 @@ t_kernel_config* load_kernel_config(t_config* config) {
         perror("Error en malloc()");
         exit(EXIT_FAILURE);
     }
-    
+
     kernel_config->puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
     kernel_config->ip_memoria = config_get_string_value(config,"IP_MEMORIA");
     kernel_config->puerto_memoria = config_get_string_value(config,"PUERTO_MEMORIA");
@@ -76,7 +74,10 @@ t_kernel_config* load_kernel_config(t_config* config) {
     return kernel_config;
 }
 
-void kernel_config_destroy(t_kernel_config* kernel_config) {
+void kernel_config_destroy() {
+
+    if(kernel_config == NULL)
+        return;
 
     for (int i = 0; kernel_config->recursos[i] != NULL; i++)
         free(kernel_config->recursos[i]);
@@ -89,6 +90,15 @@ void kernel_config_destroy(t_kernel_config* kernel_config) {
     free(kernel_config->instancias_recursos);
 
     free(kernel_config);
+}
 
-    return;
+void liberar_kernel() {
+    close(kernel_server);
+    close(conexion_dispatch);
+    close(conexion_interrupt);
+    close(conexion_memoria);
+    log_destroy(extra_logger);
+    log_destroy(info_logger);
+    config_destroy(config);
+    kernel_config_destroy();
 }

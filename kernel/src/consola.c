@@ -6,10 +6,24 @@
 extern t_kernel_config* kernel_config;
 extern t_log* info_logger;
 extern t_log* extra_logger;
+extern int conexion_memoria, conexion_dispatch, conexion_interrupt;
 
-extern scheduler_t *scheduler;
+extern scheduler_t *scheduler;   // Estructura de planificacion general
+extern t_dictionary *interfaces; // Guarda las interfaces conectadas al kernel
 
 uint16_t numero_de_procesos = 0;
+
+///////////// FUNCIONES PARA DEBUGEAR /////////////
+static void print_io_name(void *key) {
+    printf("[Interfaz: %s]\n", (String)key);
+}
+
+static void print_io(String arg) {
+    t_list *lista_io = dictionary_keys(interfaces);
+    list_iterate(lista_io, print_io_name);
+    list_destroy(lista_io);
+}
+///////////// FUNCIONES PARA DEBUGEAR /////////////
 
 void mensaje_de_bienvenida() {
     printf("---------------------------------------------------------------------------\n");
@@ -23,6 +37,7 @@ void mensaje_de_bienvenida() {
     printf("|    INICIAR_PLANIFICACION     - Reanuda la planificación de procesos     |\n");
     printf("|    MULTIPROGRAMACION         - Modifica el grado de multiprogramación   |\n");
     printf("|    PROCESO_ESTADO            - Lista los procesos por estado            |\n");
+    printf("|[D] PRINT_IO                  - Lista las interfaces conectadas [DEBUG]  |\n");
     printf("---------------------------------------------------------------------------\n");
     printf("| Escribe 'exit' para salir de la consola.                                |\n");
     printf("| Escribe 'help' para imprimir este mensaje nuevamente.                   |\n");
@@ -44,8 +59,6 @@ void iniciar_proceso(const String path) {
         puts("Proceso invalido!");
         return;
     }
-
-    printf("Iniciando proceso: %s\n", path);
 
     pcb_t *pcb = crear_proceso(++numero_de_procesos, kernel_config->quantum);
 
@@ -179,6 +192,8 @@ void manejar_comando(const String comando) {
         multiprogramacion(arg);
     } else if (strcmp(cmd, "PROCESO_ESTADO") == 0) {
         proceso_estado(arg);
+    } else if (strcmp(cmd, "PRINT_IO") == 0) { // Solo para debugear
+        print_io(arg);
     } else {
         printf(">>Comando no reconocido!\n");
     }

@@ -42,7 +42,7 @@ void io_config_destroy();
 void io_gen_sleep(int unidades_trabajo);
 
 /*** FUNCIONES AUXILIARES ***/
-void enviar_nombre(String nombre, int socket);
+void enviar_nombre_interfaz(String nombre, int socket);
 
 void generic_procesar_instrucciones(int socket);
 

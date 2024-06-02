@@ -22,20 +22,20 @@ typedef struct {
 
 /**
 * @fn    Carga la configuración en la estructura kernel_config
-* @brief Con el archivo config abierto solicita memoria y lo carga en la estructura kernel_config
+* @brief Abre un archivo config en path y lo carga en la estructura kernel_config
 */
-t_kernel_config* load_kernel_config(t_config* config);
+t_kernel_config* load_kernel_config(String path);
 
 /**
 * @fn    Libera la memoria de la estructura kernel_config
 * @brief Hace un free de la memoria solicitada incluido las variables de recursos e instancias_recursos
 */
-void kernel_config_destroy(t_kernel_config* kernel_config);
+void kernel_config_destroy();
 
 /**
-* @fn    Crea un proceso y lo pone en New
-* @brief Crea un proceso y lo pone en New
+* @fn    Libera todo el kernel
+* @brief Libera la memoria y todos los archivos usados por el kernel
 */
-void iniciar_proceso(const String path);
+void liberar_kernel();
 
 #endif

@@ -124,7 +124,7 @@ void io_gen_sleep(int unidades_trabajo) {
     TIEMPO_UNIDAD_DE_TRABAJO(unidades_trabajo);
 }
 
-void enviar_nombre(String nombre, int socket) {
+void enviar_nombre_interfaz(String nombre, int socket) {
 
     payload_t *payload = payload_create(sizeof(uint32_t) + strlen(nombre) + 1);
 
@@ -143,7 +143,7 @@ void interfaz_generica(String nombre) {
 
     int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, GENERIC_CON_KERNEL, logger);
 
-    enviar_nombre(nombre, conexion_kernel);
+    enviar_nombre_interfaz(nombre, conexion_kernel);
 
     while(1)
         generic_procesar_instrucciones(conexion_kernel);

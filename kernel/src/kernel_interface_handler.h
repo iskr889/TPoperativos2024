@@ -49,13 +49,13 @@ int handshake_con_interfaz(int socket_interfaz);
 * @fn    Maneja la interfaz conectada
 * @brief Maneja la interfaz conectada según el tipo
 */
-void manejar_interfaz(conexion_t handshake, int socket_interfaz);
+int manejar_interfaz(conexion_t handshake, int socket_interfaz);
 
 /**
 * @fn    Espera recibir el nombre de la interfaz conectada
 * @brief Recibe el nombre de la interfaz conectada
 */
-String recibir_nombre(int socket);
+String recibir_nombre_interfaz(int socket);
 
 /**
 * @fn    Envia IO_GEN_SLEEP
