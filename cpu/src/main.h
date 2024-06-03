@@ -6,10 +6,16 @@
 #include "../../utils/src/cliente.h"
 
 /**
-* @fn    Carga la configuración en la estructura cpu_config
-* @brief Carga los valores correspondiente en la estructura cpu_config
+* @fn    Libera todo la cpu
+* @brief Cierra los fd y libera las estructuras config y loggers
 */
-void load_cpu_config(t_config* config);
+void liberar_cpu();
+
+/**
+* @fn    Carga la configuración en la estructura cpu_config
+* @brief Abre un archivo config en path y lo carga en la estructura cpu_config
+*/
+void load_cpu_config(String path);
 
 typedef struct {
     String ip_memoria;

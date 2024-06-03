@@ -93,11 +93,12 @@ int handshake_con_interfaz(int socket_interfaz) {
 }
 
 void* thread_handshake_con_interfaz(void* fd_interfaz) {
-    if(handshake_con_interfaz(*(int*)fd_interfaz) < 0) {
-        perror("Error en el handshake con la Interfaz!");
-        close(*(int*)fd_interfaz);
-    }
+    int conexion = *(int*)fd_interfaz;
     free(fd_interfaz);
+    if(handshake_con_interfaz(conexion) < 0) {
+        perror("Error en el handshake con la Interfaz!");
+        close(conexion);
+    }
     pthread_exit(NULL);
 }
 
