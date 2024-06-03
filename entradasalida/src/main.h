@@ -5,8 +5,6 @@
 #include "../../utils/src/utils.h"
 #include "../../utils/src/serializacion.h"
 
-#define TIEMPO_UNIDAD_DE_TRABAJO(x) usleep(1000 * x)
-
 typedef struct {
     String tipo_interfaz;
     uint32_t tiempo_u_trabajo;

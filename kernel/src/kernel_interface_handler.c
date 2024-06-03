@@ -71,15 +71,13 @@ int aceptar_interfaces(int socket_servidor) {
     return OK;
 }
 
-// Este handshake se ejecuta en un hilo que es creado despues del accept() y es unico por cada modulo conectado
 int handshake_con_interfaz(int socket_interfaz) {
-    conexion_t tipo_handshake = HANDSHAKE_ERROR; // Esto es un enum que identifica el tipo de conexión
+    conexion_t tipo_handshake = HANDSHAKE_ERROR;
     int32_t rta_handshake = 0;
 
     if(recv(socket_interfaz, &tipo_handshake, sizeof(tipo_handshake), MSG_WAITALL) < 0)
         return ERROR;
 
-    // tipo_handshake deberia leer un enum distinto dependiendo del modulo interfaz que se conecto asi podemos identificarlo
     if(tipo_handshake < 0 || tipo_handshake >= HANDSHAKE_ERROR)
         rta_handshake = -1;
 
@@ -88,7 +86,6 @@ int handshake_con_interfaz(int socket_interfaz) {
     if(bytes_send < 0 || rta_handshake != 0)
         return ERROR;
 
-    // No salgo del hilo para no perder el socket_interfaz y manejo los comandos según el modulo conectado
     if(manejar_interfaz(tipo_handshake, socket_interfaz) < 0)
         return ERROR;
 
@@ -104,7 +101,6 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
     pthread_exit(NULL);
 }
 
-// Dentro de cada case en vez de un printf se ejecutaria una función distinta dependiendo del tipo de handshake
 int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     String nombre = recibir_nombre_interfaz(socket_interfaz);
@@ -130,6 +126,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
             break;
         default:
             fprintf(stderr, "Error al tratar de identificar el handshake de la IO conectada!\n> ");
+            free(nombre);
             return ERROR;
     }
 

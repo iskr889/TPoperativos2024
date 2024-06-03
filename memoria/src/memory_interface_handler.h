@@ -37,6 +37,6 @@ int handshake_con_interfaz(int socket_interfaz);
 * @fn    Maneja la interfaz conectada
 * @brief Maneja la interfaz conectada según el tipo
 */
-void manejar_interfaz(conexion_t handshake, int socket_interfaz);
+int manejar_interfaz(conexion_t handshake, int socket_interfaz);
 
 #endif

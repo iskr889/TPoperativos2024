@@ -21,6 +21,7 @@
 
 #define ERROR -1
 #define OK     0
+#define TIEMPO_UNIDAD_DE_TRABAJO(x) usleep(1000 * x)
 
 typedef char* String;
 
@@ -38,7 +39,7 @@ typedef enum {
      STDOUT_CON_KERNEL,
      DIALFS_CON_KERNEL,
     HANDSHAKE_ERROR
-} conexion_t ; // Tipo de conexión especifico entre modulos
+} conexion_t; // Tipo de conexión especifico entre modulos
 
 typedef enum {
     IO_GEN_SLEEP,
@@ -50,7 +51,7 @@ typedef enum {
     IO_FS_WRITE,
     IO_FS_READ,
     IO_ERROR
-} instrucciones_t ; // Tipo de conexión especifico entre modulos
+} instrucciones_t; // Tipo de conexión especifico entre modulos
 
 /**
 * @fn    Inicia un logger
