@@ -1,27 +1,28 @@
 #include "main.h"
 
-t_log *logger = NULL;
-t_config *config = NULL;
-t_interfaz_config* interfaz_config = NULL;
+t_config *config;
+t_interfaz_config* interfaz_config;
+t_log *logger;
+t_log *extra_logger;
 
 int main(int argc, char *argv[]) {
 
     if (argc != 3) {
-        log_error(logger, "Cantidad de argumentos del programa incorrectos!");
+        log_error(extra_logger, "Cantidad de argumentos del programa incorrectos!");
         return ERROR;
     }
 
-    config = iniciar_config(argv[2]);
-
-    interfaz_config = load_io_config();
+    interfaz_config = load_io_config(argv[2]);
 
     logger = iniciar_logger("entradasalida.log", argv[1], 1, LOG_LEVEL_INFO);
+
+    extra_logger = iniciar_logger("entradasalida_debug.log", argv[1], 1, LOG_LEVEL_DEBUG);
 
     String interfaz = interfaz_config->tipo_interfaz;
 
     if (interfaz == NULL) {
-        log_error(logger, "Error al leer la interfaz del archivo config!");
-        liberar_todo();
+        log_error(extra_logger, "Error al leer la interfaz del archivo config!");
+        liberar_interfaz();
         return ERROR;
     } else if (strcmp(interfaz, "GENERIC") == 0) {
         interfaz_generica(argv[1]);
@@ -32,33 +33,38 @@ int main(int argc, char *argv[]) {
     } else if (strcmp(interfaz, "DialFS") == 0) {
         interfaz_dialFS(argv[1]);
     } else {
-        log_error(logger, "Nombre de interfaz invalido!");
-        liberar_todo();
+        log_error(extra_logger, "Nombre de interfaz invalido!");
+        liberar_interfaz();
         return ERROR;
     }
 
-    liberar_todo();
+    liberar_interfaz();
+
+    puts("\nCerrando Interfaz...");
 
     return OK;
 }
 
-void liberar_todo() {
+void liberar_interfaz() {
     log_destroy(logger);
+    log_destroy(extra_logger);
     config_destroy(config);
     io_config_destroy();
 }
 
-t_interfaz_config* load_io_config() {
+t_interfaz_config* load_io_config(String path) {
+
+    config = iniciar_config(path);
+
+    if(config == NULL) {
+        fprintf(stderr, "Config invalido!\n");
+        exit(EXIT_FAILURE);
+    }
 
     interfaz_config = malloc(sizeof(t_interfaz_config));
 
     if(interfaz_config == NULL) {
         perror("Fallo malloc");
-        exit(EXIT_FAILURE);
-    }
-
-    if(config == NULL) {
-        fprintf(stderr, "Config invalido!\n");
         exit(EXIT_FAILURE);
     }
 
@@ -117,7 +123,7 @@ void io_config_destroy() {
 
 void io_gen_sleep(int unidades_trabajo) {
     if (unidades_trabajo <= 0) {
-        log_error(logger, "Unidades de trabajo invalidas!");
+        log_error(extra_logger, "Unidades de trabajo invalidas!");
         exit(EXIT_FAILURE);
     }
     log_info(logger, "Operacion: IO_GEN_SLEEP %dms", unidades_trabajo);
@@ -141,7 +147,7 @@ void enviar_nombre_interfaz(String nombre, int socket) {
 
 void interfaz_generica(String nombre) {
 
-    int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, GENERIC_CON_KERNEL, logger);
+    int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, GENERIC_CON_KERNEL, extra_logger);
 
     enviar_nombre_interfaz(nombre, conexion_kernel);
 
@@ -158,7 +164,7 @@ void generic_procesar_instrucciones(int socket) {
         exit(EXIT_FAILURE);
 
     if(paquete->operacion != IO_GEN_SLEEP) {
-        log_error(logger, "Instruccion recibida por el kernel no reconocida!");
+        log_error(extra_logger, "Instruccion recibida por el kernel no reconocida!");
         return;
     }
 

@@ -34,7 +34,7 @@ void kernel_config_destroy();
 
 /**
 * @fn    Libera todo el kernel
-* @brief Libera la memoria y todos los archivos usados por el kernel
+* @brief Cierra los fd y libera las estructuras kernel_config, config y loggers
 */
 void liberar_kernel();
 

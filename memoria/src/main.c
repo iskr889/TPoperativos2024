@@ -1,48 +1,68 @@
 #include "main.h"
 #include "memory_interface_handler.h"
 
+t_config* config;
+t_memoria_config* memoria_config;
+t_log* logger;
+t_log* extra_logger;
+
+int conexion_cpu, conexion_kernel, memoria_server;
+
 int main(int argc, char* argv[]) {
 
-    t_log* logger = iniciar_logger("memoria.log", "MEMORIA", 1, LOG_LEVEL_INFO);
-    t_config* config = iniciar_config("memoria.config");
-    t_memoria_config* memoria_config = load_memoria_config(config);
+    memoria_config = load_memoria_config("memoria.config");
 
-    log_info(logger, "Archivo de configuración cargado correctamente");
+    logger = iniciar_logger("memoria.log", "MEMORIA", 1, LOG_LEVEL_INFO);
+
+    extra_logger = iniciar_logger("memoria_debug.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
 
     // Iniciamos servidor escuchando por conexiones de CPU, KERNEL e INTERFACES
-    int memoria_server = escuchar_conexiones_de("CPU, KERNEL e INTERFACES", memoria_config->puerto_escucha, logger);
+    memoria_server = escuchar_conexiones_de("CPU, KERNEL e INTERFACES", memoria_config->puerto_escucha, extra_logger);
 
     // La MEMORIA espera que la CPU se conecte
-    int conexion_cpu = esperar_conexion_de(CPU_CON_MEMORIA, memoria_server);
+    conexion_cpu = esperar_conexion_de(CPU_CON_MEMORIA, memoria_server);
 
     if(conexion_cpu < 0)
-        log_error(logger, "MODULO CPU NO PUDO CONECTARSE CON LA MEMORIA!");
+        log_error(extra_logger, "MODULO CPU NO PUDO CONECTARSE CON LA MEMORIA!");
     else
-        log_info(logger, "MODULO CPU CONECTO CON LA MEMORIA EXITOSAMENTE!");
+        log_debug(extra_logger, "MODULO CPU CONECTO CON LA MEMORIA EXITOSAMENTE!");
 
     // La MEMORIA espera que el KERNEL se conecte
-    int conexion_kernel = esperar_conexion_de(KERNEL_CON_MEMORIA, memoria_server);
+    conexion_kernel = esperar_conexion_de(KERNEL_CON_MEMORIA, memoria_server);
 
     if(conexion_kernel < 0)
-        log_error(logger, "MODULO KERNEL NO PUDO CONECTARSE CON LA MEMORIA!");
+        log_error(extra_logger, "MODULO KERNEL NO PUDO CONECTARSE CON LA MEMORIA!");
     else
-        log_info(logger, "MODULO KERNEL CONECTO CON LA MEMORIA EXITOSAMENTE!");
+        log_debug(extra_logger, "MODULO KERNEL CONECTO CON LA MEMORIA EXITOSAMENTE!");
 
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(memoria_server);
 
     sleep(30);
 
-    // Cierro todos lo archivos y libero los punteros usados
-    close(memoria_server);
-    log_destroy(logger);
-    config_destroy(config);
-    free(memoria_config);
+    liberar_memoria();
+
+    puts("\nCerrando Memoria...");
     
     return OK;
 }
 
-t_memoria_config* load_memoria_config(t_config* config) {
+void liberar_memoria() {
+    close(memoria_server);
+    log_destroy(logger);
+    log_destroy(extra_logger);
+    config_destroy(config);
+    free(memoria_config);
+}
+
+t_memoria_config* load_memoria_config(String path) {
+
+    config = iniciar_config(path);
+
+    if(config == NULL) {
+        fprintf(stderr, "Config invalido!\n");
+        exit(EXIT_FAILURE);
+    }
     
     t_memoria_config* memoria_config = malloc(sizeof(t_memoria_config));
     

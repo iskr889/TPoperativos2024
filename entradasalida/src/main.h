@@ -19,16 +19,16 @@ typedef struct {
 } t_interfaz_config;
 
 /**
-* @fn    Libera todas las estructuras
-* @brief Libera las estructuras interfaz_config, config y logger
+* @fn    Libera toda la interfaz
+* @brief Cierra los fd y libera las estructuras interfaz_config, config y loggers
 */
-void liberar_todo();
+void liberar_interfaz();
 
 /**
 * @fn    Carga la configuración en la estructura interfaz_config
 * @brief Segun el tipo de interfaz carga a la estructura los datos correspondientes
 */
-t_interfaz_config* load_io_config();
+t_interfaz_config* load_io_config(String path);
 
 /**
 * @fn    Libera la estructura interfaz_config

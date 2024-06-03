@@ -54,14 +54,14 @@ int conectarse_a_modulo(String nombre_servidor, String ip, String puerto, conexi
         exit(EXIT_FAILURE);
     }
 
-    log_info(logger, "CONECTADO A %s", nombre_servidor);
+    log_debug(logger, "CONECTADO A %s", nombre_servidor);
 
     if(handshake_con_servidor(fd_modulo, handshake)) {
         log_error(logger, "HANDSHAKE CON %s INVALIDO!", nombre_servidor);
         exit(EXIT_FAILURE);
     }
 
-    log_info(logger, "HANDSHAKE CON %s EXITOSO!", nombre_servidor);
+    log_debug(logger, "HANDSHAKE CON %s EXITOSO!", nombre_servidor);
 
     return fd_modulo;
 }

@@ -9,7 +9,7 @@ int escuchar_conexiones_de(String nombre_modulos, String puerto, t_log* logger) 
         exit(EXIT_FAILURE);
     }
     
-    log_info(logger, "SERVIDOR INICIADO... ESPERANDO LA CONEXION DE %s", nombre_modulos);
+    log_debug(logger, "SERVIDOR INICIADO... ESPERANDO LA CONEXION DE %s", nombre_modulos);
 
     return fd_servidor;
 }

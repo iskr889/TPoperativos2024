@@ -4,7 +4,7 @@
 #include <errno.h>
 
 extern t_kernel_config* kernel_config;
-extern t_log* info_logger;
+extern t_log* logger;
 extern t_log* extra_logger;
 extern int conexion_memoria, conexion_dispatch, conexion_interrupt;
 
@@ -120,7 +120,7 @@ void multiprogramacion(const String valor) {
 
     kernel_config->grado_multiprogramacion = multiprogramacion;
 
-    log_info(info_logger, "Cambiando multiprogramacion a %d\n", kernel_config->grado_multiprogramacion);
+    log_debug(extra_logger, "Cambiando multiprogramacion a %d\n", kernel_config->grado_multiprogramacion);
 
 }
 
@@ -213,6 +213,7 @@ void* thread_consola(void* arg) {
 
         if (strcmp(command, "exit") == 0) {
             destroy_scheduler(scheduler);
+            dictionary_destroy_and_destroy_elements(interfaces, free);
             break;
         }
 

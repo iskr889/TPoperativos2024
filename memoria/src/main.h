@@ -13,9 +13,15 @@ typedef struct {
 } t_memoria_config;
 
 /**
-* @fn    Carga la configuración en la estructura memoria_config
-* @brief Con el archivo config abierto solicita memoria y lo carga en la estructura memoria_config
+* @fn    Libera toda la memoria
+* @brief Cierra los fd y libera las estructuras memoria_config, config y loggers
 */
-t_memoria_config* load_memoria_config(t_config* config);
+void liberar_memoria();
+
+/**
+* @fn    Carga la configuración en la estructura memoria_config
+* @brief Abre un archivo config en path y lo carga en la estructura memoria_config
+*/
+t_memoria_config* load_memoria_config(String path);
 
 #endif
