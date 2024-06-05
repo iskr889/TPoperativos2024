@@ -3,6 +3,7 @@
 
 void* user_memory; // Espacio contiguo de memoria
 t_bitarray* frame_bitarray;  // Bitarray para seguir el estado de los marcos
+uint32_t paginas_totales; // Cantidad total de paginas en la memoria = TAM_MEMORIA / TAM_PAGINA
 
 t_config* config;
 t_memoria_config* memoria_config;
@@ -75,33 +76,48 @@ t_memoria_config* load_memoria_config(String path) {
     }
 
     memoria_config->puerto_escucha = config_get_string_value(config, "PUERTO_ESCUCHA");
-    memoria_config->tam_memoria = config_get_string_value(config,"TAM_MEMORIA");
-    memoria_config->tam_pagina = config_get_string_value(config,"TAM_PAGINA");
+    memoria_config->tam_memoria = config_get_int_value(config,"TAM_MEMORIA");
+    memoria_config->tam_pagina = config_get_int_value(config,"TAM_PAGINA");
     memoria_config->path_intrucciones = config_get_string_value(config,"PATH_INSTRUCCIONES");
-    memoria_config->retardo_respuesta = config_get_string_value(config,"RETARDO_RESPUESTA");
+    memoria_config->retardo_respuesta = config_get_int_value(config,"RETARDO_RESPUESTA");
+
+    if(memoria_config->tam_memoria <= 0 || memoria_config->tam_pagina <= 0 || memoria_config->retardo_respuesta <= 0) {
+        fprintf(stderr, "Tamaño de memoria, pagina o retardo de respuesta invalido!\n");
+        exit(EXIT_FAILURE);
+    }
 
     return memoria_config;
 }
 
 void inicializar_memoria() {
 
-    user_memory = malloc(MEMORY_SIZE);
+    user_memory = malloc(memoria_config->tam_memoria);
 
     if(user_memory == NULL) {
         perror("Error en malloc()");
         exit(EXIT_FAILURE);
     }
 
-    size_t bitmap_size = (MEMORY_SIZE / PAGE_SIZE) / CHAR_BIT;
+    paginas_totales = memoria_config->tam_memoria / memoria_config->tam_pagina;
 
-    char* bitarray_data = calloc(bitmap_size, sizeof(char));
+    if(paginas_totales <= 0)  {
+        fprintf(stderr, "La cantidad de paginas totales tiene que ser mayor a cero! Por lo que: Tamaño memoria >= Tamaño pagina");
+        exit(EXIT_FAILURE);
+    }
+
+    size_t bitarray_size = paginas_totales / CHAR_BIT; // Necesario porque las funciones usan Bytes no Bits!
+
+    if(bitarray_size == 0)
+        bitarray_size = 1; // Al menos necesito un bitarray de 1 byte
+
+    char* bitarray_data = calloc(bitarray_size, sizeof(char)); // Inicializa la memoria en 0
 
     if(bitarray_data == NULL) {
         perror("Error en calloc()");
         exit(EXIT_FAILURE);
     }
 
-    frame_bitarray = bitarray_create_with_mode(bitarray_data, bitmap_size, LSB_FIRST);
+    frame_bitarray = bitarray_create_with_mode(bitarray_data, bitarray_size, LSB_FIRST);
 }
 
 // Crear un proceso en memoria
@@ -171,7 +187,7 @@ int acceder_marco(Proceso_t* proceso, int numero_de_pagina) {
 // Lectura desde el espacio de usuario
 int leer_memoria(int direccion_fisica, void* buffer, size_t size) {
 
-    if (direccion_fisica + size > MEMORY_SIZE) {
+    if (direccion_fisica + size > memoria_config->tam_memoria) {
         fprintf(stderr, "Lectura fuera de limites!\n");
         return ERROR;
     }
@@ -183,7 +199,7 @@ int leer_memoria(int direccion_fisica, void* buffer, size_t size) {
 // Escritura en el espacio de usuario
 int escribir_memoria(int direccion_fisica, void* data, size_t size) {
 
-    if (direccion_fisica + size > MEMORY_SIZE) {
+    if (direccion_fisica + size > memoria_config->tam_memoria) {
         fprintf(stderr, "Escritura fuera de limites\n");
         return ERROR;
     }

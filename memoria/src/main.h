@@ -5,10 +5,6 @@
 #include "../../utils/src/utils.h"
 #include <commons/bitarray.h>
 
-#define PAGE_SIZE 128 // Tamaño de pagina
-#define CANT_PAGINAS 128 // Cantidad de paginas
-#define MEMORY_SIZE (PAGE_SIZE * CANT_PAGINAS)  // Tamaño total de memoria
-
 typedef struct {
     int marco;
     bool asignada;
@@ -22,10 +18,10 @@ typedef struct {
 
 typedef struct {
     String puerto_escucha;
-    String tam_memoria;
-    String tam_pagina;
+    uint32_t tam_memoria;
+    uint32_t tam_pagina;
     String path_intrucciones;
-    String retardo_respuesta;
+    uint32_t retardo_respuesta;
 } t_memoria_config;
 
 /**
