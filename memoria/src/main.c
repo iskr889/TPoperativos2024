@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     // La MEMORIA espera que la CPU se conecte
     conexion_cpu = esperar_conexion_de(CPU_CON_MEMORIA, memoria_server);
 
-    if(conexion_cpu < 0)
+    if (conexion_cpu < 0)
         log_error(extra_logger, "MODULO CPU NO PUDO CONECTARSE CON LA MEMORIA!");
     else
         log_debug(extra_logger, "MODULO CPU CONECTO CON LA MEMORIA EXITOSAMENTE!");
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     // La MEMORIA espera que el KERNEL se conecte
     conexion_kernel = esperar_conexion_de(KERNEL_CON_MEMORIA, memoria_server);
 
-    if(conexion_kernel < 0)
+    if (conexion_kernel < 0)
         log_error(extra_logger, "MODULO KERNEL NO PUDO CONECTARSE CON LA MEMORIA!");
     else
         log_debug(extra_logger, "MODULO KERNEL CONECTO CON LA MEMORIA EXITOSAMENTE!");
@@ -63,14 +63,14 @@ t_memoria_config* load_memoria_config(String path) {
 
     config = iniciar_config(path);
 
-    if(config == NULL) {
+    if (config == NULL) {
         fprintf(stderr, "Config invalido!\n");
         exit(EXIT_FAILURE);
     }
     
     t_memoria_config* memoria_config = malloc(sizeof(t_memoria_config));
     
-    if(memoria_config == NULL) {
+    if (memoria_config == NULL) {
         perror("Error en malloc()");
         exit(EXIT_FAILURE);
     }
@@ -81,7 +81,7 @@ t_memoria_config* load_memoria_config(String path) {
     memoria_config->path_intrucciones = config_get_string_value(config,"PATH_INSTRUCCIONES");
     memoria_config->retardo_respuesta = config_get_int_value(config,"RETARDO_RESPUESTA");
 
-    if(memoria_config->tam_memoria <= 0 || memoria_config->tam_pagina <= 0 || memoria_config->retardo_respuesta <= 0) {
+    if (memoria_config->tam_memoria <= 0 || memoria_config->tam_pagina <= 0 || memoria_config->retardo_respuesta <= 0) {
         fprintf(stderr, "Tamaño de memoria, pagina o retardo de respuesta invalido!\n");
         exit(EXIT_FAILURE);
     }
@@ -93,26 +93,26 @@ void inicializar_memoria() {
 
     user_memory = malloc(memoria_config->tam_memoria);
 
-    if(user_memory == NULL) {
+    if (user_memory == NULL) {
         perror("Error en malloc()");
         exit(EXIT_FAILURE);
     }
 
     paginas_totales = memoria_config->tam_memoria / memoria_config->tam_pagina;
 
-    if(paginas_totales <= 0)  {
+    if (paginas_totales <= 0)  {
         fprintf(stderr, "La cantidad de paginas totales tiene que ser mayor a cero! Por lo que: Tamaño memoria >= Tamaño pagina");
         exit(EXIT_FAILURE);
     }
 
     size_t bitarray_size = paginas_totales / CHAR_BIT; // Necesario porque las funciones usan Bytes no Bits!
 
-    if(bitarray_size == 0)
+    if (bitarray_size == 0)
         bitarray_size = 1; // Al menos necesito un bitarray de 1 byte
 
     char* bitarray_data = calloc(bitarray_size, sizeof(char)); // Inicializa la memoria en 0
 
-    if(bitarray_data == NULL) {
+    if (bitarray_data == NULL) {
         perror("Error en calloc()");
         exit(EXIT_FAILURE);
     }
@@ -128,7 +128,7 @@ Proceso_t* crear_proceso(int pid, int cant_paginas) {
     proceso->cant_paginas = cant_paginas;
     proceso->pagina = malloc(cant_paginas * sizeof(Page_table_t));
 
-    if(proceso->pagina == NULL) {
+    if (proceso->pagina == NULL) {
         perror("Error en malloc()");
         exit(EXIT_FAILURE);
     }
@@ -243,4 +243,48 @@ int resize_proceso(Proceso_t* proceso, int new_cant_paginas) {
     }
 
     return OK;
+}
+
+char** instrucciones; // Lista de instrucciones leídas del archivo
+int num_instrucciones; // Cantidad de instrucciones del archivo
+
+// Prototipo de función para enviar instrucciones a la CPU
+void enviar_instruccion(String instruccion) {
+    printf("Enviando instrucción a la CPU: %s\n", instruccion);
+}
+
+// Prototipo de función para recibir una solicitud de la CPU
+void recibir_linea_cpu(int numero_de_linea) {
+    printf("CPU pidio linea N%d\n", numero_de_linea);
+    if (numero_de_linea < 0 || numero_de_linea >= num_instrucciones)
+        printf("Número de línea fuera de rango\n");
+    enviar_instruccion(instrucciones[numero_de_linea]);
+}
+
+// Leer y almacenar instrucciones desde un archivo
+void leer_instrucciones(String filename) {
+
+    FILE* pseudocodigo = fopen(filename, "r");
+
+    if (pseudocodigo == NULL) {
+        perror("Error al abrir el archivo de pseudocodigo!");
+        exit(EXIT_FAILURE);
+    }
+
+    char linea[BUFF_SIZE];
+
+    for (num_instrucciones = 0; fgets(linea, sizeof(linea), pseudocodigo); num_instrucciones++); // Recorre el archivo y cuenta la cantidad de lineas
+
+    rewind(pseudocodigo); // Vuelve al inicio del archivo para empezar a leer linea por linea
+
+    instrucciones = malloc(num_instrucciones * sizeof(String));
+
+    for (uint32_t i = 0; fgets(linea, sizeof(linea), pseudocodigo); i++) {
+        linea[strcspn(linea, "\n")] = '\0';  // Elimina el salto de línea
+        instrucciones[i] = strdup(linea);
+    }
+
+    fclose(pseudocodigo);
+
+    return;
 }

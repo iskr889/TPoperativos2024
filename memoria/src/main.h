@@ -5,6 +5,8 @@
 #include "../../utils/src/utils.h"
 #include <commons/bitarray.h>
 
+#define BUFF_SIZE 256 // Tamaño del buffer que lee una linea de pseudocodigo a la vez
+
 typedef struct {
     int marco;
     bool asignada;
