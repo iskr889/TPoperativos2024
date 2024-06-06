@@ -42,7 +42,24 @@ int main(int argc, char* argv[]) {
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(memoria_server);
 
-    sleep(30);
+    /////////////////////// Debajo test para leer e imprimir pseudocodigo ///////////////////////
+
+    t_list *lista = leer_pseudocodigo(argv[1]);
+
+    imprimir_instrucciones(lista); // Imprime todas las instrucciones del archivo
+
+    while(1) {
+        int num_linea;
+        printf("\nIndicar que linea enviar: ");
+        scanf("%d", &num_linea);
+        if(num_linea < 0)
+            break;
+        imprimir_instruccion_numero(lista, num_linea);
+    }
+
+    list_destroy_and_destroy_elements(lista, free);
+
+    /////////////////////// Arriba test para leer e imprimir pseudocodigo ///////////////////////
 
     liberar_memoria();
 
@@ -110,7 +127,7 @@ void inicializar_memoria() {
     if (bitarray_size == 0)
         bitarray_size = 1; // Al menos necesito un bitarray de 1 byte
 
-    char* bitarray_data = calloc(bitarray_size, sizeof(char)); // Inicializa la memoria en 0
+    char *bitarray_data = calloc(bitarray_size, sizeof(char)); // Inicializa la memoria en 0
 
     if (bitarray_data == NULL) {
         perror("Error en calloc()");
