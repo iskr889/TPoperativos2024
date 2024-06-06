@@ -54,4 +54,14 @@ int escribir_memoria(int physical_address, void* data, size_t size);
 
 int resize_proceso(Proceso_t* proceso, int new_cant_paginas);
 
+t_list *leer_pseudocodigo(String filename);
+
+// Debajo de esta linea hay funciones de prueba
+
+void imprimir_instrucciones(t_list* instrucciones);
+
+void imprimir_instruccion(String instruccion);
+
+void imprimir_instruccion_numero(t_list* instrucciones, uint32_t numero_de_linea);
+
 #endif

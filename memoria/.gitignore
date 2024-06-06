@@ -1,6 +1,7 @@
 # Generated files
 bin/
 obj/
+pseudocodigo/
 *.log
 
 # Eclipse files

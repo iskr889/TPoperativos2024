@@ -245,24 +245,7 @@ int resize_proceso(Proceso_t* proceso, int new_cant_paginas) {
     return OK;
 }
 
-char** instrucciones; // Lista de instrucciones leídas del archivo
-int num_instrucciones; // Cantidad de instrucciones del archivo
-
-// Prototipo de función para enviar instrucciones a la CPU
-void enviar_instruccion(String instruccion) {
-    printf("Enviando instrucción a la CPU: %s\n", instruccion);
-}
-
-// Prototipo de función para recibir una solicitud de la CPU
-void recibir_linea_cpu(int numero_de_linea) {
-    printf("CPU pidio linea N%d\n", numero_de_linea);
-    if (numero_de_linea < 0 || numero_de_linea >= num_instrucciones)
-        printf("Número de línea fuera de rango\n");
-    enviar_instruccion(instrucciones[numero_de_linea]);
-}
-
-// Leer y almacenar instrucciones desde un archivo
-void leer_instrucciones(String filename) {
+t_list *leer_pseudocodigo(String filename) {
 
     FILE* pseudocodigo = fopen(filename, "r");
 
@@ -272,19 +255,42 @@ void leer_instrucciones(String filename) {
     }
 
     char linea[BUFF_SIZE];
+    t_list* instrucciones = list_create();
 
-    for (num_instrucciones = 0; fgets(linea, sizeof(linea), pseudocodigo); num_instrucciones++); // Recorre el archivo y cuenta la cantidad de lineas
+    while (fgets(linea, sizeof(linea), pseudocodigo)) {
 
-    rewind(pseudocodigo); // Vuelve al inicio del archivo para empezar a leer linea por linea
+        if (linea[0] == '\n') // Ignora las lineas del archivo con solo salto de linea
+           continue;
 
-    instrucciones = malloc(num_instrucciones * sizeof(String));
+        linea[strcspn(linea, "\n")] = '\0';  // Elimina el salto de línea al final de la instrucción
+        String instruccion = strdup(linea);  // Copia la linea leida en un string nuevo
 
-    for (uint32_t i = 0; fgets(linea, sizeof(linea), pseudocodigo); i++) {
-        linea[strcspn(linea, "\n")] = '\0';  // Elimina el salto de línea
-        instrucciones[i] = strdup(linea);
+        if (instruccion == NULL) {
+            perror("Error leer linea!");
+            exit(EXIT_FAILURE);
+        }
+
+        list_add(instrucciones, instruccion); // Agrega la instrucción a la lista de instrucciones
     }
 
     fclose(pseudocodigo);
+    return instrucciones;
+}
 
-    return;
+void imprimir_instrucciones(t_list* instrucciones) {
+    for (int i = 0; i < list_size(instrucciones); i++) {
+        printf("Linea %d: ", i);
+        imprimir_instruccion(list_get(instrucciones, i));
+    }
+}
+
+void imprimir_instruccion(String instruccion) {
+    if(instruccion == NULL)
+        fprintf(stderr, "No existe la instrucción!\n");
+    printf("Enviando instrucción a la CPU: %s\n", instruccion);
+}
+
+void imprimir_instruccion_numero(t_list* instrucciones, uint32_t numero_de_linea) {
+    printf("CPU pidio Linea %d: ", numero_de_linea);
+    imprimir_instruccion(list_get(instrucciones, numero_de_linea));
 }
