@@ -13,8 +13,8 @@ typedef struct {
 } Page_table_t; // Tabla donde el indice de pagina representa el marco y si está asignado o no
 
 typedef struct {
-    int pid;
-    int cant_paginas;
+    uint16_t pid;
+    uint32_t cant_paginas;
     Page_table_t* pagina;
 } Proceso_t;
 
@@ -40,28 +40,18 @@ t_memoria_config* load_memoria_config(String path);
 
 void inicializar_memoria();
 
-Proceso_t* crear_proceso(int pid, int cant_paginas);
+Proceso_t* crear_proceso(uint16_t pid, uint32_t cant_paginas);
 
 int asignar_pagina(Proceso_t* proceso);
 
 void liberar_paginas_proceso(Proceso_t* proceso);
 
-int acceder_marco(Proceso_t* proceso, int numero_de_pagina);
+int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina);
 
-int leer_memoria(int physical_address, void* buffer, size_t size);
+int leer_memoria(uint32_t direccion_fisica, void *buffer, size_t size);
 
-int escribir_memoria(int physical_address, void* data, size_t size);
+int escribir_memoria(uint32_t direccion_fisica, void *data, size_t size);
 
-int resize_proceso(Proceso_t* proceso, int new_cant_paginas);
-
-t_list *leer_pseudocodigo(String filename);
-
-// Debajo de esta linea hay funciones de prueba
-
-void imprimir_instrucciones(t_list* instrucciones);
-
-void imprimir_instruccion(String instruccion);
-
-void imprimir_instruccion_numero(t_list* instrucciones, uint32_t numero_de_linea);
+int resize_proceso(Proceso_t* proceso, uint32_t new_cant_paginas);
 
 #endif

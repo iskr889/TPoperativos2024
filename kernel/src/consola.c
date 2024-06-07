@@ -73,6 +73,7 @@ void iniciar_proceso(const String path) {
 
     dictionary_put(scheduler->procesos, str_pid, pcb);
 
+    enviar_proceso_memoria(pcb->pid, path);
 }
 
 void finalizar_proceso(const String str_pid) {
@@ -142,7 +143,6 @@ void proceso_estado(const String s) {
     return;
 }
 
-// Función para imprimir el PID y el estado de un proceso
 void imprimir_proceso(void* proceso) {
     pcb_t* pcb = (pcb_t*)proceso;
     char estado[8];
@@ -169,7 +169,6 @@ void imprimir_proceso(void* proceso) {
     printf("[PID: %d | ESTADO: %s]\n", pcb->pid, estado);
 }
 
-// Función para el manejo de comandos
 void manejar_comando(const String comando) {
 
     String cmd = strtok(comando, " ");
@@ -199,7 +198,6 @@ void manejar_comando(const String comando) {
     }
 }
 
-// Thread para la interfaz de usuario
 void* thread_consola(void* arg) {
 
     char* command = NULL;
@@ -234,8 +232,6 @@ void* thread_consola(void* arg) {
     return NULL;
 }
 
-
-// Iniciar el thread_consola
 int consola_kernel() {
 
     pthread_t hilo;
@@ -248,4 +244,21 @@ int consola_kernel() {
     pthread_join(hilo, NULL);
 
     return OK;
+}
+
+void enviar_proceso_memoria(uint16_t pid, String path) {
+    uint32_t total_size = sizeof(uint16_t) +  // pid
+                          sizeof(uint32_t) +  // Para indicar la longitud del string que viene en el payload
+                          strlen(path) + 1;   // String + \0
+
+    payload_t *payload = payload_create(total_size);
+    payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add_string(payload, path);
+    paquete_t *paquete = crear_paquete(MEMORY_PROCESS_CREATE, payload);
+
+    if(enviar_paquete(conexion_memoria, paquete) != OK)
+        exit(EXIT_FAILURE);
+    
+    payload_destroy(payload);
+    liberar_paquete(paquete);
 }

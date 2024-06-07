@@ -101,9 +101,6 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
 int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     switch (handshake) {
-        case GENERIC_CON_MEMORIA:
-            puts("Interfaz GENERICA conectada con la MEMORIA\n");
-            break;
         case STDIN_CON_MEMORIA:
             puts("Interfaz STDIN conectada con la MEMORIA\n");
             break;

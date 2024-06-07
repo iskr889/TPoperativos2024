@@ -1,5 +1,6 @@
 #include "main.h"
 #include "memory_interface_handler.h"
+#include "manejar_instrucciones.h"
 
 void* user_memory; // Espacio contiguo de memoria
 t_bitarray* frame_bitarray;  // Bitarray para seguir el estado de los marcos
@@ -42,24 +43,7 @@ int main(int argc, char* argv[]) {
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(memoria_server);
 
-    /////////////////////// Debajo test para leer e imprimir pseudocodigo ///////////////////////
-
-    t_list *lista = leer_pseudocodigo(argv[1]);
-
-    imprimir_instrucciones(lista); // Imprime todas las instrucciones del archivo
-
-    while(1) {
-        int num_linea;
-        printf("\nIndicar que linea enviar: ");
-        scanf("%d", &num_linea);
-        if(num_linea < 0)
-            break;
-        imprimir_instruccion_numero(lista, num_linea);
-    }
-
-    list_destroy_and_destroy_elements(lista, free);
-
-    /////////////////////// Arriba test para leer e imprimir pseudocodigo ///////////////////////
+    manejar_instrucciones_kernel();
 
     liberar_memoria();
 
@@ -138,7 +122,7 @@ void inicializar_memoria() {
 }
 
 // Crear un proceso en memoria
-Proceso_t* crear_proceso(int pid, int cant_paginas) {
+Proceso_t* crear_proceso(uint16_t pid, uint32_t cant_paginas) {
 
     Proceso_t* proceso = malloc(sizeof(Proceso_t));
     proceso->pid = pid;
@@ -150,7 +134,7 @@ Proceso_t* crear_proceso(int pid, int cant_paginas) {
         exit(EXIT_FAILURE);
     }
 
-    for (int i = 0; i < cant_paginas; i++) {
+    for (uint32_t i = 0; i < cant_paginas; i++) {
         proceso->pagina[i].marco = -1; // Al crearse el proceso no tiene marcos asignados a la memoria
         proceso->pagina[i].asignada = false;
     }
@@ -161,9 +145,9 @@ Proceso_t* crear_proceso(int pid, int cant_paginas) {
 // Asignar páginas a un proceso
 int asignar_pagina(Proceso_t* proceso) {
 
-    int paginas_asignadas = 0;
+    uint32_t paginas_asignadas = 0;
 
-    for (int i = 0; i < bitarray_get_max_bit(frame_bitarray); i++) {
+    for (uint32_t i = 0; i < bitarray_get_max_bit(frame_bitarray); i++) {
 
         if (bitarray_test_bit(frame_bitarray, i) == false) {
 
@@ -183,7 +167,7 @@ int asignar_pagina(Proceso_t* proceso) {
 // Liberar páginas de un proceso
 void liberar_paginas_proceso(Proceso_t* proceso) {
 
-    for (int i = 0; i < proceso->cant_paginas; i++) {
+    for (uint32_t i = 0; i < proceso->cant_paginas; i++) {
         if (proceso->pagina[i].asignada)
             bitarray_clean_bit(frame_bitarray, proceso->pagina[i].marco);
     }
@@ -193,7 +177,7 @@ void liberar_paginas_proceso(Proceso_t* proceso) {
 }
 
 // Acceso a la tabla de páginas
-int acceder_marco(Proceso_t* proceso, int numero_de_pagina) {
+int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina) {
 
     if (numero_de_pagina >= proceso->cant_paginas)
         return ERROR;
@@ -202,7 +186,7 @@ int acceder_marco(Proceso_t* proceso, int numero_de_pagina) {
 }
 
 // Lectura desde el espacio de usuario
-int leer_memoria(int direccion_fisica, void* buffer, size_t size) {
+int leer_memoria(uint32_t direccion_fisica, void *buffer, size_t size) {
 
     if (direccion_fisica + size > memoria_config->tam_memoria) {
         fprintf(stderr, "Lectura fuera de limites!\n");
@@ -214,7 +198,7 @@ int leer_memoria(int direccion_fisica, void* buffer, size_t size) {
 }
 
 // Escritura en el espacio de usuario
-int escribir_memoria(int direccion_fisica, void* data, size_t size) {
+int escribir_memoria(uint32_t direccion_fisica, void *data, size_t size) {
 
     if (direccion_fisica + size > memoria_config->tam_memoria) {
         fprintf(stderr, "Escritura fuera de limites\n");
@@ -226,13 +210,13 @@ int escribir_memoria(int direccion_fisica, void* data, size_t size) {
 }
 
 // Ajustar tamaño de un proceso
-int resize_proceso(Proceso_t* proceso, int new_cant_paginas) {
+int resize_proceso(Proceso_t* proceso, uint32_t new_cant_paginas) {
 
     if (new_cant_paginas > proceso->cant_paginas) { // Ampliación del proceso
 
-        int paginas_adicionales = new_cant_paginas - proceso->cant_paginas;
+        uint32_t paginas_adicionales = new_cant_paginas - proceso->cant_paginas;
 
-        for (int i = 0; i < bitarray_get_max_bit(frame_bitarray) && paginas_adicionales > 0; i++) {
+        for (uint32_t i = 0; i < bitarray_get_max_bit(frame_bitarray) && paginas_adicionales > 0; i++) {
 
             if (!bitarray_test_bit(frame_bitarray, i)) {
 
@@ -260,54 +244,4 @@ int resize_proceso(Proceso_t* proceso, int new_cant_paginas) {
     }
 
     return OK;
-}
-
-t_list *leer_pseudocodigo(String filename) {
-
-    FILE* pseudocodigo = fopen(filename, "r");
-
-    if (pseudocodigo == NULL) {
-        perror("Error al abrir el archivo de pseudocodigo!");
-        exit(EXIT_FAILURE);
-    }
-
-    char linea[BUFF_SIZE];
-    t_list* instrucciones = list_create();
-
-    while (fgets(linea, sizeof(linea), pseudocodigo)) {
-
-        if (linea[0] == '\n') // Ignora las lineas del archivo con solo salto de linea
-           continue;
-
-        linea[strcspn(linea, "\n")] = '\0';  // Elimina el salto de línea al final de la instrucción
-        String instruccion = strdup(linea);  // Copia la linea leida en un string nuevo
-
-        if (instruccion == NULL) {
-            perror("Error leer linea!");
-            exit(EXIT_FAILURE);
-        }
-
-        list_add(instrucciones, instruccion); // Agrega la instrucción a la lista de instrucciones
-    }
-
-    fclose(pseudocodigo);
-    return instrucciones;
-}
-
-void imprimir_instrucciones(t_list* instrucciones) {
-    for (int i = 0; i < list_size(instrucciones); i++) {
-        printf("Linea %d: ", i);
-        imprimir_instruccion(list_get(instrucciones, i));
-    }
-}
-
-void imprimir_instruccion(String instruccion) {
-    if(instruccion == NULL)
-        fprintf(stderr, "No existe la instrucción!\n");
-    printf("Enviando instrucción a la CPU: %s\n", instruccion);
-}
-
-void imprimir_instruccion_numero(t_list* instrucciones, uint32_t numero_de_linea) {
-    printf("CPU pidio Linea %d: ", numero_de_linea);
-    imprimir_instruccion(list_get(instrucciones, numero_de_linea));
 }
