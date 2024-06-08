@@ -69,9 +69,11 @@ void iniciar_proceso(const String path) {
 
     char str_pid[8];
 
-    snprintf(str_pid, sizeof(str_pid), "%d", pcb->pid);
+    snprintf(str_pid, sizeof(str_pid), "%d", pcb->pid); // Convierto el pid a string para poder usarlo como key en el diccionario
 
     dictionary_put(scheduler->procesos, str_pid, pcb);
+
+    log_debug(extra_logger, "PROCESO CREADO [PID: %s]", str_pid);
 
     enviar_proceso_memoria(pcb->pid, path);
 }

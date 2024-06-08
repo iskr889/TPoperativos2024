@@ -3,8 +3,10 @@
 #include "manejar_instrucciones.h"
 
 void* user_memory; // Espacio contiguo de memoria
+char *bitarray_data;  // Necesario como global para que no quede sin liberar porque bitarray_destroy() no lo libera
 t_bitarray* frame_bitarray;  // Bitarray para seguir el estado de los marcos
 uint32_t paginas_totales; // Cantidad total de paginas en la memoria = TAM_MEMORIA / TAM_PAGINA
+t_dictionary *procesos; // Guarda los procesos creados en memoria
 
 t_config* config;
 t_memoria_config* memoria_config;
@@ -20,6 +22,8 @@ int main(int argc, char* argv[]) {
     logger = iniciar_logger("memoria.log", "MEMORIA", 1, LOG_LEVEL_INFO);
 
     extra_logger = iniciar_logger("memoria_debug.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
+
+    inicializar_memoria();
 
     // Iniciamos servidor escuchando por conexiones de CPU, KERNEL e INTERFACES
     memoria_server = escuchar_conexiones_de("CPU, KERNEL e INTERFACES", memoria_config->puerto_escucha, extra_logger);
@@ -58,6 +62,11 @@ void liberar_memoria() {
     log_destroy(extra_logger);
     config_destroy(config);
     free(memoria_config);
+    free(user_memory);
+    free(bitarray_data);
+    bitarray_destroy(frame_bitarray);
+    // TODO: Deberia recorrer cada proceso para liberar la pagina y lista de instrucciones pero por ahora queda asi porque no hay tiempo :(
+    dictionary_destroy_and_destroy_elements(procesos, free);
 }
 
 t_memoria_config* load_memoria_config(String path) {
@@ -111,7 +120,7 @@ void inicializar_memoria() {
     if (bitarray_size == 0)
         bitarray_size = 1; // Al menos necesito un bitarray de 1 byte
 
-    char *bitarray_data = calloc(bitarray_size, sizeof(char)); // Inicializa la memoria en 0
+    bitarray_data = calloc(bitarray_size, sizeof(char)); // Inicializa la memoria en 0
 
     if (bitarray_data == NULL) {
         perror("Error en calloc()");
@@ -119,15 +128,18 @@ void inicializar_memoria() {
     }
 
     frame_bitarray = bitarray_create_with_mode(bitarray_data, bitarray_size, LSB_FIRST);
+
+    procesos = dictionary_create();
 }
 
 // Crear un proceso en memoria
-Proceso_t* crear_proceso(uint16_t pid, uint32_t cant_paginas) {
+void crear_proceso(uint16_t pid, uint32_t cant_paginas, t_list *instrucciones) {
 
     Proceso_t* proceso = malloc(sizeof(Proceso_t));
     proceso->pid = pid;
     proceso->cant_paginas = cant_paginas;
     proceso->pagina = malloc(cant_paginas * sizeof(Page_table_t));
+    proceso->instrucciones = instrucciones;
 
     if (proceso->pagina == NULL) {
         perror("Error en malloc()");
@@ -139,7 +151,31 @@ Proceso_t* crear_proceso(uint16_t pid, uint32_t cant_paginas) {
         proceso->pagina[i].asignada = false;
     }
 
-    return proceso;
+    char str_pid[8];
+
+    snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
+
+    dictionary_put(procesos, str_pid, proceso);
+}
+
+void finalizar_proceso(uint16_t pid) {
+
+    char str_pid[8];
+
+    snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
+
+    Proceso_t* proceso = dictionary_get(procesos, str_pid);
+
+    if(proceso == NULL)
+        return;
+
+    free(proceso->pagina);
+
+    list_destroy_and_destroy_elements(proceso->instrucciones, free);
+
+    dictionary_remove(procesos, str_pid);
+
+    free(proceso);
 }
 
 // Asignar páginas a un proceso

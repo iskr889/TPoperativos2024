@@ -5,8 +5,6 @@
 #include "../../utils/src/utils.h"
 #include <commons/bitarray.h>
 
-#define BUFF_SIZE 256 // Tamaño del buffer que lee una linea de pseudocodigo a la vez
-
 typedef struct {
     int marco;
     bool asignada;
@@ -16,6 +14,7 @@ typedef struct {
     uint16_t pid;
     uint32_t cant_paginas;
     Page_table_t* pagina;
+    t_list *instrucciones;
 } Proceso_t;
 
 typedef struct {
@@ -40,7 +39,9 @@ t_memoria_config* load_memoria_config(String path);
 
 void inicializar_memoria();
 
-Proceso_t* crear_proceso(uint16_t pid, uint32_t cant_paginas);
+void crear_proceso(uint16_t pid, uint32_t cant_paginas, t_list *instrucciones);
+
+void finalizar_proceso(uint16_t pid);
 
 int asignar_pagina(Proceso_t* proceso);
 

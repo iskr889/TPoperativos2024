@@ -1,6 +1,7 @@
 #include "manejar_instrucciones.h"
-#include "main.h"
-#include <commons/collections/list.h>
+
+extern t_log* logger;
+extern t_log* extra_logger;
 
 extern int conexion_kernel;
 
@@ -15,7 +16,6 @@ void *thread_instrucciones_kernel(void *arg) {
 
         switch (paquete->operacion) {
             case MEMORY_PROCESS_CREATE:
-                puts("Instrucción: MEMORY_PROCESS_CREATE");
                 instruccion_process_create(paquete->payload);
                 break;
             case MEMORY_PROCESS_TERM:
@@ -56,13 +56,15 @@ void instruccion_process_create(payload_t* payload) {
 
     payload_read(payload, &pid, sizeof(uint16_t));
 
+    char str_pid[8];
+
+    snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
+
     String path = payload_read_string(payload);
 
-    strcat(pseudocodigo, path);
+    strcat(pseudocodigo, path); // Concateno el directorio de la carpeta de pseudocodigo
 
     free(path);
-
-    // Proceso_t* proceso = crear_proceso(pid, 1);
 
     t_list *instrucciones = leer_pseudocodigo(pseudocodigo);
 
@@ -71,9 +73,11 @@ void instruccion_process_create(payload_t* payload) {
         return;
     }
 
+    crear_proceso(pid, CANT_PAGINAS_DEFAULT, instrucciones);
+
     imprimir_instrucciones(instrucciones);
 
-    list_destroy_and_destroy_elements(instrucciones, free);
+    log_debug(extra_logger, "CREAR PROCESO RECIBIDO [PID: %s] PSEUDOCODIGO EN [PATH: %s]", str_pid, pseudocodigo);
 }
 
 t_list *leer_pseudocodigo(String filename) {
