@@ -17,20 +17,27 @@ void *thread_instrucciones_kernel(void *arg) {
         switch (paquete->operacion) {
             case MEMORY_PROCESS_CREATE:
                 instruccion_process_create(paquete->payload);
+                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_CREATE");
                 break;
             case MEMORY_PROCESS_TERM:
-                puts("Instrucción: MEMORY_PROCESS_TERM");
+                instruccion_process_terminate(paquete->payload);
+                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_TERM");
                 break;
             case MEMORY_PAGE_TABLE_ACCESS:
-                puts("Instrucción: MEMORY_PAGE_TABLE");
+                instruccion_pageTable_access(paquete->payload);
+                log_debug(extra_logger, "Ejecutando: MEMORY_PAGE_TABLE_ACCESS");
                 break;
             case MEMORY_PROCESS_RESIZE:
-                puts("Instrucción: MEMORY_PROCESS_RESIZE");
+                instruccion_process_resize(paquete->payload);
+                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_RESIZE");
                 break;
             default:
-                puts("Error al tratar de identificar el codigo de operación del kernel!\n");
-                return arg;
+                log_error(extra_logger, "Error al tratar de identificar el codigo de operación del kernel");
+                break;
         }
+
+        payload_destroy(paquete->payload);
+        liberar_paquete(paquete);
     }
 
     return arg;
@@ -78,6 +85,23 @@ void instruccion_process_create(payload_t* payload) {
     imprimir_instrucciones(instrucciones);
 
     log_debug(extra_logger, "CREAR PROCESO RECIBIDO [PID: %s] PSEUDOCODIGO EN [PATH: %s]", str_pid, pseudocodigo);
+}
+
+void instruccion_process_terminate(payload_t* payload) {
+
+    uint16_t pid;
+
+    payload_read(payload, &pid, sizeof(uint16_t));
+
+    liberar_proceso(pid);
+}
+
+void instruccion_pageTable_access(payload_t* payload) {
+    
+}
+
+void instruccion_process_resize(payload_t* payload) {
+    
 }
 
 t_list *leer_pseudocodigo(String filename) {

@@ -45,6 +45,8 @@ void* thread_consola(void* arg);
 */
 int consola_kernel();
 
-void enviar_proceso_memoria(uint16_t pid, String path);
+void crear_proceso_en_memoria(uint16_t pid, String path);
+
+void finalizar_proceso_en_memoria(uint16_t pid);
 
 #endif

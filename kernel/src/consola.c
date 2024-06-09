@@ -30,12 +30,12 @@ void mensaje_de_bienvenida() {
     printf("|                  Bienvenido a la Consola de Comandos!                   |\n");
     printf("---------------------------------------------------------------------------\n");
     printf("| Podes utilizar los siguientes comandos para controlar el sistema:       |\n");
-    printf("|    EJECUTAR_SCRIPT <PATH>    - Ejecuta un script de instrucciones       |\n");
-    printf("|    INICIAR_PROCESO <PATH>    - Inicia un nuevo proceso                  |\n");
-    printf("|    FINALIZAR_PROCESO <PATH>  - Termina un proceso existente             |\n");
+    printf("|    EJECUTAR_SCRIPT [PATH]    - Ejecuta un script de instrucciones       |\n");
+    printf("|    INICIAR_PROCESO [PATH]    - Inicia un nuevo proceso                  |\n");
+    printf("|    FINALIZAR_PROCESO [PID]   - Termina un proceso existente             |\n");
     printf("|    DETENER_PLANIFICACION     - Detiene la planificación de proceso      |\n");
     printf("|    INICIAR_PLANIFICACION     - Reanuda la planificación de procesos     |\n");
-    printf("|    MULTIPROGRAMACION         - Modifica el grado de multiprogramación   |\n");
+    printf("|    MULTIPROGRAMACION [VALOR] - Modifica el grado de multiprogramación   |\n");
     printf("|    PROCESO_ESTADO            - Lista los procesos por estado            |\n");
     printf("|[D] PRINT_IO                  - Lista las interfaces conectadas [DEBUG]  |\n");
     printf("---------------------------------------------------------------------------\n");
@@ -75,16 +75,30 @@ void iniciar_proceso(const String path) {
 
     log_debug(extra_logger, "PROCESO CREADO [PID: %s]", str_pid);
 
-    enviar_proceso_memoria(pcb->pid, path);
+    crear_proceso_en_memoria(pcb->pid, path);
 }
 
 void finalizar_proceso(const String str_pid) {
+
     if (str_pid == NULL) {
         puts("PID INVALIDO!");
         return;
     }
-    int pid = atoi(str_pid); // Modificar o usar strtol()
-    printf("Deteniendo proceso: %d\n", pid);
+
+    if(dictionary_has_key(scheduler->procesos, str_pid) == false) {
+        log_error(extra_logger, "PROCESO [PID: %s] NO EXISTE", str_pid);
+        return;
+    }
+
+    uint16_t pid = atoi(str_pid);
+
+    if(pid == 0) {
+        puts("PID INVALIDO!");
+        return;
+    }
+
+    finalizar_proceso_en_memoria(pid);
+    log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid);
 }
 
 void iniciar_planificacion(const String s) {
@@ -248,7 +262,7 @@ int consola_kernel() {
     return OK;
 }
 
-void enviar_proceso_memoria(uint16_t pid, String path) {
+void crear_proceso_en_memoria(uint16_t pid, String path) {
     uint32_t total_size = sizeof(uint16_t) +  // pid
                           sizeof(uint32_t) +  // Para indicar la longitud del string que viene en el payload
                           strlen(path) + 1;   // String + \0
@@ -257,6 +271,19 @@ void enviar_proceso_memoria(uint16_t pid, String path) {
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add_string(payload, path);
     paquete_t *paquete = crear_paquete(MEMORY_PROCESS_CREATE, payload);
+
+    if(enviar_paquete(conexion_memoria, paquete) != OK)
+        exit(EXIT_FAILURE);
+    
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+void finalizar_proceso_en_memoria(uint16_t pid) {
+
+    payload_t *payload = payload_create(sizeof(uint16_t));
+    payload_add(payload, &pid, sizeof(uint16_t));
+    paquete_t *paquete = crear_paquete(MEMORY_PROCESS_TERM, payload);
 
     if(enviar_paquete(conexion_memoria, paquete) != OK)
         exit(EXIT_FAILURE);

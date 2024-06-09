@@ -26,6 +26,24 @@ void manejar_instrucciones_kernel();
 void instruccion_process_create(payload_t* payload);
 
 /**
+* @fn    Ejecuta la instrucción MEMORY_PROCESS_TERM recibida del kernel
+* @brief Libera el proceso con pid recibido del Kernel
+*/
+void instruccion_process_terminate(payload_t* payload);
+
+/**
+* @fn    Ejecuta la instrucción MEMORY_PAGE_TABLE_ACCESS recibida del kernel
+* @brief Accede a la tabla de paginas consultada
+*/
+void instruccion_pageTable_access(payload_t* payload);
+
+/**
+* @fn    Ejecuta la instrucción MEMORY_PROCESS_RESIZE recibida del kernel
+* @brief Ajusta la cantidad de paginas asignadas a un proceso
+*/
+void instruccion_process_resize(payload_t* payload);
+
+/**
 * @fn    Lee un archivo de pseudocodigo
 * @brief Devuelve las instrucciones del archivo de pseudocodigo en una lista donde el numero de instrucción comenzando de 0 corresponde al indice de la lista
 */
