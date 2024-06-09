@@ -26,23 +26,22 @@
 typedef char* String;
 
 typedef enum {
-        CPU_CON_MEMORIA,
-     KERNEL_CON_MEMORIA,
-    GENERIC_CON_MEMORIA,
-      STDIN_CON_MEMORIA,
-     STDOUT_CON_MEMORIA,
-     DIALFS_CON_MEMORIA,
-     KERNEL_CON_CPU_DISPATCH,
-     KERNEL_CON_CPU_INTERRUPT,
+    CPU_CON_MEMORIA = 0,
+    KERNEL_CON_MEMORIA,
+    STDIN_CON_MEMORIA,
+    STDOUT_CON_MEMORIA,
+    DIALFS_CON_MEMORIA,
+    KERNEL_CON_CPU_DISPATCH,
+    KERNEL_CON_CPU_INTERRUPT,
     GENERIC_CON_KERNEL,
-      STDIN_CON_KERNEL,
-     STDOUT_CON_KERNEL,
-     DIALFS_CON_KERNEL,
+    STDIN_CON_KERNEL,
+    STDOUT_CON_KERNEL,
+    DIALFS_CON_KERNEL,
     HANDSHAKE_ERROR
 } conexion_t; // Tipo de conexión especifico entre modulos
 
 typedef enum {
-    IO_GEN_SLEEP,
+    IO_GEN_SLEEP = 100,
     IO_STDIN_READ,
     IO_STDOUT_WRITE,
     IO_FS_CREATE,
@@ -51,7 +50,16 @@ typedef enum {
     IO_FS_WRITE,
     IO_FS_READ,
     IO_ERROR
-} instrucciones_t; // Tipo de conexión especifico entre modulos
+} instruccionesIO_t; // Codigo de operación para cada instrucción de IO
+
+typedef enum {
+    MEMORY_PROCESS_CREATE = 200,
+    MEMORY_PROCESS_TERM,
+    MEMORY_PAGE_TABLE_ACCESS,
+    MEMORY_PROCESS_RESIZE,
+    MEMORY_USER_SPACE_ACCESS,
+    OUT_OF_MEMORY
+} instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
 typedef enum {
     I_SET,
