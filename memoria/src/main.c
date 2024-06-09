@@ -132,8 +132,7 @@ void inicializar_memoria() {
     procesos = dictionary_create();
 }
 
-// Crear un proceso en memoria
-void crear_proceso(uint16_t pid, uint32_t cant_paginas, t_list *instrucciones) {
+void crear_proceso(uint16_t pid, t_list *instrucciones) {
 
     Proceso_t* proceso = malloc(sizeof(Proceso_t));
     proceso->pid = pid;
@@ -145,7 +144,7 @@ void crear_proceso(uint16_t pid, uint32_t cant_paginas, t_list *instrucciones) {
     dictionary_put(procesos, str_pid, proceso);
 }
 
-void finalizar_proceso(uint16_t pid) {
+void liberar_proceso(uint16_t pid) {
 
     char str_pid[8];
     snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
@@ -159,8 +158,8 @@ void finalizar_proceso(uint16_t pid) {
     dictionary_remove_and_destroy(procesos, str_pid, free);
 }
 
-void liberar_pagina(void *elem) {
-    PageTable_t *pagina = (PageTable_t *)elem;
+void liberar_pagina(void *page) {
+    PageTable_t *pagina = (PageTable_t *)page;
     if (pagina->asignada)
             bitarray_clean_bit(frame_bitarray, pagina->marco);
     free(pagina);
@@ -171,6 +170,9 @@ void liberar_paginas(t_list* paginas) {
 }
 
 bool asignar_paginas(Proceso_t* proceso, uint32_t cant_paginas) {
+
+    if(cant_paginas == 0)
+        return true;
 
     for (uint32_t i = 0, paginas_asignadas = 0; i < bitarray_get_max_bit(frame_bitarray); i++) { // Recorre todo el bitarray
 
@@ -185,9 +187,8 @@ bool asignar_paginas(Proceso_t* proceso, uint32_t cant_paginas) {
             nueva_pagina->asignada = true;
             list_add(proceso->paginas, nueva_pagina);
             bitarray_set_bit(frame_bitarray, i);
-            paginas_asignadas++;
 
-            if (paginas_asignadas == cant_paginas)
+            if (++paginas_asignadas >= cant_paginas)
                 return true;
         }
     }
@@ -195,7 +196,6 @@ bool asignar_paginas(Proceso_t* proceso, uint32_t cant_paginas) {
     return false;
 }
 
-// Acceso a la tabla de páginas
 int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina) {
 
     if (numero_de_pagina >= list_size(proceso->paginas))
@@ -203,30 +203,6 @@ int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina) {
 
     PageTable_t *pagina = list_get(proceso->paginas, numero_de_pagina);
     return pagina->marco;
-}
-
-// Lectura desde el espacio de usuario
-int leer_memoria(uint32_t direccion_fisica, void *buffer, size_t size) {
-
-    if (direccion_fisica + size > memoria_config->tam_memoria) {
-        fprintf(stderr, "Lectura fuera de limites!\n");
-        return ERROR;
-    }
-
-    memcpy(buffer, user_memory + direccion_fisica, size);
-    return OK;
-}
-
-// Escritura en el espacio de usuario
-int escribir_memoria(uint32_t direccion_fisica, void *data, size_t size) {
-
-    if (direccion_fisica + size > memoria_config->tam_memoria) {
-        fprintf(stderr, "Escritura fuera de limites\n");
-        return ERROR;
-    }
-
-    memcpy(user_memory + direccion_fisica, data, size);
-    return OK;
 }
 
 bool resize_process(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
@@ -243,5 +219,27 @@ bool resize_process(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
         }
     }
 
+    return true;
+}
+
+bool leer_memoria(uint32_t direccion_fisica, void *buffer, size_t size) {
+
+    if (direccion_fisica + size > memoria_config->tam_memoria) {
+        log_debug(extra_logger, "Lectura de memoria fisica fuera de limites!");
+        return false;
+    }
+
+    memcpy(buffer, user_memory + direccion_fisica, size);
+    return true;
+}
+
+bool escribir_memoria(uint32_t direccion_fisica, void *data, size_t size) {
+
+    if (direccion_fisica + size > memoria_config->tam_memoria) {
+        log_debug(extra_logger, "Escritura de memoria fisica fuera de limites!");
+        return false;
+    }
+
+    memcpy(user_memory + direccion_fisica, data, size);
     return true;
 }

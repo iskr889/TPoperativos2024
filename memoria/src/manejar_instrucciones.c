@@ -73,7 +73,7 @@ void instruccion_process_create(payload_t* payload) {
         return;
     }
 
-    crear_proceso(pid, CANT_PAGINAS_DEFAULT, instrucciones);
+    crear_proceso(pid, instrucciones);
 
     imprimir_instrucciones(instrucciones);
 

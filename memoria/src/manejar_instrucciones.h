@@ -6,7 +6,6 @@
 
 #define CARPETA_PSEUDOCODIGO "pseudocodigo/" // Carpeta donde estan los archivos de pseudocodigo
 #define BUFF_SIZE 256 // Tamaño del buffer que lee una linea de pseudocodigo a la vez
-#define CANT_PAGINAS_DEFAULT 1 // Cantidad de paginas por default asignadas a un proceso recien creado
 
 /**
 * @fn    Hilo que maneja las instrucciones con el kernel
