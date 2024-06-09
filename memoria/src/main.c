@@ -137,88 +137,72 @@ void crear_proceso(uint16_t pid, uint32_t cant_paginas, t_list *instrucciones) {
 
     Proceso_t* proceso = malloc(sizeof(Proceso_t));
     proceso->pid = pid;
-    proceso->cant_paginas = cant_paginas;
-    proceso->pagina = malloc(cant_paginas * sizeof(Page_table_t));
+    proceso->paginas = list_create();
     proceso->instrucciones = instrucciones;
 
-    if (proceso->pagina == NULL) {
-        perror("Error en malloc()");
-        exit(EXIT_FAILURE);
-    }
-
-    for (uint32_t i = 0; i < cant_paginas; i++) {
-        proceso->pagina[i].marco = -1; // Al crearse el proceso no tiene marcos asignados a la memoria
-        proceso->pagina[i].asignada = false;
-    }
-
     char str_pid[8];
-
     snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
-
     dictionary_put(procesos, str_pid, proceso);
 }
 
 void finalizar_proceso(uint16_t pid) {
 
     char str_pid[8];
-
     snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
-
     Proceso_t* proceso = dictionary_get(procesos, str_pid);
 
-    if(proceso == NULL)
+    if (proceso == NULL)
         return;
 
-    free(proceso->pagina);
-
+    list_destroy_and_destroy_elements(proceso->paginas, liberar_pagina);
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
-
-    dictionary_remove(procesos, str_pid);
-
-    free(proceso);
+    dictionary_remove_and_destroy(procesos, str_pid, free);
 }
 
-// Asignar páginas a un proceso
-int asignar_pagina(Proceso_t* proceso) {
+void liberar_pagina(void *elem) {
+    PageTable_t *pagina = (PageTable_t *)elem;
+    if (pagina->asignada)
+            bitarray_clean_bit(frame_bitarray, pagina->marco);
+    free(pagina);
+}
 
-    uint32_t paginas_asignadas = 0;
+void liberar_paginas(t_list* paginas) {
+    list_iterate(paginas, liberar_pagina);
+}
 
-    for (uint32_t i = 0; i < bitarray_get_max_bit(frame_bitarray); i++) {
+bool asignar_paginas(Proceso_t* proceso, uint32_t cant_paginas) {
 
-        if (bitarray_test_bit(frame_bitarray, i) == false) {
+    for (uint32_t i = 0, paginas_asignadas = 0; i < bitarray_get_max_bit(frame_bitarray); i++) { // Recorre todo el bitarray
 
-            proceso->pagina[paginas_asignadas].marco = i;
-            proceso->pagina[paginas_asignadas].asignada = true;
+        if (bitarray_test_bit(frame_bitarray, i) == false) { // Devuelve false si el frame no esta asignado a la memoria
+
+            PageTable_t* nueva_pagina = malloc(sizeof(PageTable_t));
+
+            if (nueva_pagina == NULL)
+                return false;
+
+            nueva_pagina->marco = i;
+            nueva_pagina->asignada = true;
+            list_add(proceso->paginas, nueva_pagina);
             bitarray_set_bit(frame_bitarray, i);
             paginas_asignadas++;
 
-            if (paginas_asignadas == proceso->cant_paginas)
-                return OK;
+            if (paginas_asignadas == cant_paginas)
+                return true;
         }
     }
 
-    return ERROR;
-}
-
-// Liberar páginas de un proceso
-void liberar_paginas_proceso(Proceso_t* proceso) {
-
-    for (uint32_t i = 0; i < proceso->cant_paginas; i++) {
-        if (proceso->pagina[i].asignada)
-            bitarray_clean_bit(frame_bitarray, proceso->pagina[i].marco);
-    }
-
-    free(proceso->pagina);
-    free(proceso);
+    return false;
 }
 
 // Acceso a la tabla de páginas
 int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina) {
 
-    if (numero_de_pagina >= proceso->cant_paginas)
+    if (numero_de_pagina >= list_size(proceso->paginas))
         return ERROR;
 
-    return proceso->pagina[numero_de_pagina].marco;
+    PageTable_t *pagina = list_get(proceso->paginas, numero_de_pagina);
+    return pagina->marco;
 }
 
 // Lectura desde el espacio de usuario
@@ -245,39 +229,19 @@ int escribir_memoria(uint32_t direccion_fisica, void *data, size_t size) {
     return OK;
 }
 
-// Ajustar tamaño de un proceso
-int resize_proceso(Proceso_t* proceso, uint32_t new_cant_paginas) {
+bool resize_process(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
 
-    if (new_cant_paginas > proceso->cant_paginas) { // Ampliación del proceso
+    uint32_t cant_paginas = list_size(proceso->paginas);
 
-        uint32_t paginas_adicionales = new_cant_paginas - proceso->cant_paginas;
+    if (nueva_cant_paginas > cant_paginas) // Ampliación del proceso
+        return asignar_paginas(proceso, nueva_cant_paginas - cant_paginas);
 
-        for (uint32_t i = 0; i < bitarray_get_max_bit(frame_bitarray) && paginas_adicionales > 0; i++) {
-
-            if (!bitarray_test_bit(frame_bitarray, i)) {
-
-                proceso->pagina = realloc(proceso->pagina, new_cant_paginas * sizeof(Page_table_t));
-                proceso->pagina[proceso->cant_paginas].marco = i;
-                proceso->pagina[proceso->cant_paginas].asignada = true;
-                bitarray_set_bit(frame_bitarray, i);
-                proceso->cant_paginas++;
-                paginas_adicionales--;
-            }
+    if (nueva_cant_paginas < cant_paginas) { // Reducción del proceso
+        for (int i = cant_paginas - 1; i >= nueva_cant_paginas; i--) {
+            PageTable_t *pagina = list_remove(proceso->paginas, i);
+            liberar_pagina(pagina);
         }
-
-        return (paginas_adicionales == 0) ? OK : ERROR; // ERROR: sin más memoria
-    }
-    
-    if (new_cant_paginas < proceso->cant_paginas) { // Reducción del proceso
-
-        for (int i = proceso->cant_paginas - 1; i >= new_cant_paginas; i--) {
-            if (proceso->pagina[i].asignada)
-                bitarray_clean_bit(frame_bitarray, proceso->pagina[i].marco);
-        }
-
-        proceso->pagina = realloc(proceso->pagina, new_cant_paginas * sizeof(Page_table_t));
-        proceso->cant_paginas = new_cant_paginas;
     }
 
-    return OK;
+    return true;
 }

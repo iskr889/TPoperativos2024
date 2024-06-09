@@ -8,12 +8,11 @@
 typedef struct {
     int marco;
     bool asignada;
-} Page_table_t; // Tabla donde el indice de pagina representa el marco y si está asignado o no
+} PageTable_t; // Tabla donde el indice de pagina representa el marco y si está asignado o no
 
 typedef struct {
     uint16_t pid;
-    uint32_t cant_paginas;
-    Page_table_t* pagina;
+    t_list *paginas;
     t_list *instrucciones;
 } Proceso_t;
 
@@ -43,9 +42,11 @@ void crear_proceso(uint16_t pid, uint32_t cant_paginas, t_list *instrucciones);
 
 void finalizar_proceso(uint16_t pid);
 
-int asignar_pagina(Proceso_t* proceso);
+void liberar_pagina(void *elem);
 
-void liberar_paginas_proceso(Proceso_t* proceso);
+void liberar_paginas(t_list* paginas);
+
+bool asignar_paginas(Proceso_t* proceso, uint32_t cant_paginas);
 
 int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina);
 
