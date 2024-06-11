@@ -14,6 +14,7 @@
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/collections/list.h>
+#include <commons/temporal.h>
 
 #include <readline/readline.h>
 #include <assert.h>
@@ -26,17 +27,18 @@
 typedef char* String;
 
 typedef enum {
-    CPU_CON_MEMORIA = 0,
-    KERNEL_CON_MEMORIA,
-    STDIN_CON_MEMORIA,
-    STDOUT_CON_MEMORIA,
-    DIALFS_CON_MEMORIA,
-    KERNEL_CON_CPU_DISPATCH,
-    KERNEL_CON_CPU_INTERRUPT,
+        CPU_CON_MEMORIA = 0,
+     KERNEL_CON_MEMORIA,
+    GENERIC_CON_MEMORIA,
+      STDIN_CON_MEMORIA,
+     STDOUT_CON_MEMORIA,
+     DIALFS_CON_MEMORIA,
+     KERNEL_CON_CPU_DISPATCH,
+     KERNEL_CON_CPU_INTERRUPT,
     GENERIC_CON_KERNEL,
-    STDIN_CON_KERNEL,
-    STDOUT_CON_KERNEL,
-    DIALFS_CON_KERNEL,
+      STDIN_CON_KERNEL,
+     STDOUT_CON_KERNEL,
+     DIALFS_CON_KERNEL,
     HANDSHAKE_ERROR
 } conexion_t; // Tipo de conexión especifico entre modulos
 
@@ -61,20 +63,7 @@ typedef enum {
     OUT_OF_MEMORY
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
-
 //A partir de aca copie lo que estaba en el codigo de instrucciones. Hay que revisar.
-typedef enum {
-    IO_GEN_SLEEP,
-    IO_STDIN_READ,
-    IO_STDOUT_WRITE,
-    IO_FS_CREATE,
-    IO_FS_DELETE,
-    IO_FS_TRUNCATE,
-    IO_FS_WRITE,
-    IO_FS_READ,
-    IO_ERROR
-} instrucciones_t; // Tipo de conexión especifico entre modulos
-
 typedef enum {
     I_SET,
     I_SUM,
@@ -119,6 +108,22 @@ typedef struct {
     char *nombreArchivo;
 } instruccion_t;
 
+/*
+typedef struct {
+    uint32_t pc;
+    uint8_t ax;
+    uint8_t bx;
+    uint8_t cx;
+    uint8_t dx;
+    uint32_t eax;
+    uint32_t ebx;
+    uint32_t ecx;
+    uint32_t edx;
+    uint32_t si;
+    uint32_t di;
+} cpu_reg_t;*/
+
+
 typedef enum{
     FINALIZADO=1,
     IO,
@@ -126,6 +131,7 @@ typedef enum{
     WAIT,
     SIGNAL,
 }interrupciones_t;
+
 
 /**
 * @fn    Inicia un logger
