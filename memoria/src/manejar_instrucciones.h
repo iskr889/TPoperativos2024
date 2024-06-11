@@ -8,16 +8,28 @@
 #define BUFF_SIZE 256 // Tamaño del buffer que lee una linea de pseudocodigo a la vez
 
 /**
+* @fn    Maneja las instrucciones con el kernel
+* @brief Crea un hilo que maneja las instrucciones con el kernel
+*/
+void manejar_instrucciones_kernel();
+
+/**
 * @fn    Hilo que maneja las instrucciones con el kernel
 * @brief En un hilo distinto recibe los paquetes del kernel y según el codigo de operación ejecuta una instrucción
 */
 void *thread_instrucciones_kernel(void *);
 
 /**
-* @fn    Maneja las instrucciones con el kernel
-* @brief Crea un hilo que maneja las instrucciones con el kernel
+* @fn    Maneja las instrucciones con la CPU
+* @brief Crea un hilo que maneja las instrucciones con la CPU
 */
-void manejar_instrucciones_kernel();
+void manejar_instrucciones_cpu();
+
+/**
+* @fn    Hilo que maneja las instrucciones con la CPU
+* @brief En un hilo distinto recibe los paquetes de la CPU y según el codigo de operación ejecuta una instrucción
+*/
+void *thread_instrucciones_cpu(void *);
 
 /**
 * @fn    Ejecuta la instrucción MEMORY_PROCESS_CREATE recibida del kernel
@@ -32,16 +44,22 @@ void instruccion_process_create(payload_t* payload);
 void instruccion_process_terminate(payload_t* payload);
 
 /**
-* @fn    Ejecuta la instrucción MEMORY_PAGE_TABLE_ACCESS recibida del kernel
+* @fn    Ejecuta la instrucción MEMORY_PAGE_TABLE_ACCESS recibida de la cpu
 * @brief Accede a la tabla de paginas consultada
 */
 void instruccion_pageTable_access(payload_t* payload);
 
 /**
-* @fn    Ejecuta la instrucción MEMORY_PROCESS_RESIZE recibida del kernel
+* @fn    Ejecuta la instrucción MEMORY_PROCESS_RESIZE recibida de la cpu
 * @brief Ajusta la cantidad de paginas asignadas a un proceso
 */
 void instruccion_process_resize(payload_t* payload);
+
+/**
+* @fn    Ejecuta la instrucción MEMORY_USER_SPACE_ACCESS recibida de la cpu o interfaces
+* @brief Accede al espacio de usuario
+*/
+void instruccion_userspace_access(payload_t* payload, int fd_conexion);
 
 /**
 * @fn    Lee un archivo de pseudocodigo

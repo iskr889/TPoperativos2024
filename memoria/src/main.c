@@ -190,7 +190,7 @@ bool asignar_paginas(Proceso_t* proceso, uint32_t cant_paginas) {
         }
     }
 
-    return false;
+    return false; // OUT OF MEMORY
 }
 
 int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina) {
