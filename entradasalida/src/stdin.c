@@ -1,8 +1,3 @@
-#include "../../utils/src/cliente.h"
-#include "../../utils/src/utils.h"
-#include "../../utils/src/serializacion.h"
-#include "main.h"
-
 void interfaz_stdin (String nombre){
     
     int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, STDIN_CON_KERNEL, extra_logger);
@@ -17,19 +12,48 @@ void interfaz_stdin (String nombre){
     close(conexion_kernel);
 }
 
-void io_stdin_read(){
+char *leer_texto(char *texto){
+    
+
+    return texto;
+}
+
+void io_stdin_read(int fd_memoria, int *direcciones, int cant_caracteres{
     
     // leo el texto
-    char *texto = readline(">>Ingrese texto: ");
+    char *texto;
 
-    if(texto == NULL){
-        log_info(extra_logger, "No se ingreso ningun texto");
-        return;
+    while(1){
+        texto = readline(">>Ingrese texto: ");
+
+        if(texto == NULL){
+            log_info(extra_logger, "No se ingreso ningun texto");
+        }
+        if else(strlen(texto) < cant_caracteres){
+            log_info(extra_logger, "Ingrese un texto mas largo, cantidad minima  de caracteres: %i", cant_caracteres);
+        }
+        else
+            break;
     }
+    
+    // primero las direcciones y luego el texto
+    
+    // tamaño = longitud + direcciones + texto
 
-    // agrego el texto, falta agregar las direcciones
-    paquete_t *payload = payload_create(strlen(texto));
-    payload_add(payload, texto, strlen(texto));
+    size_t longitud = sizeof(vector) / sizeof(vector[0]);
+    
+    int tamanio = sizeof(int) + longitud * sizeof(int) + cant_caracteres;
+    
+    payload_t *payload = payload_create(tamanio);
+    
+    payload_add(payload, &longitud, sizeof(int));
+
+    for(int i = 0; i < longitud; i++){
+        payload_add(payload, &direcciones[i], sizeof(int));
+    }
+    
+    payload_add(payload, texto, cant_caracteres);
+    
     paquete_t *paquete = crear_paquete(IO_STDIN_READ, payload);
     
     // lo envio a memoria
@@ -52,13 +76,31 @@ void stdin_procesar_instrucciones(int fd_kernel, int fd_memoria){
         return;
     }
 
-    // recibe de kernel direccines de memoria fisica donde guardar las cosas
-    char *direccion;
+    // recibe de kernel una o varias direcciones
+    int cant_direcciones;
     
     // puede ser una o mas direcciones
-    payload_read(paquete->payload);
+    payload_read(paquete->payload, &cant_direcciones, sizeof(int));
+    if(cant_direcciones <= 0){
+        log_error(extra_logger, "Cantidad de direcciones invalida");
+        exit(EXIT_FAILURE);
+    }
 
+    // creo el vector
+    int *vector = (int *)malloc(cant_direcciones * sizeof(int));
 
+    for(int i = 0; i < cant_direcciones; i ++){
+        payload_read(paquete->payload, &vector[i], sizeof(int));
+    }
+
+    // cantidad de caracteres 
+    int cant_caracteres;
+    payload_read(paquete->payload, &cant_caracteres, sizeof(int));
+    if(cant_caracteres <= 0){
+        log_error(extra_logger, "Cantidad de caracteres recibida no valida");
+    }
     // ejecuto la instruccion
-    io_strin_read(direccion);
+    io_stdin_read(fd_memoria, vector, cant_caracteres);
+
+    free(vector);
 }
