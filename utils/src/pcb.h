@@ -8,7 +8,7 @@ typedef enum {
     BLOCKED,
     EXIT
 } estados_t;
-/*
+
 typedef struct {
     uint32_t pc;
     uint8_t ax;
@@ -22,7 +22,7 @@ typedef struct {
     uint32_t si;
     uint32_t di;
 } cpu_reg_t;
-*/
+
 
 typedef struct {
     uint16_t pid;        // ID del proceso
