@@ -2,7 +2,6 @@
 #define MANEJARINSTRUCCIONES_H_
 
 #include "main.h"
-#include "../../utils/src/serializacion.h"
 
 #define CARPETA_PSEUDOCODIGO "pseudocodigo/" // Carpeta donde estan los archivos de pseudocodigo
 #define BUFF_SIZE 256 // Tamaño del buffer que lee una linea de pseudocodigo a la vez

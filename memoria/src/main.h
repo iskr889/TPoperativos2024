@@ -3,6 +3,7 @@
 
 #include "../../utils/src/servidor.h"
 #include "../../utils/src/utils.h"
+#include "../../utils/src/serializacion.h"
 #include <commons/bitarray.h>
 
 typedef struct {

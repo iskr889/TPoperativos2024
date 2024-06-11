@@ -47,6 +47,8 @@ int main(int argc, char* argv[]) {
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(memoria_server);
 
+    manejar_instrucciones_cpu();
+
     manejar_instrucciones_kernel();
 
     liberar_memoria();
@@ -202,7 +204,7 @@ int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina) {
     return pagina->marco;
 }
 
-bool resize_process(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
+bool resize_proceso(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
 
     uint32_t cant_paginas = list_size(proceso->paginas);
 

@@ -3,7 +3,7 @@
 extern t_log* logger;
 extern t_log* extra_logger;
 extern t_dictionary *procesos;
-extern t_memoria_config *memoria_config;;
+extern t_memoria_config *memoria_config;
 
 extern int conexion_kernel, conexion_cpu;
 
@@ -17,7 +17,7 @@ void manejar_instrucciones_kernel() {
         exit(EXIT_FAILURE);
     }
 
-    pthread_detach(hilo_instrucciones_kernel);
+    pthread_join(hilo_instrucciones_kernel, NULL);
 }
 
 void *thread_instrucciones_kernel(void *arg) {
