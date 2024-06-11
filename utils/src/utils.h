@@ -61,6 +61,72 @@ typedef enum {
     OUT_OF_MEMORY
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
+
+//A partir de aca copie lo que estaba en el codigo de instrucciones. Hay que revisar.
+typedef enum {
+    IO_GEN_SLEEP,
+    IO_STDIN_READ,
+    IO_STDOUT_WRITE,
+    IO_FS_CREATE,
+    IO_FS_DELETE,
+    IO_FS_TRUNCATE,
+    IO_FS_WRITE,
+    IO_FS_READ,
+    IO_ERROR
+} instrucciones_t; // Tipo de conexión especifico entre modulos
+
+typedef enum {
+    I_SET,
+    I_SUM,
+    I_SUB,
+    I_JNZ,
+    I_IO_GEN_SLEEP,
+    I_MOV_IN,
+    I_MOV_OUT,
+    I_RESIZE,
+    I_COPY_STRING,
+    I_WAIT,
+    I_SIGNAL,
+    I_IO_STDIN_READ,
+    I_IO_STDOUT_WRITE,
+    I_IO_FS_CREATE,
+    I_IO_FS_DELETE,
+    I_IO_FS_TRUNCATE,
+    I_IO_FS_WRITE,
+    I_IO_FS_READ,
+    I_EXIT,
+} tipo_instruccion_t;
+
+typedef enum {
+    AX,
+    BX,
+    CX,
+    DX,
+    EAX,
+    EBX,
+    ECX,
+    EDX,
+    PC
+} registro_t;
+
+typedef struct {
+    tipo_instruccion_t tipo;
+    registro_t registro1;
+    registro_t registro2;
+    uint32_t valor;
+    char *interfaz;
+    char *recurso;
+    char *nombreArchivo;
+} instruccion_t;
+
+typedef enum{
+    FINALIZADO=1,
+    IO,
+    DESALOJO_QUANTUM,
+    WAIT,
+    SIGNAL,
+}interrupciones_t;
+
 /**
 * @fn    Inicia un logger
 * @brief Crea un logger y devuelve un puntero a t_log para ser utilizado
