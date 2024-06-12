@@ -1,40 +1,13 @@
 #include "manejar_instrucciones.h"
-#include "main.h"
-#include <commons/collections/list.h>
 
-extern int conexion_kernel;
+extern t_log* logger;
+extern t_log* extra_logger;
+extern t_dictionary *procesos;
+extern t_memoria_config *memoria_config;
 
-void *thread_instrucciones_kernel(void *arg) {
+extern int conexion_kernel, conexion_cpu;
 
-    while(1) {
-
-        paquete_t *paquete = recibir_paquete(conexion_kernel);
-
-        if(paquete == NULL)
-            exit(EXIT_FAILURE);
-
-        switch (paquete->operacion) {
-            case MEMORY_PROCESS_CREATE:
-                puts("Instrucción: MEMORY_PROCESS_CREATE");
-                instruccion_process_create(paquete->payload);
-                break;
-            case MEMORY_PROCESS_TERM:
-                puts("Instrucción: MEMORY_PROCESS_TERM");
-                break;
-            case MEMORY_PAGE_TABLE_ACCESS:
-                puts("Instrucción: MEMORY_PAGE_TABLE");
-                break;
-            case MEMORY_PROCESS_RESIZE:
-                puts("Instrucción: MEMORY_PROCESS_RESIZE");
-                break;
-            default:
-                puts("Error al tratar de identificar el codigo de operación del kernel!\n");
-                return arg;
-        }
-    }
-
-    return arg;
-}
+static Proceso_t *proceso_get(uint16_t pid);
 
 void manejar_instrucciones_kernel() {
     pthread_t hilo_instrucciones_kernel;
@@ -47,6 +20,84 @@ void manejar_instrucciones_kernel() {
     pthread_join(hilo_instrucciones_kernel, NULL);
 }
 
+void *thread_instrucciones_kernel(void *arg) {
+
+    while(1) {
+
+        paquete_t *paquete = recibir_paquete(conexion_kernel);
+
+        TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
+
+        if(paquete == NULL)
+            exit(EXIT_FAILURE);
+
+        switch (paquete->operacion) {
+            case MEMORY_PROCESS_CREATE:
+                instruccion_process_create(paquete->payload);
+                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_CREATE");
+                break;
+            case MEMORY_PROCESS_TERM:
+                instruccion_process_terminate(paquete->payload);
+                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_TERM");
+                break;
+            default:
+                log_error(extra_logger, "Error al tratar de identificar el codigo de operación del Kernel");
+                break;
+        }
+
+        payload_destroy(paquete->payload);
+        liberar_paquete(paquete);
+    }
+
+    return arg;
+}
+
+void manejar_instrucciones_cpu() {
+    pthread_t hilo_instrucciones_cpu;
+
+    if (pthread_create(&hilo_instrucciones_cpu, NULL, thread_instrucciones_cpu, NULL) != 0) {
+        perror("No se pudo crear el hilo de instrucciones cpu");
+        exit(EXIT_FAILURE);
+    }
+
+    pthread_detach(hilo_instrucciones_cpu);
+}
+
+void *thread_instrucciones_cpu(void *arg) {
+
+    while(1) {
+
+        paquete_t *paquete = recibir_paquete(conexion_cpu);
+
+        TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
+
+        if(paquete == NULL)
+            exit(EXIT_FAILURE);
+
+        switch (paquete->operacion) {
+            case MEMORY_PAGE_TABLE_ACCESS:
+                instruccion_pageTable_access(paquete->payload);
+                log_debug(extra_logger, "Ejecutando: MEMORY_PAGE_TABLE_ACCESS");
+                break;
+            case MEMORY_PROCESS_RESIZE:
+                instruccion_process_resize(paquete->payload);
+                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_RESIZE");
+                break;
+            case MEMORY_USER_SPACE_ACCESS:
+                instruccion_userspace_access(paquete->payload, conexion_cpu);
+                log_debug(extra_logger, "Ejecutando: MEMORY_USER_SPACE_ACCESS");
+                break;
+            default:
+                log_error(extra_logger, "Error al tratar de identificar el codigo de operación de la CPU");
+                break;
+        }
+
+        payload_destroy(paquete->payload);
+        liberar_paquete(paquete);
+    }
+
+    return arg;
+}
 
 void instruccion_process_create(payload_t* payload) {
 
@@ -58,11 +109,9 @@ void instruccion_process_create(payload_t* payload) {
 
     String path = payload_read_string(payload);
 
-    strcat(pseudocodigo, path);
+    strcat(pseudocodigo, path); // Concateno el directorio de la carpeta de pseudocodigo
 
     free(path);
-
-    // Proceso_t* proceso = crear_proceso(pid, 1);
 
     t_list *instrucciones = leer_pseudocodigo(pseudocodigo);
 
@@ -71,9 +120,140 @@ void instruccion_process_create(payload_t* payload) {
         return;
     }
 
+    crear_proceso(pid, instrucciones);
+
     imprimir_instrucciones(instrucciones);
 
-    list_destroy_and_destroy_elements(instrucciones, free);
+    log_debug(extra_logger, "CREAR PROCESO RECIBIDO [PID: %d] PSEUDOCODIGO EN [PATH: %s]", pid, pseudocodigo);
+}
+
+void instruccion_process_terminate(payload_t* payload) {
+
+    uint16_t pid;
+
+    payload_read(payload, &pid, sizeof(uint16_t));
+
+    liberar_proceso(pid);
+}
+
+void instruccion_pageTable_access(payload_t* payload) {
+
+    uint16_t pid;
+    uint32_t numero_pagina;
+
+    payload_read(payload, &pid, sizeof(uint16_t));
+    payload_read(payload, &numero_pagina, sizeof(uint32_t));
+
+    Proceso_t* proceso = proceso_get(pid);
+
+    if (proceso == NULL) {
+        payload_t *payload = payload_create(0);
+        paquete_t *respuesta = crear_paquete(MEMORY_INVALID_PID, payload);
+        enviar_paquete(conexion_cpu, respuesta);
+        payload_destroy(payload);
+        liberar_paquete(respuesta);
+        return;
+    }
+    
+    int marco = acceder_marco(proceso, numero_pagina);
+
+    payload_t *payload_marco = payload_create(sizeof(int));
+    payload_add(payload_marco, &marco, sizeof(int));
+
+    int cod_op = marco < 0 ? MEMORY_INVALID_FRAME : MEMORY_RESPONSE_OK;
+
+    paquete_t *respuesta = crear_paquete(cod_op, payload_marco);
+    enviar_paquete(conexion_cpu, respuesta);
+
+    payload_destroy(payload_marco);
+    liberar_paquete(respuesta);
+}
+
+void instruccion_process_resize(payload_t* payload) {
+
+    uint16_t pid;
+    uint32_t new_size;
+
+    payload_read(payload, &pid, sizeof(uint16_t));
+    payload_read(payload, &new_size, sizeof(uint32_t));
+
+    Proceso_t* proceso = proceso_get(pid);
+
+    if (proceso == NULL) {
+        payload_t *payload = payload_create(0);
+        paquete_t *respuesta = crear_paquete(MEMORY_INVALID_PID, payload);
+        enviar_paquete(conexion_cpu, respuesta);
+        payload_destroy(payload);
+        liberar_paquete(respuesta);
+        return;
+    }
+
+    int cod_op = resize_proceso(proceso, new_size) ? MEMORY_RESPONSE_OK : OUT_OF_MEMORY;
+    paquete_t *respuesta = crear_paquete(cod_op, NULL);
+    enviar_paquete(conexion_cpu, respuesta); // Envia paquete vacio con cod_op OK o Out of memory
+    liberar_paquete(respuesta);
+}
+
+void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
+
+    uint16_t pid;
+    char operacion;
+    uint32_t address;
+    uint32_t size;
+
+    payload_read(payload, &pid, sizeof(uint16_t));
+    payload_read(payload, &operacion, sizeof(char));
+    payload_read(payload, &address, sizeof(uint32_t));
+    payload_read(payload, &size, sizeof(uint32_t));
+
+    Proceso_t* proceso = proceso_get(pid);
+
+    if (proceso == NULL) {
+        payload_t *payload = payload_create(0);
+        paquete_t *respuesta = crear_paquete(MEMORY_INVALID_PID, payload);
+        enviar_paquete(fd_conexion, respuesta);
+        payload_destroy(payload);
+        liberar_paquete(respuesta);
+        return;
+    }
+
+    payload_t *payload_respuesta = payload_create(size);
+
+    paquete_t *respuesta;
+
+    int cod_op;
+
+    char *buffer_data = malloc(size);
+
+    if (operacion == 'R') {
+        
+        bool resultado = leer_memoria(address, buffer_data, size);
+
+        cod_op = resultado ? MEMORY_RESPONSE_OK : MEMORY_INVALID_READ;
+
+        payload_add(payload_respuesta, buffer_data, size);
+
+    } else if (operacion == 'W') {
+
+        payload_read(payload, buffer_data, size);
+
+        bool resultado = escribir_memoria(address, buffer_data, size);
+
+        cod_op = resultado ? MEMORY_RESPONSE_OK : MEMORY_INVALID_WRITE;
+
+        char ok[] = "OK";
+        payload_add_string(payload_respuesta, ok);
+        
+    } else {
+        cod_op = MEMORY_INVALID_OPERATION;
+    }
+
+    respuesta = crear_paquete(cod_op, payload_respuesta);
+    enviar_paquete(fd_conexion, respuesta);
+
+    payload_destroy(payload_respuesta);
+    liberar_paquete(respuesta);
+    free(buffer_data);
 }
 
 t_list *leer_pseudocodigo(String filename) {
@@ -124,4 +304,10 @@ void imprimir_instruccion(String instruccion) {
 void imprimir_instruccion_numero(t_list* instrucciones, uint32_t numero_de_linea) {
     printf("CPU pidio Linea %d: ", numero_de_linea);
     imprimir_instruccion(list_get(instrucciones, numero_de_linea));
+}
+
+Proceso_t *proceso_get(uint16_t pid) {
+    char str_pid[8];
+    snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
+    return dictionary_get(procesos, str_pid);
 }

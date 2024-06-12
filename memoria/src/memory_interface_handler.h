@@ -39,4 +39,10 @@ int handshake_con_interfaz(int socket_interfaz);
 */
 int manejar_interfaz(conexion_t handshake, int socket_interfaz);
 
+void manejar_instrucciones_stdin(int socket_stdin);
+
+void manejar_instrucciones_stdout(int socket_stdout);
+
+void manejar_instrucciones_dialfs(int socket_dialfs);
+
 #endif

@@ -8,7 +8,7 @@ t_log *extra_logger;
 int main(int argc, char *argv[]) {
 
     if (argc != 3) {
-        log_error(extra_logger, "Cantidad de argumentos del programa incorrectos!");
+        fprintf(stderr, "Cantidad de argumentos del programa incorrectos!");
         return ERROR;
     }
 

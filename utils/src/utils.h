@@ -53,12 +53,18 @@ typedef enum {
 } instruccionesIO_t; // Codigo de operación para cada instrucción de IO
 
 typedef enum {
-    MEMORY_PROCESS_CREATE = 200,
-    MEMORY_PROCESS_TERM,
-    MEMORY_PAGE_TABLE_ACCESS,
-    MEMORY_PROCESS_RESIZE,
-    MEMORY_USER_SPACE_ACCESS,
-    OUT_OF_MEMORY
+    MEMORY_PROCESS_CREATE = 200,    // Instrucción
+    MEMORY_PROCESS_TERM,            // Instrucción
+    MEMORY_PAGE_TABLE_ACCESS,       // Instrucción
+    MEMORY_PROCESS_RESIZE,          // Instrucción
+    MEMORY_USER_SPACE_ACCESS,       // Instrucción
+    MEMORY_RESPONSE_OK,             // Respuesta OK general
+    MEMORY_INVALID_FRAME,           // Devuelve en caso de querer leer un marco invalido
+    MEMORY_INVALID_PID,             // Devuelve en caso de recibir un pid invalido
+    MEMORY_INVALID_OPERATION,       // Devuelve en caso de recibir una operación invalidad (distinta de Write o Read)
+    MEMORY_INVALID_READ,            // Devuelve en caso de fallar la lectura del User Space
+    MEMORY_INVALID_WRITE,           // Devuelve en caso de fallar la escritura del User Space
+    OUT_OF_MEMORY                   // Devuelve en caso de quedarse sin memoria del User Space
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
 typedef enum {
