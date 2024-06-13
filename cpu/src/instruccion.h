@@ -2,18 +2,19 @@
 #define I_CPU_
 #include "utils_cpu.h"
 
-
 typedef enum {
     SUMA,
     RESTA,
     ASIGNACION
 } operacion_t;
-
-
+int getTipoRegistro(char *tipo);
+int obtener_tipo_instruccion(const char* tipo_str);
+char* pedir_instruccion(uint32_t pc);
+char** split_string(char* str);
 void actualizar_registro(cpu_reg_t* registros, registro_t registro, uint32_t valor, operacion_t operacion);
-instruccion_t* fetch(pcb_t* pcb);
-void decode(instruccion_t* instruccion, pcb_t* pcb);
-void execute(instruccion_t* instruccion, pcb_t* pcb);
+char* fetch(pcb_t* pcb);
+void decode(char* instruccion, pcb_t* pcb);
+void execute(char* instruccion, pcb_t* pcb);
 void* obtener_registro(cpu_reg_t* registros, registro_t registro);
 extern int socket_memoria;
 

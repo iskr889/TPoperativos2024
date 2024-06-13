@@ -35,14 +35,14 @@ void actualizar_registro(cpu_reg_t* registros, registro_t registro, uint32_t val
     }
 }
 
-instruccion_t* fetch(pcb_t* pcb) {
+char* fetch(pcb_t* pcb) {
     uint32_t pc = pcb->registros.pc;
-    instruccion_t* instruccion = pedir_instruccion(pc);
+    char* instruccion = pedir_instruccion(pc);
     pcb->registros.pc += 1;
     return instruccion;
 }
 
-instruccion_t* pedir_instruccion(uint32_t pc) {
+char* pedir_instruccion(uint32_t pc) {
     enviar_pc(pc);
     return recibir_instruccion(socket_memoria);
 }
@@ -51,8 +51,9 @@ void enviar_pc(uint32_t pc) {
   send(socket_memoria, &pc, sizeof(uint32_t), 0);
 }
 
-void decode(instruccion_t* instruccion, pcb_t* pcb) {
-    switch (instruccion->tipo) {
+void decode(char* instruccion, pcb_t* pcb) {
+    char **tokens = split_string(instruccion);
+    switch (obtener_tipo_instruccion(tokens[0])) {
         case I_SET:
         case I_SUM:
         case I_SUB:
@@ -83,58 +84,62 @@ void decode(instruccion_t* instruccion, pcb_t* pcb) {
             break;
 
         default:
-            fprintf(stderr, "[ERROR] Instrucción no reconocida en decode: %d\n", instruccion->tipo);
+            fprintf(stderr, "[ERROR] Instrucción no reconocida en decode\n");
             break;
     }
+    free(tokens);
 }
 
 
-void execute(instruccion_t* instruccion, pcb_t* pcb) {
-    switch (instruccion->tipo) {
+void execute(char* instruccion, pcb_t* pcb) {
+    char **tokens = split_string(instruccion);
+    switch (obtener_tipo_instruccion(tokens[0])) {
         case I_SET:
-            actualizar_registro(&pcb->registros, instruccion->registro1, instruccion->valor, ASIGNACION);
-            break;
-
+            {
+                actualizar_registro(&pcb->registros, getTipoRegistro(tokens[1]), atoi(tokens[2]), ASIGNACION);
+            }
+                break;
         case I_SUM:
             {
-                void* reg2 = obtener_registro(&pcb->registros, instruccion->registro2);
+                void* reg2 = obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
                 if (reg2) {
-                    uint32_t valor2 = (instruccion->registro2 <= DX) ? *((uint8_t*)reg2) : *((uint32_t*)reg2);
-                    actualizar_registro(&pcb->registros, instruccion->registro1, valor2, SUMA);
+                    uint32_t valor2 = (getTipoRegistro(tokens[2]) <= DX) ? *((uint8_t*)reg2) : *((uint32_t*)reg2);
+                    actualizar_registro(&pcb->registros, getTipoRegistro(tokens[1]), valor2, SUMA);
                 } else {
-                    fprintf(stderr, "[ERROR] Registro no válido: %d\n", instruccion->registro2);
+                    fprintf(stderr, "[ERROR] Registro no válido: %d\n", getTipoRegistro(tokens[2]));
                 }
             }
             break;
 
         case I_SUB:
             {
-                void* reg2 = obtener_registro(&pcb->registros, instruccion->registro2);
+                void* reg2 = obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
                 if (reg2) {
-                    uint32_t valor2 = (instruccion->registro2 <= DX) ? *((uint8_t*)reg2) : *((uint32_t*)reg2);
-                    actualizar_registro(&pcb->registros, instruccion->registro1, valor2, RESTA);
+                    uint32_t valor2 = (getTipoRegistro(tokens[2]) <= DX) ? *((uint8_t*)reg2) : *((uint32_t*)reg2);
+                    actualizar_registro(&pcb->registros, getTipoRegistro(tokens[1]), valor2, RESTA);
                 } else {
-                    fprintf(stderr, "[ERROR] Registro no válido: %d\n", instruccion->registro2);
+                    fprintf(stderr, "[ERROR] Registro no válido: %d\n", getTipoRegistro(tokens[2]));
                 }
             }
             break;
 
         case I_JNZ:
             {
-                void* reg1 = obtener_registro(&pcb->registros, instruccion->registro1);
+                void* reg1 = obtener_registro(&pcb->registros, getTipoRegistro(tokens[1]));
                 if (reg1) {
-                    uint32_t valor1 = (instruccion->registro1 <= DX) ? *((uint8_t*)reg1) : *((uint32_t*)reg1);
+                    uint32_t valor1 = (getTipoRegistro(tokens[1]) <= DX) ? *((uint8_t*)reg1) : *((uint32_t*)reg1);
                     if (valor1 != 0) {
-                        pcb->registros.pc = instruccion->valor;
+                        pcb->registros.pc = atoi(tokens[2]);
                     }
                 } else {
-                    fprintf(stderr, "[ERROR] Registro no válido: %d\n", instruccion->registro1);
+                    fprintf(stderr, "[ERROR] Registro no válido: %d\n", getTipoRegistro(tokens[1]));
                 }
             }
             break;
 
         case I_IO_GEN_SLEEP:
-            usleep(instruccion->valor * 1000);
+            //enviar_io_gen_sleep(kernel_socket, instruccion->valor);
+            usleep(atoi(tokens[1]) * 1000);
             break;
 
         case I_MOV_IN:
@@ -236,11 +241,22 @@ void execute(instruccion_t* instruccion, pcb_t* pcb) {
 
         default:
             // Manejo de instrucciones no reconocidas
-            fprintf(stderr, "[ERROR] Instrucción no reconocida: %d\n", instruccion->tipo);
+            fprintf(stderr, "[ERROR] Instrucción no reconocida\n");
             break;
     }
 }
 
+int getTipoRegistro(char *tipo) {
+    if (strcmp(tipo, "AX") == 0) return AX;
+    if (strcmp(tipo, "BX") == 0) return BX;
+    if (strcmp(tipo, "CX") == 0) return CX;
+    if (strcmp(tipo, "DX") == 0) return DX;
+    if (strcmp(tipo, "EAX") == 0) return EAX;
+    if (strcmp(tipo, "EBX") == 0) return EBX;
+    if (strcmp(tipo, "ECX") == 0) return ECX;
+    if (strcmp(tipo, "EDX") == 0) return EDX;
+    return -1;
+}
 
 void* obtener_registro(cpu_reg_t* registros, registro_t registro) {
     switch (registro) {
@@ -256,7 +272,60 @@ void* obtener_registro(cpu_reg_t* registros, registro_t registro) {
     }
 }
 
+int obtener_tipo_instruccion(const char* tipo_str) {
+    if (strcmp(tipo_str, "SET") == 0) return I_SET;
+    if (strcmp(tipo_str, "SUM") == 0) return I_SUM;
+    if (strcmp(tipo_str, "SUB") == 0) return I_SUB;
+    if (strcmp(tipo_str, "JNZ") == 0) return I_JNZ;
+    if (strcmp(tipo_str, "MOV_IN") == 0) return I_MOV_IN;
+    if (strcmp(tipo_str, "MOV_OUT") == 0) return I_MOV_OUT;
+    if (strcmp(tipo_str, "RESIZE") == 0) return I_RESIZE;
+    if (strcmp(tipo_str, "COPY_STRING") == 0) return I_COPY_STRING;
+    if (strcmp(tipo_str, "WAIT") == 0) return I_WAIT;
+    if (strcmp(tipo_str, "SIGNAL") == 0) return I_SIGNAL;
+    if (strcmp(tipo_str, "IO_GEN_SLEEP") == 0) return I_IO_GEN_SLEEP;
+    if (strcmp(tipo_str, "IO_STDIN_READ") == 0) return I_IO_STDIN_READ;
+    if (strcmp(tipo_str, "IO_STDOUT_WRITE") == 0) return I_IO_STDOUT_WRITE;
+    if (strcmp(tipo_str, "IO_FS_CREATE") == 0) return I_IO_FS_CREATE;
+    if (strcmp(tipo_str, "IO_FS_DELETE") == 0) return I_IO_FS_DELETE;
+    if (strcmp(tipo_str, "IO_FS_TRUNCATE") == 0) return I_IO_FS_TRUNCATE;
+    if (strcmp(tipo_str, "IO_FS_WRITE") == 0) return I_IO_FS_WRITE;
+    if (strcmp(tipo_str, "IO_FS_READ") == 0) return I_IO_FS_READ;
+    if (strcmp(tipo_str, "EXIT") == 0) return I_EXIT;
+    return -1;
+}
 
+char** split_string(char* str) {
+    int spaces = 0;
+    char* temp = str;
+
+    while (*temp) {
+        if (*temp == ' ') spaces++;
+        temp++;
+    }
+
+    char** result = malloc((spaces + 2) * sizeof(char*));
+    if (!result) {
+        fprintf(stderr, "Error en la asignación de memoria.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    char* str_copy = strdup(str);
+    if (!str_copy) {
+        fprintf(stderr, "Error en la asignación de memoria.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    int idx = 0;
+    char* token = strtok(str_copy, " ");
+    while (token) {
+        result[idx++] = token;
+        token = strtok(NULL, " ");
+    }
+    result[idx] = NULL;
+
+    return result;
+}
 
 // uint32_t obtener_valor_memoria(uint32_t direccion) {
 //     // Implementa la lógica para obtener el valor desde la memoria

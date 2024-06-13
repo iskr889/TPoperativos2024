@@ -4,15 +4,33 @@
 #include "utils.h"
 #include "serializacion.h"
 
+payload_t *instruccion_serializar(char *instruccion);
+char *instruccion_deserializar(payload_t *payload);
+void enviar_instruccion(int socket, char *instruccion);
+char *recibir_instruccion(int socket);
 
-instruccion_t* pedir_instruccion(uint32_t pc);
 void enviar_pc(uint32_t pc);
-void* serializar_instruccion(instruccion_t* instruccion, int* size);
-payload_t *instruccion_serializar(instruccion_t *instruccion);
-instruccion_t *instruccion_deserializar(payload_t *payload);
-void enviar_instruccion(int socket, instruccion_t *instruccion);
-instruccion_t *recibir_instruccion(int socket);
-instruccion_t *crear_instruccion(tipo_instruccion_t tipo, registro_t reg1, registro_t reg2, uint32_t valor, const char* interfaz, const char* recurso, const char* nombreArchivo);
-void imprimir_instruccion(instruccion_t *instruccion);
+
+typedef enum {
+    I_SET,
+    I_SUM,
+    I_SUB,
+    I_JNZ,
+    I_IO_GEN_SLEEP,
+    I_MOV_IN,
+    I_MOV_OUT,
+    I_RESIZE,
+    I_COPY_STRING,
+    I_WAIT,
+    I_SIGNAL,
+    I_IO_STDIN_READ,
+    I_IO_STDOUT_WRITE,
+    I_IO_FS_CREATE,
+    I_IO_FS_DELETE,
+    I_IO_FS_TRUNCATE,
+    I_IO_FS_WRITE,
+    I_IO_FS_READ,
+    I_EXIT,
+} tipo_instruccion_t;
 
 #endif

@@ -67,6 +67,18 @@ typedef enum {
     OUT_OF_MEMORY                   // Devuelve en caso de quedarse sin memoria del User Space
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
+typedef enum {
+    AX,
+    BX,
+    CX,
+    DX,
+    EAX,
+    EBX,
+    ECX,
+    EDX,
+    PC
+} registro_t;
+
 /**
 * @fn    Inicia un logger
 * @brief Crea un logger y devuelve un puntero a t_log para ser utilizado

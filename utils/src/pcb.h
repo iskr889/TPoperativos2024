@@ -1,3 +1,6 @@
+#ifndef PCB_H_
+#define PCB_H_
+
 #include "utils.h"
 #include "serializacion.h"
 
@@ -41,3 +44,5 @@ void imprimir_pcb(pcb_t* pcb);
 void send_pcb(int socket, pcb_t *pcb);
 
 pcb_t *receive_pcb(int socket);
+
+#endif
