@@ -36,21 +36,6 @@ t_interfaz_config* load_io_config(String path);
 */
 void io_config_destroy();
 
-/*** INSTRUCCIONES **/
-void io_gen_sleep(int unidades_trabajo);
-
-/*** FUNCIONES AUXILIARES ***/
 void enviar_nombre_interfaz(String nombre, int socket);
-
-void generic_procesar_instrucciones(int socket);
-
-/*** INTERFACES **/
-void interfaz_generica(String nombre);
-
-void interfaz_stdin(String nombre);
-
-void interfaz_stdout(String nombre);
-
-void interfaz_dialFS(String nombre);
 
 #endif

@@ -1,4 +1,10 @@
-void interfaz_stdin (String nombre){
+#include "stdin.h"
+
+extern t_interfaz_config* interfaz_config;
+extern t_log *logger;
+extern t_log *extra_logger;
+
+void interfaz_stdin (String nombre) {
     
     int conexion_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, STDIN_CON_KERNEL, extra_logger);
     
@@ -13,7 +19,7 @@ void interfaz_stdin (String nombre){
     close(conexion_memoria);
 }
 
-void io_stdin_read(int cant_caracteres, char **texto){
+void io_stdin_read(int cant_caracteres, char **texto) {
 
     while(1){
         
@@ -30,7 +36,7 @@ void io_stdin_read(int cant_caracteres, char **texto){
     }
 }
 
-void stdin_procesar_instrucciones(int fd_kernel, int fd_memoria){
+void stdin_procesar_instrucciones(int fd_kernel, int fd_memoria) {
     
     char *texto;
     paquete_t *paquete = recibir_paquete(fd_kernel);
@@ -113,7 +119,7 @@ void stdin_procesar_instrucciones(int fd_kernel, int fd_memoria){
 }
 
 // ** MEMORIA ** 
-void read_io_stdin(int fd_io){
+void read_io_stdin(int fd_io) {
     
     paquete_t *paquete = recibir_paquete(fd_io);
 
