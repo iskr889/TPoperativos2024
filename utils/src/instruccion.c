@@ -4,10 +4,8 @@ payload_t *instruccion_serializar(char *instruccion) {
     uint32_t instruccion_length = strlen(instruccion) + 1;
     uint32_t total_size =  sizeof(uint32_t) + instruccion_length;
     payload_t *payload = payload_create(total_size);
-
     payload_add(payload, &instruccion_length, sizeof(uint32_t));
     payload_add(payload, instruccion, instruccion_length);
-
     return payload;
 }
 

@@ -1,5 +1,7 @@
 #include "instruccion.h"
 
+extern int conexion_memoria;
+
 void actualizar_registro(cpu_reg_t* registros, registro_t registro, uint32_t valor, operacion_t operacion) {
     void* reg = obtener_registro(registros, registro);
     if (reg) {
@@ -44,11 +46,11 @@ char* fetch(pcb_t* pcb) {
 
 char* pedir_instruccion(uint32_t pc) {
     enviar_pc(pc);
-    return recibir_instruccion(socket_memoria);
+    return recibir_instruccion(conexion_memoria);
 }
 
 void enviar_pc(uint32_t pc) {
-  send(socket_memoria, &pc, sizeof(uint32_t), 0);
+    send(conexion_memoria, &pc, sizeof(uint32_t), 0);
 }
 
 void decode(char* instruccion, pcb_t* pcb) {
@@ -209,32 +211,32 @@ void execute(char* instruccion, pcb_t* pcb) {
             break;
 
         case I_IO_FS_CREATE:
-        printf("I_IO_FS_CREATE\n");
+            printf("I_IO_FS_CREATE\n");
             // Lógica de IO_FS_CREATE
             break;
 
         case I_IO_FS_DELETE:
-        printf("I_IO_FS_DELETE\n");
+            printf("I_IO_FS_DELETE\n");
             // Lógica de IO_FS_DELETE
             break;
 
         case I_IO_FS_TRUNCATE:
-        printf("I_IO_FS_TRUNCATE\n");
+            printf("I_IO_FS_TRUNCATE\n");
             // Lógica de IO_FS_TRUNCATE
             break;
 
         case I_IO_FS_WRITE:
-        printf("I_IO_FS_WRITE\n");
+            printf("I_IO_FS_WRITE\n");
             // Lógica de IO_FS_WRITE
             break;
 
         case I_IO_FS_READ:
-        printf("I_IO_FS_READ\n");
+            printf("I_IO_FS_READ\n");
             // Lógica de IO_FS_READ
             break;
 
         case I_EXIT:
-        printf("I_EXIT\n");
+            printf("I_EXIT\n");
             // Finaliza el proceso
             pcb->estado = EXIT;
             break;
