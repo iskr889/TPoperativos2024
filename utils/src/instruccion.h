@@ -10,6 +10,10 @@ void enviar_instruccion(int socket, char *instruccion);
 char *recibir_instruccion(int socket);
 
 void enviar_pc(uint32_t pc);
+void solicitar_intruccion(int socket, int *data);
+payload_t *serializar_solicitud(int *data);
+int *deserializar_solicitud(payload_t *payload, uint32_t *count);
+int *recibir_solicitud_intruccion(int socket, uint32_t *count);
 
 typedef enum {
     I_SET,

@@ -50,4 +50,6 @@ int enviar_paquete(int socket, paquete_t *paquete);
 // Recibe el paquete del socket indicado
 paquete_t *recibir_paquete(int socket);
 
+void payload_add_int_array(payload_t *payload, int *array, uint32_t count);
+int* payload_read_int_array(payload_t *payload, uint32_t *count);
 #endif

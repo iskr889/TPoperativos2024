@@ -39,18 +39,11 @@ void actualizar_registro(cpu_reg_t* registros, registro_t registro, uint32_t val
 
 char* fetch(pcb_t* pcb) {
     uint32_t pc = pcb->registros.pc;
-    char* instruccion = pedir_instruccion(pc);
+    int data [] = {pc, pcb->pid};
+    solicitar_intruccion(conexion_memoria, data);
+    char* instruccion = recibir_instruccion(conexion_memoria);
     pcb->registros.pc += 1;
     return instruccion;
-}
-
-char* pedir_instruccion(uint32_t pc) {
-    enviar_pc(pc);
-    return recibir_instruccion(conexion_memoria);
-}
-
-void enviar_pc(uint32_t pc) {
-    send(conexion_memoria, &pc, sizeof(uint32_t), 0);
 }
 
 void decode(char* instruccion, pcb_t* pcb) {

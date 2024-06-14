@@ -4,18 +4,13 @@ payload_t *instruccion_serializar(char *instruccion) {
     uint32_t instruccion_length = strlen(instruccion) + 1;
     uint32_t total_size =  sizeof(uint32_t) + instruccion_length;
     payload_t *payload = payload_create(total_size);
-    payload_add(payload, &instruccion_length, sizeof(uint32_t));
-    payload_add(payload, instruccion, instruccion_length);
+    payload_add_string(payload, instruccion);
     return payload;
 }
 
 char *instruccion_deserializar(payload_t *payload) {
     payload->offset = 0;
-    uint32_t length;
-    payload_read(payload, &length, sizeof(uint32_t));
-    char * instruccion = malloc(length);
-    payload_read(payload, instruccion, length);
-    return instruccion;
+    return payload_read_string(payload);
 }
 
 void enviar_instruccion(int socket, char *instruccion) {
@@ -35,4 +30,38 @@ char *recibir_instruccion(int socket) {
     payload_destroy(paquete->payload);
     liberar_paquete(paquete);
     return instruccion;
+}
+
+
+void solicitar_intruccion(int socket, int *data) {
+    payload_t *payload = serializar_solicitud(data);
+    paquete_t *paquete = crear_paquete(2, payload);
+    if(enviar_paquete(socket, paquete) != OK)
+        exit(EXIT_FAILURE);
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+
+
+payload_t *serializar_solicitud(int *data) {
+    uint32_t total_size = sizeof(uint32_t) + 2 * sizeof(int);
+    payload_t *payload = payload_create(total_size);
+    payload_add_int_array(payload, data, 2);
+    return payload;
+}
+
+int *deserializar_solicitud(payload_t *payload, uint32_t *count) {
+    payload->offset = 0;
+    return payload_read_int_array(payload, count);
+}
+
+int *recibir_solicitud_intruccion(int socket, uint32_t *count) {
+    paquete_t *paquete = recibir_paquete(socket);
+    if(paquete == NULL)
+        exit(EXIT_FAILURE);
+    int *data = deserializar_solicitud(paquete->payload, count);
+    payload_destroy(paquete->payload);
+    liberar_paquete(paquete);
+    return data;
 }
