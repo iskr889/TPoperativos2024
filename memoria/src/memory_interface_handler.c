@@ -51,7 +51,7 @@ int aceptar_interfaces(int socket_servidor) {
         if (*socket_interfaz < 0) {
             perror("Error en accept()");
             free(socket_interfaz); // Libera la memoria en caso de error
-            continue;
+            return ERROR;
         }
 
         pthread_t thread;
@@ -60,7 +60,7 @@ int aceptar_interfaces(int socket_servidor) {
             perror("Error en pthread_create()");
             close(*socket_interfaz); // Cierro el socket del interfaz en caso de error
             free(socket_interfaz); // Libera la memoria en caso de error
-            continue;
+            return ERROR;
         }
 
         pthread_detach(thread);

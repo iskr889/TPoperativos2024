@@ -26,6 +26,11 @@ void *thread_instrucciones_kernel(void *arg) {
 
         paquete_t *paquete = recibir_paquete(conexion_kernel);
 
+        if(paquete == NULL) {
+            fprintf(stderr, "Error al recibir paquete del Kernel\n");
+            exit(EXIT_FAILURE);
+        }
+
         TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
 
         if(paquete == NULL)
@@ -49,7 +54,7 @@ void *thread_instrucciones_kernel(void *arg) {
         liberar_paquete(paquete);
     }
 
-    return arg;
+    pthread_exit(0);
 }
 
 void manejar_instrucciones_cpu() {
@@ -68,6 +73,11 @@ void *thread_instrucciones_cpu(void *arg) {
     while(1) {
 
         paquete_t *paquete = recibir_paquete(conexion_cpu);
+
+        if(paquete == NULL) {
+            fprintf(stderr, "Error al recibir paquete de la CPU\n");
+            exit(EXIT_FAILURE);
+        }
 
         TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
 
@@ -100,7 +110,7 @@ void *thread_instrucciones_cpu(void *arg) {
         liberar_paquete(paquete);
     }
 
-    return arg;
+    pthread_exit(0);
 }
 
 void instruccion_process_create(payload_t* payload) {

@@ -51,9 +51,9 @@ int main(int argc, char* argv[]) {
 
     manejar_instrucciones_kernel();
 
-    liberar_memoria();
-
     pthread_exit(0);
+
+    liberar_memoria();
 
     puts("\nCerrando Memoria...");
     

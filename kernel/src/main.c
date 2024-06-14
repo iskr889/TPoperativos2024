@@ -44,9 +44,9 @@ int main(int argc, char* argv[]) {
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(kernel_server);
 
-    manejador_de_dispatcher();
+    // manejador_de_dispatcher();
 
-    manejo_interrupciones_cpu();
+    // manejo_interrupciones_cpu();
 
     consola_kernel();
 
