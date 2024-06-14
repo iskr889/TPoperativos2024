@@ -23,7 +23,6 @@ typedef struct {
     uint32_t di;
 } cpu_reg_t;
 
-
 typedef struct {
     uint16_t pid;        // ID del proceso
     uint16_t quantum;    // Tiempo para RR y VRR

@@ -27,18 +27,17 @@
 typedef char* String;
 
 typedef enum {
-        CPU_CON_MEMORIA = 0,
-     KERNEL_CON_MEMORIA,
-    GENERIC_CON_MEMORIA,
-      STDIN_CON_MEMORIA,
-     STDOUT_CON_MEMORIA,
-     DIALFS_CON_MEMORIA,
-     KERNEL_CON_CPU_DISPATCH,
-     KERNEL_CON_CPU_INTERRUPT,
+    CPU_CON_MEMORIA = 0,
+    KERNEL_CON_MEMORIA,
+    STDIN_CON_MEMORIA,
+    STDOUT_CON_MEMORIA,
+    DIALFS_CON_MEMORIA,
+    KERNEL_CON_CPU_DISPATCH,
+    KERNEL_CON_CPU_INTERRUPT,
     GENERIC_CON_KERNEL,
-      STDIN_CON_KERNEL,
-     STDOUT_CON_KERNEL,
-     DIALFS_CON_KERNEL,
+    STDIN_CON_KERNEL,
+    STDOUT_CON_KERNEL,
+    DIALFS_CON_KERNEL,
     HANDSHAKE_ERROR
 } conexion_t; // Tipo de conexión especifico entre modulos
 
@@ -55,15 +54,22 @@ typedef enum {
 } instruccionesIO_t; // Codigo de operación para cada instrucción de IO
 
 typedef enum {
-    MEMORY_PROCESS_CREATE = 200,
-    MEMORY_PROCESS_TERM,
-    MEMORY_PAGE_TABLE_ACCESS,
-    MEMORY_PROCESS_RESIZE,
-    MEMORY_USER_SPACE_ACCESS,
-    OUT_OF_MEMORY
+    MEMORY_PROCESS_CREATE = 200,    // Instrucción
+    MEMORY_PROCESS_TERM,            // Instrucción
+    MEMORY_PAGE_TABLE_ACCESS,       // Instrucción
+    MEMORY_PROCESS_RESIZE,          // Instrucción
+    MEMORY_USER_SPACE_ACCESS,       // Instrucción
+    MEMORY_RESPONSE_OK,             // Respuesta OK general
+    MEMORY_INVALID_FRAME,           // Devuelve en caso de querer leer un marco invalido
+    MEMORY_INVALID_PID,             // Devuelve en caso de recibir un pid invalido
+    MEMORY_INVALID_OPERATION,       // Devuelve en caso de recibir una operación invalidad (distinta de Write o Read)
+    MEMORY_INVALID_READ,            // Devuelve en caso de fallar la lectura del User Space
+    MEMORY_INVALID_WRITE,           // Devuelve en caso de fallar la escritura del User Space
+    OUT_OF_MEMORY,                  // Devuelve en caso de quedarse sin memoria del User Space
+    MEMORY_PID_PSEUDOCODE           // La CPU pide a la memoria un PC y la memoria envia el pseudocodigo correspondiente   
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
-//A partir de aca copie lo que estaba en el codigo de instrucciones. Hay que revisar.
+// TODO: REVISAR DEBAJO DE ESTA LINEA
 typedef enum {
     I_SET,
     I_SUM,
@@ -108,30 +114,14 @@ typedef struct {
     char *nombreArchivo;
 } instruccion_t;
 
-/*
-typedef struct {
-    uint32_t pc;
-    uint8_t ax;
-    uint8_t bx;
-    uint8_t cx;
-    uint8_t dx;
-    uint32_t eax;
-    uint32_t ebx;
-    uint32_t ecx;
-    uint32_t edx;
-    uint32_t si;
-    uint32_t di;
-} cpu_reg_t;*/
-
-
-typedef enum{
+typedef enum {
     FINALIZADO=1,
     IO,
     DESALOJO_QUANTUM,
     WAIT,
     SIGNAL,
-}interrupciones_t;
-
+} interrupciones_t;
+// TODO: REVISAR ARRIBA DE ESTA LINEA
 
 /**
 * @fn    Inicia un logger
