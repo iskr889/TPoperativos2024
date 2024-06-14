@@ -1,78 +1,126 @@
 //#include "../../utils/src/pcb.h"
-// #include "planificador_corto_plazo.h"
-// #include "scheduler.h"
+#include "planificador_corto_plazo.h"
+#include "scheduler.h"
+#include "semaforos.h"
+#include "recursos.h"
 
-// extern t_kernel_config* kernel_config;
-// extern int conexion_interrupt;
-// extern int conexion_dispatch;
-// extern scheduler_t* scheduler;
+extern t_log* extra_logger;
+extern t_kernel_config* kernel_config;
+extern int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_server;
+extern scheduler_t* scheduler;
+extern sem_t sem_dispatch, sem_interrupcion;
 
 
-// pthread_t hilo_quantum;
+pthread_t thread_quantum;
+t_temporal *tiempoVRR;
 
-// void* dispatcher(){
-//     //Me creo una pcb para tener en la funcion
-//     pcb_t* pcb;
-//     //aca despachamos para el algoritmo correspondiente
-//     if(strcmp(kernel_config->algoritmo_planificacion, "FIFO")==0){
+void manejador_de_dispatcher() {
+    pthread_t thread_dispatch;
 
-//         while(1){ 
-//             //wait(sem_dispatcher);
+    if (pthread_create(&thread_dispatch, NULL, dispatcher,NULL) != 0) {
+        perror("No se pudo crear el hilo para manejar interfaces");
+        exit(EXIT_FAILURE);
+    }
 
-//             //mutex
-//             pcb = queue_pop(scheduler->cola_ready);
-//             //mutex
-//             t_paquete* paquete_pcb = crear_paquete_pcb(pcb);
-//             enviar_pcb(paquete_pcb, conexion_dispatch);
+    pthread_detach(thread_dispatch);
 
-//             //mutex
-//             scheduler->execute = pcb;
-//             //mutex
+    return;
+}
 
-//             //eliminar_paquete(paquete);
 
-            
-//             }
-//     }
-//     else if(strcmp(kernel_config->algoritmo_planificacion, "RR")==0){
+void* dispatcher(){
 
-//         while(1){ 
-//             //wait(sem_dispatcher)
-//             pthread_create(&hilo_quantum,NULL, thread_hilo_quantum, NULL);
+    //Codigo de prueba
+    pcb_t *pcb1 = crear_proceso(1,2000);
+    proceso_a_cola_new(pcb1);
+    cola_new_a_ready();
+    pcb_t *pcb2 = crear_proceso(2,2000);
+    proceso_a_cola_new(pcb2);
+    cola_new_a_ready();
+    pcb_t *pcb3 = crear_proceso(3,2000);
+    proceso_a_cola_new(pcb3);
+    cola_new_a_ready();
+    pcb_t *pcb4 = crear_proceso(4,2000);
+    proceso_a_cola_new(pcb4);
+    cola_new_a_ready();
+    pcb_t *pcb5 = crear_proceso(5,2000);
+    proceso_a_cola_new(pcb5);
+    cola_new_a_ready();
+    //Termina codigo de prueba
 
-//             //mutex
-//             pcb = queue_pop(scheduler->cola_ready);
-//             //mutex
 
-//             t_paquete* paquete_pcb = crear_paquete_pcb(pcb);
-//             enviar_pcb(paquete_pcb, conexion_dispatch);
-
-//             //mutex
-//             scheduler->execute = pcb;
-//             //mutex
-//             //eliminar_paquete(paquete);
-            
-//             }
-//     }
-//     else if(strcmp(kernel_config->algoritmo_planificacion, "VRR")==0){
-
-//         while(1){ 
-//             //A determinar en el otro checkpoint
-            
-//             }
-//     }
-
+    if(strcmp(kernel_config->algoritmo_planificacion, "FIFO")==0){
         
-// } 
+        while(1){ 
+            sem_wait(&sem_dispatch);
 
-// void* thread_hilo_quantum(){
-//     usleep(1000*(kernel_config->quantum));
-//     //enviar_mensaje("Desalojo_quantum",conexion_interrupt);
-//     pthread_exit(NULL);
+            cola_ready_a_exec();
+            
+            send_pcb(conexion_dispatch,scheduler->proceso_ejecutando);
+            
+            sem_post(&sem_interrupcion);
 
-// }
+            }
+    }
 
-// void liberar_pcb(pcb_t* pcb){
-//     free(pcb->recursos);
-//     free(pcb);
-// }
+    if(strcmp(kernel_config->algoritmo_planificacion, "RR")==0){
+    
+        while(1){ 
+            sem_wait(&sem_dispatch);
+            
+            cola_ready_a_exec();
+            
+            send_pcb(conexion_dispatch,scheduler->proceso_ejecutando);
+            printf("%d", kernel_config->quantum);
+
+            if (pthread_create(&thread_quantum, NULL, thread_hilo_quantum, &kernel_config->quantum) != 0) {
+            perror("No se pudo crear el hilo para manejar quantum");
+            exit(EXIT_FAILURE);
+            }
+
+            sem_post(&sem_interrupcion);
+            }
+    }
+
+
+    if(strcmp(kernel_config->algoritmo_planificacion, "VRR")==0){
+
+        while(1){ 
+            sem_wait(&sem_dispatch);
+
+            //verifico si la lista aux_bloqueados esta vacia, por las prioridades
+            if(!list_is_empty(scheduler->cola_aux_blocked)){
+                cola_aux_blocked_a_exec();
+                printf("COLA AUX BLOQUEADOS \n");
+                
+            }else{
+                cola_ready_a_exec();
+                printf("COLA DE READYS \n");
+            }
+
+            send_pcb(conexion_dispatch, scheduler->proceso_ejecutando);
+            
+
+            if (pthread_create(&thread_quantum, NULL, thread_hilo_quantum, &scheduler->proceso_ejecutando->quantum) != 0) {
+            perror("No se pudo crear el hilo para manejar quantum");
+            exit(EXIT_FAILURE);
+            }
+
+            //empiezo a contar el tiempo
+            tiempoVRR = temporal_create();
+
+            sem_post(&sem_interrupcion);
+            }
+    }
+    return NULL;
+}
+
+void* thread_hilo_quantum(void *arg){
+    printf("inicio quantum \n");
+    uint16_t tiempo = *(uint16_t*)arg;
+    usleep(1000*(tiempo));
+    //envio orden de desalojo
+    enviar_operacion(DESALOJO_QUANTUM, conexion_interrupt);
+    printf("Finalizo quantum \n");
+    pthread_exit(NULL);
+}

@@ -1,13 +1,18 @@
 #include "main.h"
 #include "consola.h"
 #include "kernel_interface_handler.h"
+#include "planificador_corto_plazo.h"
+#include "manejo_interrupciones_cpu.h"
 #include "scheduler.h"
+#include "semaforos.h"
+#include "recursos.h"
 
 t_config* config;
 t_kernel_config* kernel_config;
 t_log* logger;
 t_log* extra_logger;
 int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_server;
+extern t_dictionary *recursos;
 
 int main(int argc, char* argv[]) {
 
@@ -18,6 +23,11 @@ int main(int argc, char* argv[]) {
     extra_logger = iniciar_logger("kernel_debug.log", "KERNEL", 1, LOG_LEVEL_DEBUG);
 
     init_scheduler();
+
+    init_semaforos();
+
+    init_recursos();
+
 
     // El Kernel intenta conectarse con la memoria
     conexion_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, KERNEL_CON_MEMORIA, extra_logger);
@@ -33,6 +43,10 @@ int main(int argc, char* argv[]) {
 
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(kernel_server);
+
+    manejador_de_dispatcher();
+
+    manejo_interrupciones_cpu();
 
     consola_kernel();
 

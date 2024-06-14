@@ -14,6 +14,7 @@
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/collections/list.h>
+#include <commons/temporal.h>
 
 #include <readline/readline.h>
 #include <assert.h>
@@ -67,6 +68,60 @@ typedef enum {
     OUT_OF_MEMORY,                  // Devuelve en caso de quedarse sin memoria del User Space
     MEMORY_PID_PSEUDOCODE           // La CPU pide a la memoria un PC y la memoria envia el pseudocodigo correspondiente   
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
+
+// TODO: REVISAR DEBAJO DE ESTA LINEA
+typedef enum {
+    I_SET,
+    I_SUM,
+    I_SUB,
+    I_JNZ,
+    I_IO_GEN_SLEEP,
+    I_MOV_IN,
+    I_MOV_OUT,
+    I_RESIZE,
+    I_COPY_STRING,
+    I_WAIT,
+    I_SIGNAL,
+    I_IO_STDIN_READ,
+    I_IO_STDOUT_WRITE,
+    I_IO_FS_CREATE,
+    I_IO_FS_DELETE,
+    I_IO_FS_TRUNCATE,
+    I_IO_FS_WRITE,
+    I_IO_FS_READ,
+    I_EXIT,
+} tipo_instruccion_t;
+
+typedef enum {
+    AX,
+    BX,
+    CX,
+    DX,
+    EAX,
+    EBX,
+    ECX,
+    EDX,
+    PC
+} registro_t;
+
+typedef struct {
+    tipo_instruccion_t tipo;
+    registro_t registro1;
+    registro_t registro2;
+    uint32_t valor;
+    char *interfaz;
+    char *recurso;
+    char *nombreArchivo;
+} instruccion_t;
+
+typedef enum {
+    FINALIZADO=1,
+    IO,
+    DESALOJO_QUANTUM,
+    WAIT,
+    SIGNAL,
+} interrupciones_t;
+// TODO: REVISAR ARRIBA DE ESTA LINEA
 
 /**
 * @fn    Inicia un logger
