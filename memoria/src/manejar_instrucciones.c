@@ -17,7 +17,7 @@ void manejar_instrucciones_kernel() {
         exit(EXIT_FAILURE);
     }
 
-    pthread_join(hilo_instrucciones_kernel, NULL);
+    pthread_detach(hilo_instrucciones_kernel);
 }
 
 void *thread_instrucciones_kernel(void *arg) {
@@ -75,6 +75,10 @@ void *thread_instrucciones_cpu(void *arg) {
             exit(EXIT_FAILURE);
 
         switch (paquete->operacion) {
+            case MEMORY_PID_PSEUDOCODE:
+                instruccion_enviar_pseudocodigo(paquete->payload);
+                log_debug(extra_logger, "Enviando Program Counter a la CPU");
+                break;
             case MEMORY_PAGE_TABLE_ACCESS:
                 instruccion_pageTable_access(paquete->payload);
                 log_debug(extra_logger, "Ejecutando: MEMORY_PAGE_TABLE_ACCESS");
@@ -254,6 +258,42 @@ void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
     payload_destroy(payload_respuesta);
     liberar_paquete(respuesta);
     free(buffer_data);
+}
+
+void instruccion_enviar_pseudocodigo(payload_t* payload) {
+
+    uint16_t pid;
+    uint32_t programCounter;
+
+    payload_read(payload, &pid, sizeof(uint16_t));
+    payload_read(payload, &programCounter, sizeof(uint32_t));
+
+    Proceso_t* proceso = proceso_get(pid);
+
+    if (proceso == NULL) {
+        payload_t *payload = payload_create(0);
+        paquete_t *respuesta = crear_paquete(MEMORY_INVALID_PID, payload);
+        enviar_paquete(conexion_cpu, respuesta);
+        payload_destroy(payload);
+        liberar_paquete(respuesta);
+        return;
+    }
+
+    String instruccion = list_get(proceso->instrucciones, programCounter);
+
+    payload_t *payload_respuesta = payload_create(sizeof(uint32_t) + strlen(instruccion) + 1);
+
+    payload_add_string(payload_respuesta, instruccion);
+
+    paquete_t *paquete = crear_paquete(MEMORY_PID_PSEUDOCODE, payload_respuesta);
+
+    enviar_paquete(conexion_cpu, paquete);
+
+    payload_destroy(payload_respuesta);
+
+    liberar_paquete(paquete);
+
+    log_debug(extra_logger, "[PID: %d] envia linea N%d: %s", pid, programCounter, instruccion);
 }
 
 t_list *leer_pseudocodigo(String filename) {

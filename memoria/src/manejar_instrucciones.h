@@ -61,6 +61,12 @@ void instruccion_process_resize(payload_t* payload);
 void instruccion_userspace_access(payload_t* payload, int fd_conexion);
 
 /**
+* @fn    Envia el pseudocodigo solicitado por la CPU
+* @brief Envia la linea de pseudocodigo solicitada por el Program Counter de la CPU
+*/
+void instruccion_enviar_pseudocodigo(payload_t* payload);
+
+/**
 * @fn    Lee un archivo de pseudocodigo
 * @brief Devuelve las instrucciones del archivo de pseudocodigo en una lista donde el numero de instrucción comenzando de 0 corresponde al indice de la lista
 */

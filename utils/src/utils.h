@@ -64,7 +64,8 @@ typedef enum {
     MEMORY_INVALID_OPERATION,       // Devuelve en caso de recibir una operación invalidad (distinta de Write o Read)
     MEMORY_INVALID_READ,            // Devuelve en caso de fallar la lectura del User Space
     MEMORY_INVALID_WRITE,           // Devuelve en caso de fallar la escritura del User Space
-    OUT_OF_MEMORY                   // Devuelve en caso de quedarse sin memoria del User Space
+    OUT_OF_MEMORY,                  // Devuelve en caso de quedarse sin memoria del User Space
+    MEMORY_PID_PSEUDOCODE           // La CPU pide a la memoria un PC y la memoria envia el pseudocodigo correspondiente   
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
 /**

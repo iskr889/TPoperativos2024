@@ -53,6 +53,8 @@ int main(int argc, char* argv[]) {
 
     liberar_memoria();
 
+    pthread_exit(0);
+
     puts("\nCerrando Memoria...");
     
     return OK;
