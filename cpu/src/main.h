@@ -4,6 +4,8 @@
 #include "../../utils/src/utils.h"
 #include "../../utils/src/servidor.h"
 #include "../../utils/src/cliente.h"
+#include "../../utils/src/pcb.h"
+#include "../../utils/src/serializacion.h"
 
 /**
 * @fn    Libera todo la cpu

@@ -1,4 +1,5 @@
 #include "main.h"
+#include "servers.h"
 
 t_config* config;
 t_cpu_config cpu_config;
@@ -26,20 +27,30 @@ int main(int argc, char* argv[]) {
     // La CPU espera que el KERNEL se conecte al puerto Dispatch
     conexion_dispatch = esperar_conexion_de(KERNEL_CON_CPU_DISPATCH, dispatch_server);
 
-    if(conexion_dispatch < 0)
+    if(conexion_dispatch < 0) {
         log_error(extra_logger, "MODULO KERNEL NO PUDO CONECTARSE CON CPU DISPATCH!");
-    else
-        log_debug(extra_logger, "MODULO KERNEL CONECTO CON CPU DISPATCH EXITOSAMENTE!");
+        exit(EXIT_FAILURE);
+    }
+
+    log_debug(extra_logger, "MODULO KERNEL CONECTO CON CPU DISPATCH EXITOSAMENTE!");
 
     // La CPU espera que el KERNEL se conecte al puerto Inrerrupt
     conexion_interrupt = esperar_conexion_de(KERNEL_CON_CPU_INTERRUPT, interrupt_server);
 
-    if(conexion_interrupt < 0)
+    if(conexion_interrupt < 0) {
         log_error(extra_logger, "MODULO KERNEL NO PUDO CONECTARSE CON CPU INTERRUPT!");
-    else
-        log_debug(extra_logger, "MODULO KERNEL CONECTO CON CPU INTERRUPT EXITOSAMENTE!");
+        exit(EXIT_FAILURE);
+    }
 
-    sleep(30);
+    log_debug(extra_logger, "MODULO KERNEL CONECTO CON CPU INTERRUPT EXITOSAMENTE!");
+
+    // Creo los hilos de dispatch e interrupt para manejar la comunicación con el kernel
+    pthread_t thread_dispatch, thread_interrupt;
+    pthread_create(&thread_dispatch, NULL, iniciar_dispatch, NULL);
+    pthread_detach(thread_dispatch);
+    pthread_create(&thread_interrupt, NULL, iniciar_interrupt, NULL);
+    pthread_detach(thread_interrupt);
+    pthread_exit(0);
 
     liberar_cpu();
 
