@@ -33,9 +33,6 @@ void *thread_instrucciones_kernel(void *arg) {
 
         TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
 
-        if(paquete == NULL)
-            exit(EXIT_FAILURE);
-
         switch (paquete->operacion) {
             case MEMORY_PROCESS_CREATE:
                 instruccion_process_create(paquete->payload);
@@ -80,9 +77,6 @@ void *thread_instrucciones_cpu(void *arg) {
         }
 
         TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
-
-        if(paquete == NULL)
-            exit(EXIT_FAILURE);
 
         switch (paquete->operacion) {
             case MEMORY_PID_PSEUDOCODE:

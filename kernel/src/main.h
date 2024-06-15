@@ -6,8 +6,6 @@
 #include "../../utils/src/cliente.h"
 //#include "../../utils/src/pcb.h"
 #include "../../utils/src/interrupcion.h"
-#include "../../utils/src/instruccion.h"
-
 
 typedef struct {
     String   puerto_escucha;
