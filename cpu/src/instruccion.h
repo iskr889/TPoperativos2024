@@ -9,28 +9,6 @@ typedef enum {
     ASIGNACION
 } operacion_t;
 
-typedef enum {
-    I_SET,
-    I_SUM,
-    I_SUB,
-    I_JNZ,
-    I_IO_GEN_SLEEP,
-    I_MOV_IN,
-    I_MOV_OUT,
-    I_RESIZE,
-    I_COPY_STRING,
-    I_WAIT,
-    I_SIGNAL,
-    I_IO_STDIN_READ,
-    I_IO_STDOUT_WRITE,
-    I_IO_FS_CREATE,
-    I_IO_FS_DELETE,
-    I_IO_FS_TRUNCATE,
-    I_IO_FS_WRITE,
-    I_IO_FS_READ,
-    I_EXIT,
-} tipo_instruccion_t;
-
 int getTipoRegistro(char *tipo);
 int obtener_tipo_instruccion(const char* tipo_str);
 char** split_string(char* str);
