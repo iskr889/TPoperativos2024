@@ -5,7 +5,6 @@
 #include "../../utils/src/servidor.h"
 #include "../../utils/src/cliente.h"
 #include "../../utils/src/pcb.h"
-#include "../../utils/src/instruccion.h"
 #include "../../utils/src/serializacion.h"
 
 /**

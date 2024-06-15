@@ -114,15 +114,3 @@ paquete_t *recibir_paquete(int socket) {
 
     return paquete;
 }
-
-void payload_add_int_array(payload_t *payload, int *array, uint32_t count) {
-    payload_add(payload, &count, sizeof(count));
-    payload_add(payload, array, count * sizeof(int));
-}
-
-int* payload_read_int_array(payload_t *payload, uint32_t *count) {
-    payload_read(payload, count, sizeof(*count));
-    int *array = malloc(*count * sizeof(int));
-    payload_read(payload, array, *count * sizeof(int));
-    return array;
-}

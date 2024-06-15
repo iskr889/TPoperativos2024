@@ -39,8 +39,8 @@ void actualizar_registro(cpu_reg_t* registros, registro_t registro, uint32_t val
 
 char* fetch(pcb_t* pcb) {
     uint32_t pc = pcb->registros.pc;
-    int data [] = {pc, pcb->pid};
-    solicitar_intruccion(conexion_memoria, data);
+    uint16_t pid = pcb->pid;
+    solicitar_intruccion(conexion_memoria, pid, pc);
     char* instruccion = recibir_instruccion(conexion_memoria);
     pcb->registros.pc += 1;
     return instruccion;
@@ -320,6 +320,27 @@ char** split_string(char* str) {
     result[idx] = NULL;
 
     return result;
+}
+
+void solicitar_intruccion(int socket, uint16_t pid, uint32_t pc) {
+    payload_t *payload = payload_create(sizeof(pid) + sizeof(pc));
+    payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add(payload, &pc, sizeof(uint32_t));
+    paquete_t *paquete = crear_paquete(0, payload);
+    if(enviar_paquete(socket, paquete) != OK)
+        exit(EXIT_FAILURE);
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+char *recibir_instruccion(int socket) {
+    paquete_t *paquete = recibir_paquete(socket);
+    if(paquete == NULL)
+        exit(EXIT_FAILURE);
+    char *instruccion = payload_read_string(paquete->payload);
+    payload_destroy(paquete->payload);
+    liberar_paquete(paquete);
+    return instruccion;
 }
 
 // uint32_t obtener_valor_memoria(uint32_t direccion) {
