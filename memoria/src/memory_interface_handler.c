@@ -167,6 +167,10 @@ void manejar_instrucciones_stdout(int socket_stdout) {
             perror("Error al recibir paquete de STDOUT");
             exit(EXIT_FAILURE);
         }
+        if(paquete->operacion != IO_STDOUT_WRITE){
+            perror("Error codigo de operacion invalido");
+            exit(EXIT_FAILURE);
+        }
 
         TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
 
@@ -177,7 +181,18 @@ void manejar_instrucciones_stdout(int socket_stdout) {
                 payload_read(paquete->payload, &size, sizeof(size));
                 char *buffer = malloc(size);
                 leer_memoria(address, buffer, size);
+                
+                // **ENVIAR A STDOUT**
+                payload_t *payload = payload_create(strlen(buffer) + sizeof(int));
+                payload_add_string(payload, buffer);
+                paquete_t *paquete_a_enviar =crear_paquete(IO_STDOUT_WRITE, payload);
+                if(enviar_paquete(socket_stdout, paquete_a_enviar) != OK){
+                    perror("No se puedo enviar el paquete a STDOUT");
+                    exit(EXIT_FAILURE);
+                }
+
                 log_debug(extra_logger, "Ejecutando: IO_STDOUT_WRITE [%s]", buffer);
+
                 free(buffer);
                 break;
             }
