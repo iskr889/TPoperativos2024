@@ -116,10 +116,12 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         case STDIN_CON_KERNEL:
             interfaz->tipo = STDIN;
             printf("Interfaz STDIN conectada con el KERNEL [%s]\n> ", nombre);
+            send_io_stdin_read(socket_interfaz, 12, 4);
             break;
         case STDOUT_CON_KERNEL:
             interfaz->tipo = STDOUT;
             printf("Interfaz STDOUT conectada con el KERNEL [%s]\n> ", nombre);
+            send_io_stdout_write(socket_interfaz, 12, 4);
             break;
         case DIALFS_CON_KERNEL:
             interfaz->tipo = DIALFS;
@@ -162,6 +164,53 @@ void send_io_gen_sleep(int socket, uint32_t tiempo) {
 
     if(enviar_paquete(socket, paquete) != OK)
         exit(EXIT_FAILURE);
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+void send_io_stdin_read(int socket, int direccion, int cant_caracteres) {
+
+    int tam = sizeof(int) + sizeof(int);
+
+    payload_t *payload = payload_create(tam);
+
+    // direccion
+    //printf("direccion: %i, cant de caracteres: %i\n", direccion, cant_caracteres);
+    payload_add(payload, &direccion, sizeof(uint32_t));
+
+    // cantidad de caracteres
+    payload_add(payload, &cant_caracteres, sizeof(int));
+
+    paquete_t *paquete = crear_paquete(IO_STDIN_READ, payload);
+
+    if(enviar_paquete(socket, paquete) != OK){
+        printf("fallo al enviar el paquete a stdin");
+        exit(EXIT_FAILURE);
+    }
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+void send_io_stdout_write(int fd_io, int direccion, int cant_caracteres){
+
+    int tam = sizeof(int) + sizeof(int);
+
+    payload_t *payload = payload_create(tam);
+
+    // direccion
+    payload_add(payload, &direccion, sizeof(uint32_t));
+
+    // cantidad de caracteres
+    payload_add(payload, &cant_caracteres, sizeof(int));
+
+    paquete_t *paquete = crear_paquete(IO_STDOUT_WRITE, payload);
+
+    if(enviar_paquete(fd_io, paquete) != OK){
+        printf("fallo al enviar el paquete a stdin");
+        exit(EXIT_FAILURE);
+    }
 
     payload_destroy(payload);
     liberar_paquete(paquete);
