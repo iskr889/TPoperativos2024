@@ -63,4 +63,16 @@ String recibir_nombre_interfaz(int socket);
 */
 void send_io_gen_sleep(int socket, uint32_t tiempo);
 
+/**
+* @fn    Envia IO_STDIN_READ
+* @brief Envia la instrucción IO_STDIN_READ a la interfaz stdin conectada
+*/
+void send_io_stdin_read(int socket, int direccion, int cant_caracteres);
+
+/**
+ * @fn Envia IO_STDOUT_WRITE
+ * @brief Envia la instruccion IO_STDOUT_WRITE a la interfas stdout conectada 
+*/
+void send_io_stdout_write(int fd_io, int direccion, int cant_caracteres);
+
 #endif
