@@ -1,4 +1,5 @@
 #include "memory_interface_handler.h"
+#include "manejar_instrucciones.h"
 
 extern t_log* logger;
 extern t_log* extra_logger;
@@ -131,26 +132,20 @@ void manejar_instrucciones_stdin(int socket_stdin) {
         paquete_t *paquete = recibir_paquete(socket_stdin);
 
         if (paquete == NULL) {
-            perror("Error al recibir paquete de STDIN");
+            fprintf(stderr, "Error al recibir paquete de STDIN");
             exit(EXIT_FAILURE);
         }
 
         TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
 
-        switch (paquete->operacion) {
-            case IO_STDIN_READ: {
-                uint32_t address;
-                payload_read(paquete->payload, &address, sizeof(address));
-                String texto = payload_read_string(paquete->payload);
-                escribir_memoria(address, texto, strlen(texto));
-                log_debug(extra_logger, "Ejecutando: IO_STDIN_READ [%s]", texto);
-                free(texto);
-                break;
-            }
-            default:
-                log_error(extra_logger, "Operacion de STDIN no reconocida");
-                break;
+        if (paquete->operacion != MEMORY_USER_SPACE_ACCESS) {
+            log_error(extra_logger, "Operacion recibida de STDIN invalida");
+            payload_destroy(paquete->payload);
+            liberar_paquete(paquete);
+            exit(EXIT_FAILURE);
         }
+
+        instruccion_userspace_access(paquete->payload, socket_stdin);
 
         payload_destroy(paquete->payload);
         liberar_paquete(paquete);
@@ -164,42 +159,20 @@ void manejar_instrucciones_stdout(int socket_stdout) {
         paquete_t *paquete = recibir_paquete(socket_stdout);
 
         if (paquete == NULL) {
-            perror("Error al recibir paquete de STDOUT");
-            exit(EXIT_FAILURE);
-        }
-        if(paquete->operacion != IO_STDOUT_WRITE){
-            perror("Error codigo de operacion invalido");
+            fprintf(stderr, "Error al recibir paquete de STDOUT");
             exit(EXIT_FAILURE);
         }
 
         TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
 
-        switch (paquete->operacion) {
-            case IO_STDOUT_WRITE: {
-                uint32_t address, size;
-                payload_read(paquete->payload, &address, sizeof(address));
-                payload_read(paquete->payload, &size, sizeof(size));
-                char *buffer = malloc(size);
-                leer_memoria(address, buffer, size);
-                
-                // **ENVIAR A STDOUT**
-                payload_t *payload = payload_create(strlen(buffer) + sizeof(int));
-                payload_add_string(payload, buffer);
-                paquete_t *paquete_a_enviar =crear_paquete(IO_STDOUT_WRITE, payload);
-                if(enviar_paquete(socket_stdout, paquete_a_enviar) != OK){
-                    perror("No se puedo enviar el paquete a STDOUT");
-                    exit(EXIT_FAILURE);
-                }
-
-                log_debug(extra_logger, "Ejecutando: IO_STDOUT_WRITE [%s]", buffer);
-
-                free(buffer);
-                break;
-            }
-            default:
-                log_error(extra_logger, "Operacion de STDOUT no reconocida");
-                break;
+        if (paquete->operacion != MEMORY_USER_SPACE_ACCESS) {
+            log_error(extra_logger, "Operacion recibida de STDOUT invalida");
+            payload_destroy(paquete->payload);
+            liberar_paquete(paquete);
+            exit(EXIT_FAILURE);
         }
+
+        instruccion_userspace_access(paquete->payload, socket_stdout);
 
         payload_destroy(paquete->payload);
         liberar_paquete(paquete);

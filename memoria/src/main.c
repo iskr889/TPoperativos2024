@@ -15,6 +15,8 @@ t_log* extra_logger;
 
 int conexion_cpu, conexion_kernel, memoria_server;
 
+pthread_mutex_t memoria_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int main(int argc, char* argv[]) {
 
     memoria_config = load_memoria_config("memoria.config");
@@ -31,18 +33,24 @@ int main(int argc, char* argv[]) {
     // La MEMORIA espera que la CPU se conecte
     conexion_cpu = esperar_conexion_de(CPU_CON_MEMORIA, memoria_server);
 
-    if (conexion_cpu < 0)
+    if (conexion_cpu < 0) {
         log_error(extra_logger, "MODULO CPU NO PUDO CONECTARSE CON LA MEMORIA!");
-    else
-        log_debug(extra_logger, "MODULO CPU CONECTO CON LA MEMORIA EXITOSAMENTE!");
+        liberar_memoria();
+        exit(EXIT_FAILURE);
+    }
+    
+    log_debug(extra_logger, "MODULO CPU CONECTO CON LA MEMORIA EXITOSAMENTE!");
 
     // La MEMORIA espera que el KERNEL se conecte
     conexion_kernel = esperar_conexion_de(KERNEL_CON_MEMORIA, memoria_server);
 
-    if (conexion_kernel < 0)
+    if (conexion_kernel < 0) {
         log_error(extra_logger, "MODULO KERNEL NO PUDO CONECTARSE CON LA MEMORIA!");
-    else
-        log_debug(extra_logger, "MODULO KERNEL CONECTO CON LA MEMORIA EXITOSAMENTE!");
+        liberar_memoria();
+        exit(EXIT_FAILURE);
+    }
+
+    log_debug(extra_logger, "MODULO KERNEL CONECTO CON LA MEMORIA EXITOSAMENTE!");
 
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(memoria_server);
@@ -224,23 +232,31 @@ bool resize_proceso(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
 }
 
 bool leer_memoria(uint32_t direccion_fisica, void *buffer, size_t size) {
+    pthread_mutex_lock(&memoria_mutex);
 
     if (direccion_fisica + size > memoria_config->tam_memoria) {
         log_debug(extra_logger, "Lectura de memoria fisica fuera de limites!");
+        pthread_mutex_unlock(&memoria_mutex);
         return false;
     }
 
     memcpy(buffer, user_memory + direccion_fisica, size);
+
+    pthread_mutex_unlock(&memoria_mutex);
     return true;
 }
 
 bool escribir_memoria(uint32_t direccion_fisica, void *data, size_t size) {
+    pthread_mutex_lock(&memoria_mutex);
 
     if (direccion_fisica + size > memoria_config->tam_memoria) {
         log_debug(extra_logger, "Escritura de memoria fisica fuera de limites!");
+        pthread_mutex_unlock(&memoria_mutex);
         return false;
     }
 
     memcpy(user_memory + direccion_fisica, data, size);
+
+    pthread_mutex_unlock(&memoria_mutex);
     return true;
 }

@@ -204,40 +204,27 @@ void instruccion_process_resize(payload_t* payload) {
 
 void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
 
-    uint16_t pid;
     char operacion;
     uint32_t address;
     uint32_t size;
 
-    payload_read(payload, &pid, sizeof(uint16_t));
     payload_read(payload, &operacion, sizeof(char));
     payload_read(payload, &address, sizeof(uint32_t));
     payload_read(payload, &size, sizeof(uint32_t));
 
-    Proceso_t* proceso = proceso_get(pid);
-
-    if (proceso == NULL) {
-        payload_t *payload = payload_create(0);
-        paquete_t *respuesta = crear_paquete(MEMORY_INVALID_PID, payload);
-        enviar_paquete(fd_conexion, respuesta);
-        payload_destroy(payload);
-        liberar_paquete(respuesta);
-        return;
-    }
-
-    payload_t *payload_respuesta = payload_create(size);
-
-    paquete_t *respuesta;
-
-    int cod_op;
+    payload_t *payload_respuesta;
 
     char *buffer_data = malloc(size);
+
+    int cod_op;
 
     if (operacion == 'R') {
         
         bool resultado = leer_memoria(address, buffer_data, size);
 
         cod_op = resultado ? MEMORY_RESPONSE_OK : MEMORY_INVALID_READ;
+
+        payload_respuesta = payload_create(size);
 
         payload_add(payload_respuesta, buffer_data, size);
 
@@ -250,13 +237,16 @@ void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
         cod_op = resultado ? MEMORY_RESPONSE_OK : MEMORY_INVALID_WRITE;
 
         char ok[] = "OK";
+
+        payload_respuesta = payload_create(sizeof(uint32_t) + strlen(ok) + 1);
+
         payload_add_string(payload_respuesta, ok);
         
     } else {
         cod_op = MEMORY_INVALID_OPERATION;
     }
 
-    respuesta = crear_paquete(cod_op, payload_respuesta);
+    paquete_t *respuesta = crear_paquete(cod_op, payload_respuesta);
     enviar_paquete(fd_conexion, respuesta);
 
     payload_destroy(payload_respuesta);
@@ -342,11 +332,11 @@ void imprimir_instrucciones(t_list* instrucciones) {
 void imprimir_instruccion(String instruccion) {
     if(instruccion == NULL)
         fprintf(stderr, "No existe la instrucción!\n");
-    printf("Enviando instrucción a la CPU: %s\n", instruccion);
+    printf("%s\n", instruccion);
 }
 
 void imprimir_instruccion_numero(t_list* instrucciones, uint32_t numero_de_linea) {
-    printf("CPU pidio Linea %d: ", numero_de_linea);
+    printf("Linea %d: ", numero_de_linea);
     imprimir_instruccion(list_get(instrucciones, numero_de_linea));
 }
 
