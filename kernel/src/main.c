@@ -6,6 +6,7 @@
 #include "scheduler.h"
 #include "semaforos.h"
 #include "recursos.h"
+#include "planificador_largo_plazo.h"
 
 t_config* config;
 t_kernel_config* kernel_config;
@@ -44,9 +45,15 @@ int main(int argc, char* argv[]) {
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(kernel_server);
 
-    // manejador_de_dispatcher();
+    manejador_de_dispatcher();
 
-    // manejo_interrupciones_cpu();
+    manejador_de_interrupciones();
+
+    manejador_de_largo_new_a_ready();
+
+    //sleep(10);
+
+    //cambiar_grado_multiprogramacion(4);
 
     consola_kernel();
 

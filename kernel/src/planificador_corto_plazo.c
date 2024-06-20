@@ -30,25 +30,6 @@ void manejador_de_dispatcher() {
 
 void* dispatcher(){
 
-    //Codigo de prueba
-    pcb_t *pcb1 = crear_proceso(1,2000);
-    proceso_a_cola_new(pcb1);
-    cola_new_a_ready();
-    pcb_t *pcb2 = crear_proceso(2,2000);
-    proceso_a_cola_new(pcb2);
-    cola_new_a_ready();
-    pcb_t *pcb3 = crear_proceso(3,2000);
-    proceso_a_cola_new(pcb3);
-    cola_new_a_ready();
-    pcb_t *pcb4 = crear_proceso(4,2000);
-    proceso_a_cola_new(pcb4);
-    cola_new_a_ready();
-    pcb_t *pcb5 = crear_proceso(5,2000);
-    proceso_a_cola_new(pcb5);
-    cola_new_a_ready();
-    //Termina codigo de prueba
-
-
     if(strcmp(kernel_config->algoritmo_planificacion, "FIFO")==0){
         
         while(1){ 

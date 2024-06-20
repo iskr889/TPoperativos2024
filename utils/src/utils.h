@@ -14,6 +14,7 @@
 #include <commons/log.h>
 #include <commons/string.h>
 #include <commons/collections/list.h>
+#include <commons/collections/dictionary.h>
 #include <commons/temporal.h>
 
 #include <readline/readline.h>

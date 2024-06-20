@@ -2,6 +2,7 @@
 #define KERNELINTERFACEHANDLER_H_
 
 #include "main.h"
+#include "semaforos.h"
 
 typedef enum {
     GENERIC,
@@ -13,6 +14,8 @@ typedef enum {
 typedef struct {
     int socket;
     tipo_io_t tipo;
+    t_list *instruccion_IO;
+    sem_t *sem_IO_ejecucion;
 } interfaz_t;
 
 /**

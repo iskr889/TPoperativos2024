@@ -1,4 +1,6 @@
 #include "kernel_interface_handler.h"
+#include "manejo_interrupciones_cpu.h"
+#include "scheduler.h"
 
 t_dictionary *interfaces;
 
@@ -107,6 +109,8 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
     String nombre = recibir_nombre_interfaz(socket_interfaz);
     interfaz_t *interfaz = malloc(sizeof(interfaz_t));
     interfaz->socket = socket_interfaz;
+    sem_init(interfaz->sem_IO_ejecucion,0,0);
+    interfaz->instruccion_IO = list_create();
 
     switch (handshake) {
         case GENERIC_CON_KERNEL:
@@ -116,12 +120,12 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         case STDIN_CON_KERNEL:
             interfaz->tipo = STDIN;
             printf("Interfaz STDIN conectada con el KERNEL [%s]\n> ", nombre);
-            send_io_stdin_read(socket_interfaz, 12, 4); // Prueba
+            //send_io_stdin_read(socket_interfaz, 12, 4); // Prueba
             break;
         case STDOUT_CON_KERNEL:
             interfaz->tipo = STDOUT;
             printf("Interfaz STDOUT conectada con el KERNEL [%s]\n> ", nombre);
-            send_io_stdout_write(socket_interfaz, 12, 4); // Prueba
+            //send_io_stdout_write(socket_interfaz, 12, 4); // Prueba
             break;
         case DIALFS_CON_KERNEL:
             interfaz->tipo = DIALFS;
@@ -135,6 +139,28 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     fflush(stdout);
     dictionary_put(interfaces, nombre, interfaz); // Guardo la conexión en un diccionario y uso el nombre de la interfaz como key
+
+
+    while(1){
+        sem_wait(interfaz->sem_IO_ejecucion);
+        String instruccion = list_pop(interfaz->instruccion_IO);
+        ejecutar_IO(split_string(instruccion));
+        
+     // int respuesta = ejecutar_IO(split_string(instruccion));
+    /*    if(respuesta ==OK){
+            cola_blocked_a_ready(nombre);
+        }else{
+            cola_block_a_exit(nombre);
+            aumentar_programacion();
+            liberar_memoria();
+        }
+    */
+        cola_blocked_a_ready(nombre);
+        
+    }
+   
+
+
     free(nombre);
     return OK;
 }
