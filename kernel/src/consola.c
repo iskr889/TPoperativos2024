@@ -1,6 +1,5 @@
 #include "consola.h"
 #include "scheduler.h"
-#include <stdint.h>
 #include <errno.h>
 
 extern t_kernel_config* kernel_config;
@@ -46,11 +45,30 @@ void mensaje_de_bienvenida() {
 }
 
 void ejecutar_script(const String path) {
+
     if (path == NULL) {
         puts("Script invalido!");
         return;
     }
+
     printf("Ejecutando script: %s\n", path);
+    FILE *file = fopen(path, "r");
+
+    if (file == NULL) {
+        printf("No se pudo abrir el archivo: %s\n", path);
+        return;
+    }
+
+    char *line = NULL;
+    size_t len = 0;
+
+    while (getline(&line, &len, file) != -1) {
+        line[strcspn(line, "\r\n")] = 0;  // Elimina \r y \n del comando
+        manejar_comando(line);
+    }
+
+    free(line);
+    fclose(file);
 }
 
 void iniciar_proceso(const String path) {

@@ -1,6 +1,7 @@
 # Generated files
 bin/
 obj/
+scripts_kernel/
 *.log
 
 # Eclipse files

@@ -1,8 +1,4 @@
 #include "semaforos.h"
-/*#include <stdio.h>
-#include <stdlib.h>
-#include <pthread.h>
-#include <semaphore.h>*/
 #include "main.h"
 
 extern t_kernel_config* kernel_config;

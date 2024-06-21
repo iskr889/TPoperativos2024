@@ -109,7 +109,12 @@ void *thread_instrucciones_cpu(void *arg) {
 
 void instruccion_process_create(payload_t* payload) {
 
-    char pseudocodigo[BUFF_SIZE] = CARPETA_PSEUDOCODIGO;
+    char pseudocodigo[BUFF_SIZE];
+
+    if (getcwd(pseudocodigo, sizeof(pseudocodigo)) == NULL) {
+        perror("Error en getcwd()");
+        exit(EXIT_FAILURE);
+    }
 
     uint16_t pid;
 
@@ -117,7 +122,7 @@ void instruccion_process_create(payload_t* payload) {
 
     String path = payload_read_string(payload);
 
-    strcat(pseudocodigo, path); // Concateno el directorio de la carpeta de pseudocodigo
+    strcat(pseudocodigo, path); // Concateno en el directorio actual de trabajo la carpeta de pseudocodigo
 
     free(path);
 
@@ -295,9 +300,12 @@ t_list *leer_pseudocodigo(String filename) {
     FILE* pseudocodigo = fopen(filename, "r");
 
     if (pseudocodigo == NULL) {
-        perror("Error al abrir el archivo de pseudocodigo!");
+        fprintf(stderr, "Error al abrir el archivo de pseudocodigo! %s\n", filename);
+        perror("");
         return NULL;
     }
+
+    printf("Leyendo pseudocodigo en: %s\n", filename);
 
     char linea[BUFF_SIZE];
     t_list* instrucciones = list_create();

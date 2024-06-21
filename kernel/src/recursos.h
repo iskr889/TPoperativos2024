@@ -3,9 +3,6 @@
 
 #include "main.h"
 
-
-
-
 void init_recursos();
 
 void restar_recurso(t_dictionary *diccionario, char* recurso);
