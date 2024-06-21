@@ -107,9 +107,13 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
 int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     String nombre = recibir_nombre_interfaz(socket_interfaz);
+
     interfaz_t *interfaz = malloc(sizeof(interfaz_t));
+
     interfaz->socket = socket_interfaz;
-    sem_init(interfaz->sem_IO_ejecucion,0,0);
+
+    sem_init(&interfaz->sem_IO_ejecucion, 0, 0);
+
     interfaz->instruccion_IO = list_create();
 
     switch (handshake) {
@@ -140,9 +144,8 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
     fflush(stdout);
     dictionary_put(interfaces, nombre, interfaz); // Guardo la conexión en un diccionario y uso el nombre de la interfaz como key
 
-
     while(1){
-        sem_wait(interfaz->sem_IO_ejecucion);
+        sem_wait(&interfaz->sem_IO_ejecucion);
         String instruccion = list_pop(interfaz->instruccion_IO);
         ejecutar_IO(split_string(instruccion));
         
@@ -156,10 +159,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         }
     */
         cola_blocked_a_ready(nombre);
-        
     }
-   
-
 
     free(nombre);
     return OK;

@@ -109,7 +109,7 @@ void* manejo_interrupciones_cpu(){
                 }else{
                     interfaz_t *interfaz = dictionary_get(interfaces, tokens[1]);
                     pcb_a_blocked(interrupcion->pcb, tokens[1]); //SI existe
-                    sem_post(interfaz->sem_IO_ejecucion);
+                    sem_post(&interfaz->sem_IO_ejecucion);
                 }
             
                 sem_post(&sem_dispatch);
@@ -234,17 +234,16 @@ bool verificar_instruccion(t_dictionary *diccionario, char **tokens){
 }
 
 
-int ejecutar_IO(char **instruccion_tokens){
+int ejecutar_IO(char **instruccion_tokens) {
 
     int socket_interfaz = *(int*)dictionary_get(interfaces,instruccion_tokens[1]);
     
-    switch(obtener_tipo_instruccion(instruccion_tokens[0])){
+    switch(obtener_tipo_instruccion(instruccion_tokens[0])) {
         case IO_GEN_SLEEP:
-
             send_io_gen_sleep(socket_interfaz, atoi(instruccion_tokens[2]));
-
         break;
-
+        default:
+            return ERROR;
     }
 
     return recibir_operacion(socket_interfaz); //se queda esperando hasta que recibe el ok de la interfaz

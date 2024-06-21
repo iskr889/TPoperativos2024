@@ -15,7 +15,7 @@ typedef struct {
     int socket;
     tipo_io_t tipo;
     t_list *instruccion_IO;
-    sem_t *sem_IO_ejecucion;
+    sem_t sem_IO_ejecucion;
 } interfaz_t;
 
 /**
