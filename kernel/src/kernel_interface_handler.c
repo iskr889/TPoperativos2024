@@ -1,8 +1,10 @@
 #include "kernel_interface_handler.h"
 #include "manejo_interrupciones_cpu.h"
 #include "scheduler.h"
+#include "planificador_corto_plazo.h"
 
 t_dictionary *interfaces;
+extern bool VRR_modo;
 
 void manejador_de_interfaces(int fd_servidor) {
 
@@ -107,13 +109,9 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
 int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     String nombre = recibir_nombre_interfaz(socket_interfaz);
-
     interfaz_t *interfaz = malloc(sizeof(interfaz_t));
-
     interfaz->socket = socket_interfaz;
-
     sem_init(&interfaz->sem_IO_ejecucion, 0, 0);
-
     interfaz->instruccion_IO = list_create();
 
     switch (handshake) {
@@ -158,7 +156,11 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
             liberar_memoria();
         }
     */
-        cola_blocked_a_ready(nombre);
+        if(VRR_modo) {
+            cola_blocked_a_aux_blocked(nombre);
+        } else {
+            cola_blocked_a_ready(nombre);
+        }
     }
 
     free(nombre);

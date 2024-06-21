@@ -10,8 +10,9 @@ extern int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_serve
 extern scheduler_t* scheduler;
 extern sem_t sem_dispatch, sem_interrupcion;
 
-
 pthread_t thread_quantum;
+
+bool VRR_modo = false;
 t_temporal *tiempoVRR;
 
 void manejador_de_dispatcher() {
@@ -55,8 +56,8 @@ void* dispatcher(){
             printf("%d", kernel_config->quantum);
 
             if (pthread_create(&thread_quantum, NULL, thread_hilo_quantum, &kernel_config->quantum) != 0) {
-            perror("No se pudo crear el hilo para manejar quantum");
-            exit(EXIT_FAILURE);
+                perror("No se pudo crear el hilo para manejar quantum");
+                exit(EXIT_FAILURE);
             }
 
             sem_post(&sem_interrupcion);
@@ -66,25 +67,30 @@ void* dispatcher(){
 
     if(strcmp(kernel_config->algoritmo_planificacion, "VRR")==0){
 
+        VRR_modo = true;
+
         while(1){ 
             sem_wait(&sem_dispatch);
 
             //verifico si la lista aux_bloqueados esta vacia, por las prioridades
+            pthread_mutex_lock(&scheduler->mutex_aux_blocked);
+
             if(!list_is_empty(scheduler->cola_aux_blocked)){
+                pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
                 cola_aux_blocked_a_exec();
                 printf("COLA AUX BLOQUEADOS \n");
                 
             }else{
+                pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
                 cola_ready_a_exec();
                 printf("COLA DE READYS \n");
             }
 
             send_pcb(conexion_dispatch, scheduler->proceso_ejecutando);
             
-
             if (pthread_create(&thread_quantum, NULL, thread_hilo_quantum, &scheduler->proceso_ejecutando->quantum) != 0) {
-            perror("No se pudo crear el hilo para manejar quantum");
-            exit(EXIT_FAILURE);
+                perror("No se pudo crear el hilo para manejar quantum");
+                exit(EXIT_FAILURE);
             }
 
             //empiezo a contar el tiempo
