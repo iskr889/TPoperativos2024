@@ -39,6 +39,7 @@ void destroy_scheduler(scheduler_t *scheduler) {
     scheduler->proceso_ejecutando = NULL;
     dictionary_destroy_and_destroy_elements(scheduler->colas_blocked, free);
     list_destroy_and_destroy_elements(scheduler->cola_exit, free);
+    list_destroy_and_destroy_elements(scheduler->cola_aux_blocked, free);
     pthread_mutex_destroy(&scheduler->mutex_procesos);
     pthread_mutex_destroy(&scheduler->mutex_new);
     pthread_mutex_destroy(&scheduler->mutex_ready);

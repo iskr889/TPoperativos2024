@@ -28,6 +28,7 @@ void *thread_instrucciones_kernel(void *arg) {
 
         if(paquete == NULL) {
             fprintf(stderr, "Error al recibir paquete del Kernel\n");
+            liberar_memoria();
             exit(EXIT_FAILURE);
         }
 
@@ -71,6 +72,7 @@ void *thread_instrucciones_cpu(void *arg) {
 
         if(paquete == NULL) {
             fprintf(stderr, "Error al recibir paquete de la CPU\n");
+            liberar_memoria();
             exit(EXIT_FAILURE);
         }
 

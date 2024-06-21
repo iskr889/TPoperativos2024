@@ -68,6 +68,13 @@ int main(int argc, char* argv[]) {
     return OK;
 }
 
+void free_procesos(void *elem) {
+    Proceso_t *proceso = elem;
+    list_destroy_and_destroy_elements(proceso->paginas, liberar_pagina);
+    list_destroy_and_destroy_elements(proceso->instrucciones, free);
+    free(elem);
+}
+
 void liberar_memoria() {
     close(memoria_server);
     log_destroy(logger);
@@ -77,8 +84,7 @@ void liberar_memoria() {
     free(user_memory);
     free(bitarray_data);
     bitarray_destroy(frame_bitarray);
-    // TODO: Deberia recorrer cada proceso para liberar la pagina y lista de instrucciones pero por ahora queda asi porque no hay tiempo :(
-    dictionary_destroy_and_destroy_elements(procesos, free);
+    dictionary_destroy_and_destroy_elements(procesos, free_procesos);
 }
 
 t_memoria_config* load_memoria_config(String path) {
