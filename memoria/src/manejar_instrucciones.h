@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-#define BUFF_SIZE 256 // Tamaño del buffer que lee una linea de pseudocodigo a la vez
+#define BUFF_SIZE 256
 
 /**
 * @fn    Maneja las instrucciones con el kernel

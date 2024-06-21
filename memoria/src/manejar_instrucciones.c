@@ -103,9 +103,9 @@ void *thread_instrucciones_cpu(void *arg) {
 
 void instruccion_process_create(payload_t* payload) {
 
-    char pseudocodigo[BUFF_SIZE];
+    char full_path[BUFF_SIZE];
 
-    if (getcwd(pseudocodigo, sizeof(pseudocodigo)) == NULL) {
+    if (getcwd(full_path, sizeof(full_path)) == NULL) {
         perror("Error en getcwd()");
         exit(EXIT_FAILURE);
     }
@@ -116,11 +116,11 @@ void instruccion_process_create(payload_t* payload) {
 
     String path = payload_read_string(payload);
 
-    strcat(pseudocodigo, path); // Concateno en el directorio actual de trabajo la carpeta de pseudocodigo
+    strcat(full_path, path); // Concateno en el directorio actual de trabajo la carpeta con el pseudocodigo
 
     free(path);
 
-    t_list *instrucciones = leer_pseudocodigo(pseudocodigo);
+    t_list *instrucciones = leer_pseudocodigo(full_path);
 
     if(instrucciones == NULL) {
         puts("Path invalido!");
@@ -130,7 +130,7 @@ void instruccion_process_create(payload_t* payload) {
     crear_proceso(pid, instrucciones);
 
     log_debug(extra_logger, "Proceso [PID: %d] creado", pid);
-    log_debug(extra_logger, "Pseudocodigo en: %s", pseudocodigo);
+    log_debug(extra_logger, "Pseudocodigo en: %s", full_path);
 
     // imprimir_instrucciones(instrucciones);
 }

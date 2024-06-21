@@ -51,11 +51,21 @@ void ejecutar_script(const String path) {
         return;
     }
 
-    printf("Ejecutando script: %s\n", path);
-    FILE *file = fopen(path, "r");
+    char full_path[BUFF_SIZE];
+
+    if (getcwd(full_path, sizeof(full_path)) == NULL) {
+        perror("Error en getcwd()");
+        exit(EXIT_FAILURE);
+    }
+
+    strcat(full_path, path);
+
+    printf("Ejecutando script: %s\n", full_path);
+
+    FILE *file = fopen(full_path, "r");
 
     if (file == NULL) {
-        printf("No se pudo abrir el archivo: %s\n", path);
+        printf("No se pudo abrir el archivo en: %s\n", full_path);
         return;
     }
 

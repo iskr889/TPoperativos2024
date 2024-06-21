@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-#define BUFF_SIZE 64
+#define BUFF_SIZE 256
 
 /**
 * @fn    Imprime un mensaje de bienvenida
