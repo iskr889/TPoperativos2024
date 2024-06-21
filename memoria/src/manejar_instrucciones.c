@@ -36,11 +36,9 @@ void *thread_instrucciones_kernel(void *arg) {
         switch (paquete->operacion) {
             case MEMORY_PROCESS_CREATE:
                 instruccion_process_create(paquete->payload);
-                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_CREATE");
                 break;
             case MEMORY_PROCESS_TERM:
                 instruccion_process_terminate(paquete->payload);
-                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_TERM");
                 break;
             default:
                 log_error(extra_logger, "Error al tratar de identificar el codigo de operación del Kernel");
@@ -81,19 +79,15 @@ void *thread_instrucciones_cpu(void *arg) {
         switch (paquete->operacion) {
             case MEMORY_PID_PSEUDOCODE:
                 instruccion_enviar_pseudocodigo(paquete->payload);
-                log_debug(extra_logger, "Enviando Program Counter a la CPU");
                 break;
             case MEMORY_PAGE_TABLE_ACCESS:
                 instruccion_pageTable_access(paquete->payload);
-                log_debug(extra_logger, "Ejecutando: MEMORY_PAGE_TABLE_ACCESS");
                 break;
             case MEMORY_PROCESS_RESIZE:
                 instruccion_process_resize(paquete->payload);
-                log_debug(extra_logger, "Ejecutando: MEMORY_PROCESS_RESIZE");
                 break;
             case MEMORY_USER_SPACE_ACCESS:
                 instruccion_userspace_access(paquete->payload, conexion_cpu);
-                log_debug(extra_logger, "Ejecutando: MEMORY_USER_SPACE_ACCESS");
                 break;
             default:
                 log_error(extra_logger, "Error al tratar de identificar el codigo de operación de la CPU");
@@ -135,9 +129,10 @@ void instruccion_process_create(payload_t* payload) {
 
     crear_proceso(pid, instrucciones);
 
-    imprimir_instrucciones(instrucciones);
+    log_debug(extra_logger, "Proceso [PID: %d] creado", pid);
+    log_debug(extra_logger, "Pseudocodigo en: %s", pseudocodigo);
 
-    log_debug(extra_logger, "CREAR PROCESO RECIBIDO [PID: %d] PSEUDOCODIGO EN [PATH: %s]", pid, pseudocodigo);
+    // imprimir_instrucciones(instrucciones);
 }
 
 void instruccion_process_terminate(payload_t* payload) {
@@ -147,6 +142,8 @@ void instruccion_process_terminate(payload_t* payload) {
     payload_read(payload, &pid, sizeof(uint16_t));
 
     liberar_proceso(pid);
+
+    log_debug(extra_logger, "Proceso [PID: %d] finalizado", pid);
 }
 
 void instruccion_pageTable_access(payload_t* payload) {
@@ -165,6 +162,7 @@ void instruccion_pageTable_access(payload_t* payload) {
         enviar_paquete(conexion_cpu, respuesta);
         payload_destroy(payload);
         liberar_paquete(respuesta);
+        log_error(extra_logger, "No existe en la memoria el proceso con [PID: %d] solicitado por la CPU", pid);
         return;
     }
     
@@ -180,6 +178,8 @@ void instruccion_pageTable_access(payload_t* payload) {
 
     payload_destroy(payload_marco);
     liberar_paquete(respuesta);
+
+    log_debug(extra_logger, "Proceso [PID: %d] enviando marco %d correspondiente a la pagina %d", pid, marco, numero_pagina);
 }
 
 void instruccion_process_resize(payload_t* payload) {
@@ -198,6 +198,7 @@ void instruccion_process_resize(payload_t* payload) {
         enviar_paquete(conexion_cpu, respuesta);
         payload_destroy(payload);
         liberar_paquete(respuesta);
+        log_error(extra_logger, "No existe en la memoria el proceso con [PID: %d] solicitado por la CPU", pid);
         return;
     }
 
@@ -205,6 +206,8 @@ void instruccion_process_resize(payload_t* payload) {
     paquete_t *respuesta = crear_paquete(cod_op, NULL);
     enviar_paquete(conexion_cpu, respuesta); // Envia paquete vacio con cod_op OK o Out of memory
     liberar_paquete(respuesta);
+
+    log_debug(extra_logger, "Proceso [PID: %d] redimensionado a %d paginas", pid, new_size);
 }
 
 void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
@@ -257,6 +260,8 @@ void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
     payload_destroy(payload_respuesta);
     liberar_paquete(respuesta);
     free(buffer_data);
+
+    log_debug(extra_logger, "Accediendo %d posiciones de memoria desde la dirección %d", size, address);
 }
 
 void instruccion_enviar_pseudocodigo(payload_t* payload) {
@@ -275,6 +280,7 @@ void instruccion_enviar_pseudocodigo(payload_t* payload) {
         enviar_paquete(conexion_cpu, respuesta);
         payload_destroy(payload);
         liberar_paquete(respuesta);
+        log_error(extra_logger, "No existe en la memoria el proceso con [PID: %d] solicitado por la CPU", pid);
         return;
     }
 
@@ -292,7 +298,7 @@ void instruccion_enviar_pseudocodigo(payload_t* payload) {
 
     liberar_paquete(paquete);
 
-    log_debug(extra_logger, "[PID: %d] envia linea N%d: %s", pid, programCounter, instruccion);
+    log_debug(extra_logger, "Proceso [PID: %d] envia linea N%d: %s", pid, programCounter, instruccion);
 }
 
 t_list *leer_pseudocodigo(String filename) {
@@ -304,8 +310,6 @@ t_list *leer_pseudocodigo(String filename) {
         perror("");
         return NULL;
     }
-
-    printf("Leyendo pseudocodigo en: %s\n", filename);
 
     char linea[BUFF_SIZE];
     t_list* instrucciones = list_create();
