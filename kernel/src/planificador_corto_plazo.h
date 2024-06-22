@@ -3,9 +3,9 @@
 
 #include "main.h"
 
-void manejador_de_dispatcher();
+void dispatch_handler();
 void* dispatcher();
-void* thread_hilo_quantum();
+void* thread_hilo_quantum(void *arg);
 
 
 #endif

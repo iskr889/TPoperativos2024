@@ -1,7 +1,7 @@
 #ifndef SEMAFOROS_H_
 #define SEMAFOROS_H_
 
-#include <semaphore.h>
+#include "main.h"
 
 void init_semaforos();
 

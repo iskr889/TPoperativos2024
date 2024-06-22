@@ -29,7 +29,6 @@ int main(int argc, char* argv[]) {
 
     init_recursos();
 
-
     // El Kernel intenta conectarse con la memoria
     conexion_memoria = conectarse_a_modulo("MEMORIA", kernel_config->ip_memoria, kernel_config->puerto_memoria, KERNEL_CON_MEMORIA, extra_logger);
 
@@ -45,11 +44,12 @@ int main(int argc, char* argv[]) {
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
     manejador_de_interfaces(kernel_server);
 
-    manejador_de_dispatcher();
+    // Inicio la planificación de largo plazo en un hilo a parte
+    planificador_largo_plazo();
 
-    manejador_de_interrupciones();
-
-    manejador_de_largo_new_a_ready();
+    // Inicia la planifcación de corto plazo en hilos a parte (dispatch e interrupt)
+    dispatch_handler();
+    interrupt_handler();
 
     //sleep(10);
 

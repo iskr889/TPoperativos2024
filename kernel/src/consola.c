@@ -100,11 +100,13 @@ void iniciar_proceso(const String path) {
 
     //dictionary_put(scheduler->procesos, str_pid, pcb);
     //necesito pasar la pcb a la cola de new
-    proceso_a_cola_new(pcb); //paso el proceso a la cola new
+    
 
     //log_debug(extra_logger, "PROCESO CREADO [PID: %s]", str_pid);
 
     crear_proceso_en_memoria(pcb->pid, path);
+
+    proceso_a_cola_new(pcb); //paso el proceso a la cola new
 }
 
 void finalizar_proceso(const String str_pid) {

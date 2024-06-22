@@ -1,7 +1,6 @@
 #include "kernel_interface_handler.h"
 #include "manejo_interrupciones_cpu.h"
 #include "scheduler.h"
-#include "planificador_corto_plazo.h"
 
 t_dictionary *interfaces;
 extern bool VRR_modo;

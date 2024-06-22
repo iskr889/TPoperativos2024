@@ -1,12 +1,8 @@
 #include "scheduler.h"
 #include "manejo_interrupciones_cpu.h"
 #include "kernel_interface_handler.h"
-#include "semaforos.h"
 #include "recursos.h"
-#include "planificador_corto_plazo.h"
 #include "consola.h"
-
-#include <inttypes.h>
 
 extern t_log* extra_logger;
 extern t_kernel_config* kernel_config;
@@ -22,7 +18,7 @@ extern t_dictionary *recursos;
 extern bool VRR_modo;
 
 
-void manejador_de_interrupciones() {
+void interrupt_handler() {
     pthread_t thread_manejo_interrupciones;
 
     if (pthread_create(&thread_manejo_interrupciones, NULL, manejo_interrupciones_cpu, NULL) != 0) {

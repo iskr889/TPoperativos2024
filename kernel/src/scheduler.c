@@ -2,6 +2,8 @@
 
 scheduler_t *scheduler = NULL;
 
+extern t_log* extra_logger;
+
 // Función para inicializar el planificador
 void init_scheduler() {
     scheduler = malloc(sizeof(scheduler_t));
@@ -23,12 +25,13 @@ void init_scheduler() {
     pthread_mutex_init(&scheduler->mutex_exec, NULL);
     pthread_mutex_init(&scheduler->mutex_blocked, NULL);
     pthread_mutex_init(&scheduler->mutex_aux_blocked,NULL);
+    pthread_cond_init(&scheduler->cond_new, NULL);
     pthread_cond_init(&scheduler->cond_ready, NULL);
     pthread_cond_init(&scheduler->cond_exec, NULL);
     pthread_cond_init(&scheduler->cond_aux_blocked, NULL);
     return;
 }
-//Actualizar funcion para destruir el planificador
+
 // Función para destruir el planificador
 void destroy_scheduler(scheduler_t *scheduler) {
     if (scheduler == NULL)
@@ -46,8 +49,6 @@ void destroy_scheduler(scheduler_t *scheduler) {
     pthread_mutex_destroy(&scheduler->mutex_exit);
     pthread_mutex_destroy(&scheduler->mutex_exec);
     pthread_mutex_destroy(&scheduler->mutex_blocked);
-    pthread_cond_destroy(&scheduler->cond_ready);
-    pthread_cond_destroy(&scheduler->cond_exec);
     free(scheduler);
 }
 
@@ -55,17 +56,19 @@ void proceso_a_cola_new(pcb_t* proceso) {
     pthread_mutex_lock(&scheduler->mutex_new);
     proceso->estado = NEW;
     list_push(scheduler->cola_new, proceso);
+    pthread_cond_signal(&scheduler->cond_new);
     pthread_mutex_unlock(&scheduler->mutex_new);
 }
 
 void cola_new_a_ready() {
     pthread_mutex_lock(&scheduler->mutex_new);
     if (list_is_empty(scheduler->cola_new)) {
-        pthread_mutex_unlock(&scheduler->mutex_new);
-        return;
+        pthread_cond_wait(&scheduler->cond_new, &scheduler->mutex_new);
     }
     pcb_t* proceso = list_pop(scheduler->cola_new);
     pthread_mutex_unlock(&scheduler->mutex_new);
+
+    log_debug(extra_logger, "Proceso %d movido de NEW a READY", proceso->pid);
 
     pthread_mutex_lock(&scheduler->mutex_ready);
     proceso->estado = READY;
@@ -81,6 +84,8 @@ void cola_ready_a_exec() {
     }
     pcb_t* proceso = list_pop(scheduler->cola_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
+
+    log_debug(extra_logger, "Proceso %d movido de READY a EXEC", proceso->pid);
 
     pthread_mutex_lock(&scheduler->mutex_exec);
     scheduler->proceso_ejecutando = proceso;
@@ -119,7 +124,6 @@ void proceso_exec_a_blocked(pcb_t* proceso, char* nombre_cola) {
     list_push(cola_bloqueada, proceso);
     pthread_mutex_unlock(&scheduler->mutex_blocked);
 }
-
 
 void pcb_a_blocked(pcb_t* proceso, char* nombre_cola) {
     pthread_mutex_lock(&scheduler->mutex_exec);
@@ -203,8 +207,7 @@ void cola_blocked_a_aux_blocked(char* nombre_cola) {
     pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
 }
 
-//Esta funcion tendria que cambiar tipo el exit no va a estar actualizado
-
+// TODO: Esta funcion tendria que cambiar tipo el exit no va a estar actualizado
 void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_cola_actual) {
     pthread_mutex_lock(mutex_cola_actual);
     list_pop(cola_actual);
@@ -230,12 +233,13 @@ void pcb_a_exit(pcb_t* proceso) {
     pthread_mutex_unlock(&scheduler->mutex_exit);
 }
 
-
-void list_push(t_list* queue, void* element) { // Función para hacer push (agregar al final) en la lista
+// Función para hacer push (agregar al final) en la lista
+void list_push(t_list* queue, void* element) {
     list_add(queue, element);
 }
 
-void* list_pop(t_list* queue) { // Función para hacer pop (remover del inicio) en la lista
+// Función para hacer pop (remover del inicio) en la lista
+void* list_pop(t_list* queue) {
     if (list_is_empty(queue))
         return NULL;
     return list_remove(queue, 0);

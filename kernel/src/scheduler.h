@@ -14,14 +14,15 @@ typedef struct {
     pcb_t *proceso_ejecutando;
     t_dictionary *colas_blocked;
     t_list *cola_exit;
-    t_list *cola_aux_blocked; //agrego cola auxiliar de bloqueados
+    t_list *cola_aux_blocked;
     pthread_mutex_t mutex_procesos;
     pthread_mutex_t mutex_new;
     pthread_mutex_t mutex_ready;
     pthread_mutex_t mutex_exit;
     pthread_mutex_t mutex_exec;
     pthread_mutex_t mutex_blocked;
-    pthread_mutex_t mutex_aux_blocked; // agrego mutex cola auxiliar bloqueados
+    pthread_mutex_t mutex_aux_blocked;
+    pthread_cond_t cond_new;
     pthread_cond_t cond_ready;
     pthread_cond_t cond_exec;
     pthread_cond_t cond_aux_blocked;
