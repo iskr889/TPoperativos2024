@@ -1,7 +1,10 @@
 #include "mmu.h"
 
+extern t_cpu_config cpu_config;
+extern t_log*  logger;
+
 uint32_t traducir_direccion_logica(uint32_t direccion_logica, uint16_t pid, int socket_memoria, uint32_t tam_pagina) {
-    uint32_t pagina = floor(direccion_logica / tam_pagina);
+    uint32_t pagina = floor((double)direccion_logica / (double)tam_pagina); // Para no perder precisión
     uint32_t desplazamiento = direccion_logica - pagina * tam_pagina;
     uint32_t marco;
     uint8_t respuesta;
@@ -54,14 +57,9 @@ uint32_t recibirMarco(int socket_memoria) {
 }
 
 uint32_t obtenerTamPagina(int socket_memoria) {
-    return recibirTamPagina(socket_memoria);    
-}
-
-uint32_t recibirTamPagina(int socket_memoria) {
     paquete_t *paquete = recibir_paquete(socket_memoria);
-    if(paquete == NULL || paquete->operacion != TAM_PAGINA)
+    if(paquete == NULL || paquete->operacion != MEMORY_PAGE_SIZE)
         exit(EXIT_FAILURE);
-
     uint32_t tamanio;
     payload_read(paquete->payload, &tamanio, sizeof(uint32_t));
     payload_destroy(paquete->payload);

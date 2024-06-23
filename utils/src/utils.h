@@ -68,7 +68,8 @@ typedef enum {
     MEMORY_INVALID_READ,            // Devuelve en caso de fallar la lectura del User Space
     MEMORY_INVALID_WRITE,           // Devuelve en caso de fallar la escritura del User Space
     OUT_OF_MEMORY,                  // Devuelve en caso de quedarse sin memoria del User Space
-    MEMORY_PID_PSEUDOCODE           // La CPU pide a la memoria un PC y la memoria envia el pseudocodigo correspondiente   
+    MEMORY_PID_PSEUDOCODE,          // La CPU pide a la memoria un PC y la memoria envia el pseudocodigo correspondiente
+    MEMORY_PAGE_SIZE,               // Envia el tamaño de pagina a la cpu
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
 // TODO: REVISAR DEBAJO DE ESTA LINEA

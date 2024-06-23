@@ -1,6 +1,7 @@
 #include "main.h"
 #include "servers.h"
 #include "tlb.h"
+#include "mmu.h"
 
 t_config* config;
 t_cpu_config cpu_config;

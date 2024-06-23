@@ -95,7 +95,7 @@ void execute(char* instruccion, pcb_t* pcb) {
         case I_SET:
             actualizar_registro(&pcb->registros, getTipoRegistro(tokens[1]), atoi(tokens[2]), ASIGNACION);
             break;
-        case I_SUM:
+        case I_SUM: {
             void* reg2 = obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
             if (reg2) {
                 uint32_t valor2 = (getTipoRegistro(tokens[2]) <= DX) ? *((uint8_t*)reg2) : *((uint32_t*)reg2);
@@ -103,7 +103,8 @@ void execute(char* instruccion, pcb_t* pcb) {
             } else
                 fprintf(stderr, "[ERROR] Registro no válido: %d\n", getTipoRegistro(tokens[2]));
             break;
-        case I_SUB:
+        }
+        case I_SUB: {
             void* reg = obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
             if (reg) {
                 uint32_t valor2 = (getTipoRegistro(tokens[2]) <= DX) ? *((uint8_t*)reg) : *((uint32_t*)reg);
@@ -111,8 +112,8 @@ void execute(char* instruccion, pcb_t* pcb) {
             } else
                 fprintf(stderr, "[ERROR] Registro no válido: %d\n", getTipoRegistro(tokens[2]));
             break;
-
-        case I_JNZ:
+        }
+        case I_JNZ: {
             void* reg1 = obtener_registro(&pcb->registros, getTipoRegistro(tokens[1]));
             if (reg1) {
                 uint32_t valor1 = (getTipoRegistro(tokens[1]) <= DX) ? *((uint8_t*)reg1) : *((uint32_t*)reg1);
@@ -122,7 +123,8 @@ void execute(char* instruccion, pcb_t* pcb) {
             } else
                 fprintf(stderr, "[ERROR] Registro no válido: %d\n", getTipoRegistro(tokens[1]));
             break;
-        case I_MOV_IN:
+        }
+        case I_MOV_IN: {
             uint32_t direccion_logica = atoi(tokens[2]);
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
             uint32_t valor_memoria;
@@ -132,8 +134,8 @@ void execute(char* instruccion, pcb_t* pcb) {
                 fprintf(stderr, "[ERROR] Error al leer memoria en la dirección física: %d\n", direccion_fisica);
             }
             break;
-
-        case I_MOV_OUT:
+        }
+        case I_MOV_OUT: {
             void* registro = obtener_registro(&pcb->registros, getTipoRegistro(tokens[1]));
             if (registro) {
                 uint32_t valor_reg = (getTipoRegistro(tokens[1]) <= DX) ? *((uint8_t*)registro) : *((uint32_t*)registro);
@@ -146,6 +148,7 @@ void execute(char* instruccion, pcb_t* pcb) {
                 fprintf(stderr, "[ERROR] Registro no válido: %d\n", getTipoRegistro(tokens[1]));
             }
             break;
+        }
         case I_RESIZE:
             resize(pcb, atoi(tokens[1]));
             break;
@@ -161,10 +164,10 @@ void execute(char* instruccion, pcb_t* pcb) {
             enviar_interrupcion(conexion_dispatch, pcb, instruccion, I_IO_GEN_SLEEP);
             break;
         case I_IO_STDIN_READ:
-            i_io_stdin_operation(tokens[0],tokens[1],tokens[2],tokens[3], I_IO_STDIN_READ, pcb);
+            i_io_stdin_operation(tokens[0], tokens[1], tokens[2], tokens[3], I_IO_STDIN_READ, pcb);
             break;
         case I_IO_STDOUT_WRITE:
-            i_io_stdin_operation(tokens[0],tokens[1],tokens[2],tokens[3], I_IO_STDOUT_WRITE, pcb);
+            i_io_stdin_operation(tokens[0], tokens[1], tokens[2], tokens[3], I_IO_STDOUT_WRITE, pcb);
             break;
         case I_IO_FS_CREATE:
             enviar_interrupcion(conexion_dispatch, pcb, instruccion, I_IO_FS_CREATE);
@@ -172,20 +175,20 @@ void execute(char* instruccion, pcb_t* pcb) {
         case I_IO_FS_DELETE:
             enviar_interrupcion(conexion_dispatch, pcb, instruccion, I_IO_FS_DELETE);
             break;
-        case I_IO_FS_TRUNCATE:
+        case I_IO_FS_TRUNCATE: {
             uint32_t tamanio = *(uint32_t*)obtener_valor_registro(pcb,tokens[3]);
-            size_t instruccion_len = snprintf(NULL, 0, "I_IO_FS_TRUNCATE %s %s %u",tokens[1], tokens[2], tamanio) + 1;
+            size_t instruccion_len = snprintf(NULL, 0, "I_IO_FS_TRUNCATE %s %s %u", tokens[1], tokens[2], tamanio) + 1;
             char *instruccion = (char*)malloc(instruccion_len);
-            snprintf(instruccion, instruccion_len, "I_IO_FS_TRUNCATE %s %s %u",tokens[1], tokens[2], tamanio);
+            snprintf(instruccion, instruccion_len, "I_IO_FS_TRUNCATE %s %s %u", tokens[1], tokens[2], tamanio);
             enviar_interrupcion(conexion_dispatch, pcb, instruccion, I_IO_FS_TRUNCATE);
             free(instruccion);
             break;
-
+        }
         case I_IO_FS_WRITE:
-            i_io_fs_operation("I_IO_FS_WRITE",tokens[1],tokens[2],tokens[3],tokens[4],tokens[5], I_IO_FS_READ,pcb);
+            i_io_fs_operation("I_IO_FS_WRITE", tokens[1], tokens[2], tokens[3], tokens[4], tokens[5], I_IO_FS_READ, pcb);
             break;
         case I_IO_FS_READ:
-            i_io_fs_operation("I_IO_FS_READ",tokens[1],tokens[2],tokens[3],tokens[4],tokens[5], I_IO_FS_READ,pcb);
+            i_io_fs_operation("I_IO_FS_READ", tokens[1], tokens[2], tokens[3], tokens[4], tokens[5], I_IO_FS_READ, pcb);
             break;
         case I_EXIT:
             printf("I_EXIT\n");
@@ -221,9 +224,9 @@ void* obtener_valor_registro(pcb_t *pcb, char* registro) {
 }
 
 void i_io_fs_operation(char *t_instruccion, char *interfaz, char *nombre_archivo, char *direccion, char *tamanio, char *puntero_archivo, uint16_t cod, pcb_t *pcb) {
-    uint32_t direccion_logica = *(uint32_t*)obtener_valor_registro(pcb,direccion);
-    uint32_t tam = *(uint32_t*)obtener_valor_registro(pcb,tamanio);
-    uint32_t puntero_file = *(uint32_t*)obtener_valor_registro(pcb,puntero_archivo);
+    uint32_t direccion_logica = *(uint32_t*)obtener_valor_registro(pcb, direccion);
+    uint32_t tam = *(uint32_t*)obtener_valor_registro(pcb, tamanio);
+    uint32_t puntero_file = *(uint32_t*)obtener_valor_registro(pcb, puntero_archivo);
     uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
     size_t instruccion_len = snprintf(NULL, 0, "%s %s %s %u %u %u",t_instruccion, interfaz, nombre_archivo, direccion_fisica, tam, puntero_file) + 1;
     char *instruccion = (char*)malloc(instruccion_len);
@@ -236,9 +239,9 @@ void i_io_stdin_operation(char *t_instruccion, char *interfaz, char *direccion, 
     uint32_t direccion_logica = *(uint32_t*)obtener_valor_registro(pcb,direccion);
     uint32_t tam = *(uint32_t*)obtener_valor_registro(pcb,tamanio);
     uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
-    size_t instruccion_len = snprintf(NULL, 0, "%s %s %u %u",t_instruccion, interfaz, direccion_fisica, tam) + 1;
+    size_t instruccion_len = snprintf(NULL, 0, "%s %s %u %u", t_instruccion, interfaz, direccion_fisica, tam) + 1;
     char *instruccion = (char*)malloc(instruccion_len);
-    snprintf(instruccion, instruccion_len, "%s %s %u %u",t_instruccion, interfaz, direccion_fisica, tam);
+    snprintf(instruccion, instruccion_len, "%s %s %u %u", t_instruccion, interfaz, direccion_fisica, tam);
     enviar_interrupcion(conexion_dispatch, pcb, instruccion, cod);
     free(instruccion);
 }
@@ -300,8 +303,14 @@ char** split_string(char* str) {
     int spaces = 0;
     char* temp = str;
 
+    if (str == NULL) {
+        fprintf(stderr, "Error: String vacio!\n");
+        exit(EXIT_FAILURE);
+    }
+
     while (*temp) {
-        if (*temp == ' ') spaces++;
+        if (*temp == ' ')
+            spaces++;
         temp++;
     }
 
