@@ -32,7 +32,7 @@ void *thread_instrucciones_kernel(void *arg) {
             exit(EXIT_FAILURE);
         }
 
-        TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
+        ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
 
         switch (paquete->operacion) {
             case MEMORY_PROCESS_CREATE:
@@ -76,7 +76,7 @@ void *thread_instrucciones_cpu(void *arg) {
             exit(EXIT_FAILURE);
         }
 
-        TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
+        ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
 
         switch (paquete->operacion) {
             case MEMORY_PID_PSEUDOCODE:

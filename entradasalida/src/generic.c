@@ -43,5 +43,5 @@ void io_gen_sleep(int unidades_trabajo) {
         exit(EXIT_FAILURE);
     }
     log_info(logger, "Operacion: IO_GEN_SLEEP %dms", unidades_trabajo);
-    TIEMPO_UNIDAD_DE_TRABAJO(unidades_trabajo);
+    ESPERAR_X_MILISEGUNDOS(unidades_trabajo);
 }

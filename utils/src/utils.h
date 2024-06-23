@@ -24,7 +24,7 @@
 
 #define ERROR -1
 #define OK     0
-#define TIEMPO_UNIDAD_DE_TRABAJO(x) usleep(1000 * x)
+#define ESPERAR_X_MILISEGUNDOS(x) usleep(1000 * x)
 
 typedef char* String;
 

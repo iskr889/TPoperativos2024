@@ -39,8 +39,8 @@ void* dispatcher(){
             send_pcb(conexion_dispatch, scheduler->proceso_ejecutando);
             
             sem_post(&sem_interrupcion);
-
         }
+
     } else if (strcmp(kernel_config->algoritmo_planificacion, "RR") == 0) {
     
         while(1) { 
@@ -58,6 +58,7 @@ void* dispatcher(){
 
             sem_post(&sem_interrupcion);
         }
+
     } else if (strcmp(kernel_config->algoritmo_planificacion, "VRR") == 0) {
 
         VRR_modo = true;
@@ -68,11 +69,10 @@ void* dispatcher(){
             //verifico si la lista aux_bloqueados esta vacia, por las prioridades
             pthread_mutex_lock(&scheduler->mutex_aux_blocked);
 
-            if (!list_is_empty(scheduler->cola_aux_blocked)){
+            if (!list_is_empty(scheduler->cola_aux_blocked)) {
                 pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
                 cola_aux_blocked_a_exec();
                 printf("COLA AUX BLOQUEADOS \n");
-                
             } else {
                 pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
                 cola_ready_a_exec();
@@ -92,13 +92,13 @@ void* dispatcher(){
             sem_post(&sem_interrupcion);
         }
     }
+
     return NULL;
 }
 
-void* thread_hilo_quantum(void *arg) {
+void* thread_hilo_quantum(void *tiempo) {
     printf("inicio quantum \n");
-    uint16_t tiempo = *(uint16_t*)arg;
-    usleep(1000*(tiempo));
+    ESPERAR_X_MILISEGUNDOS(*(uint16_t*)tiempo);
     //envio orden de desalojo
     enviar_operacion(DESALOJO_QUANTUM, conexion_interrupt);
     printf("Finalizo quantum \n");

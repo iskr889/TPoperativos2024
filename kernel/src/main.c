@@ -51,8 +51,6 @@ int main(int argc, char* argv[]) {
     dispatch_handler();
     interrupt_handler();
 
-    //sleep(10);
-
     //cambiar_grado_multiprogramacion(4);
 
     consola_kernel();

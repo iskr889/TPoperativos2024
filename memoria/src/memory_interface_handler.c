@@ -136,7 +136,7 @@ void manejar_instrucciones_stdin(int socket_stdin) {
             exit(EXIT_FAILURE);
         }
 
-        TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
+        ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
 
         if (paquete->operacion != MEMORY_USER_SPACE_ACCESS) {
             log_error(extra_logger, "Operacion recibida de STDIN invalida");
@@ -163,7 +163,7 @@ void manejar_instrucciones_stdout(int socket_stdout) {
             exit(EXIT_FAILURE);
         }
 
-        TIEMPO_UNIDAD_DE_TRABAJO(memoria_config->retardo_respuesta);
+        ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
 
         if (paquete->operacion != MEMORY_USER_SPACE_ACCESS) {
             log_error(extra_logger, "Operacion recibida de STDOUT invalida");
