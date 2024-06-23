@@ -7,6 +7,7 @@
 #include "../../utils/src/pcb.h"
 #include "../../utils/src/serializacion.h"
 
+
 /**
 * @fn    Libera todo la cpu
 * @brief Cierra los fd y libera las estructuras config y loggers

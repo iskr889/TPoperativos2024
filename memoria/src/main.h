@@ -97,4 +97,10 @@ bool leer_memoria(uint32_t direccion_fisica, void *buffer, size_t size);
 */
 bool escribir_memoria(uint32_t direccion_fisica, void *data, size_t size);
 
+/**
+* @fn    Envia a la CPU el tamaño de pagina
+* @brief Envia a la CPU el tamaño de pagina
+*/
+void enviarTamPagina(int conexion_cpu, uint32_t tamanio_pagina);
+
 #endif

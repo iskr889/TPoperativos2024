@@ -1,14 +1,18 @@
 #include "main.h"
 #include "servers.h"
+#include "tlb.h"
+#include "mmu.h"
 
 t_config* config;
 t_cpu_config cpu_config;
 t_log* logger;
 t_log* extra_logger;
+uint32_t tam_pagina;
 int conexion_memoria, dispatch_server, interrupt_server, conexion_dispatch, conexion_interrupt;
 
 int main(int argc, char* argv[]) {
 
+    iniciar_TLB();
     load_cpu_config("cpu.config");
 
     logger = iniciar_logger("cpu.log", "CPU", 1, LOG_LEVEL_INFO);
@@ -17,6 +21,10 @@ int main(int argc, char* argv[]) {
 
     // El Kernel intenta conectarse con la memoria
     conexion_memoria = conectarse_a_modulo("MEMORIA", cpu_config.ip_memoria, cpu_config.puerto_memoria, CPU_CON_MEMORIA, extra_logger);
+
+    tam_pagina = obtenerTamPagina(conexion_memoria);
+
+    log_debug(extra_logger, "TAMAÑO DE PAGINA RECIBIDO DE LA MEMORIA: %d", tam_pagina);
 
     // La CPU inicia un servidor que escucha por conexiones del Kernel a la CPU (DISPATCH)
     dispatch_server = escuchar_conexiones_de("KERNEL (PUERTO DISPATCH)", cpu_config.puerto_escucha_dispath, extra_logger);
@@ -53,7 +61,7 @@ int main(int argc, char* argv[]) {
     pthread_exit(0);
 
     liberar_cpu();
-
+    destruir_TLB();
     puts("\nCerrando CPU...");
 
     return OK;

@@ -11,7 +11,6 @@
 void* iniciar_dispatch();
 void* iniciar_interrupt();
 void ciclo_instruccion(pcb_t* pcb);
-//traduccion_t traducir_direccion(uint32_t direccion_logica);
-void enviar_pc(uint32_t pc);
+void enviar_interrupcion_FINALIZADO(int conexion_interrupt, pcb_t *pcb);
 
 #endif
