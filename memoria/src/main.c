@@ -41,6 +41,9 @@ int main(int argc, char* argv[]) {
     
     log_debug(extra_logger, "MODULO CPU CONECTO CON LA MEMORIA EXITOSAMENTE!");
 
+    // Envia el tamaño de pagina a la CPU despues de conectarse
+    enviarTamPagina(conexion_cpu, memoria_config->tam_pagina);
+
     // La MEMORIA espera que el KERNEL se conecte
     conexion_kernel = esperar_conexion_de(KERNEL_CON_MEMORIA, memoria_server);
 
@@ -265,4 +268,14 @@ bool escribir_memoria(uint32_t direccion_fisica, void *data, size_t size) {
 
     pthread_mutex_unlock(&memoria_mutex);
     return true;
+}
+
+void enviarTamPagina(int conexion_cpu, uint32_t tamanio_pagina) {
+    payload_t *payload = payload_create(sizeof(uint32_t));
+    payload_add(payload, &tamanio_pagina, sizeof(uint32_t));
+    paquete_t *paquete = crear_paquete(MEMORY_PAGE_SIZE, payload);
+    if(enviar_paquete(conexion_cpu, paquete) != OK)
+        exit(EXIT_FAILURE);
+    payload_destroy(payload);
+    liberar_paquete(paquete);
 }
