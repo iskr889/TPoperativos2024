@@ -13,7 +13,10 @@ void interfaz_stdout(String nombre) {
 
     enviar_nombre_interfaz(nombre, conexion_kernel);
 
-    while (stdout_procesar_instrucciones(conexion_kernel, conexion_memoria));
+    while(1){
+            stdout_procesar_instrucciones(conexion_kernel, conexion_memoria);
+            enviar_operacion(OK, conexion_kernel);
+    }
 
     close(conexion_kernel);
     close(conexion_memoria);

@@ -1,17 +1,21 @@
 //#include "../../utils/src/pcb.h"
 #include "planificador_corto_plazo.h"
 #include "scheduler.h"
+//#include "semaforos.h"
+//#include "recursos.h"
 
 extern t_log* extra_logger;
 extern t_kernel_config* kernel_config;
 extern int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_server;
 extern scheduler_t* scheduler;
-extern sem_t sem_dispatch, sem_interrupcion;
+extern sem_t sem_dispatch, sem_interrupcion, sem_iniciar_dispatcher, sem_hay_encolado_VRR;
 
 pthread_t thread_quantum;
 
 bool VRR_modo = false;
+bool FIFO_modo = false;
 t_temporal *tiempoVRR;
+pthread_mutex_t mutex_tiempoVRR;
 
 void dispatch_handler() {
     pthread_t thread_dispatch;
@@ -30,7 +34,8 @@ void dispatch_handler() {
 void* dispatcher(){
 
     if (strcmp(kernel_config->algoritmo_planificacion, "FIFO") == 0) {
-        
+        FIFO_modo = true;
+
         while(1) { 
             sem_wait(&sem_dispatch);
 
@@ -60,11 +65,14 @@ void* dispatcher(){
         }
 
     } else if (strcmp(kernel_config->algoritmo_planificacion, "VRR") == 0) {
-
+        pthread_mutex_init(&mutex_tiempoVRR, NULL);
         VRR_modo = true;
 
         while(1) { 
             sem_wait(&sem_dispatch);
+            log_info(extra_logger, "Paso sem_dispatch");//Prueba
+            sem_wait(&sem_hay_encolado_VRR);
+            log_info(extra_logger, "Paso sem_encolado_VRR");//Prueba
 
             //verifico si la lista aux_bloqueados esta vacia, por las prioridades
             pthread_mutex_lock(&scheduler->mutex_aux_blocked);
@@ -87,7 +95,9 @@ void* dispatcher(){
             }
 
             //empiezo a contar el tiempo
+            pthread_mutex_lock(&mutex_tiempoVRR);
             tiempoVRR = temporal_create();
+            pthread_mutex_unlock(&mutex_tiempoVRR);
 
             sem_post(&sem_interrupcion);
         }

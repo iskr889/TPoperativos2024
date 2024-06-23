@@ -1,11 +1,13 @@
 #include "consola.h"
 #include "scheduler.h"
 #include <errno.h>
+//#include "semaforos.h"
 
 extern t_kernel_config* kernel_config;
 extern t_log* logger;
 extern t_log* extra_logger;
 extern int conexion_memoria, conexion_dispatch, conexion_interrupt;
+extern sem_t sem_iniciar_planificacion, sem_proceso_a_new;
 
 extern scheduler_t *scheduler;   // Estructura de planificacion general
 extern t_dictionary *interfaces; // Guarda las interfaces conectadas al kernel
@@ -137,6 +139,10 @@ void iniciar_planificacion(const String s) {
         puts("El comando no deberia contener argumentos!");
         return;
     }
+/*
+    pcb_t *pcb1 = crear_proceso(1,2000);
+    proceso_a_cola_new(pcb1);
+   */
     puts("Reanudando planificador");
 }
 

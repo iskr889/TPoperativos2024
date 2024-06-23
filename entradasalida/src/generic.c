@@ -10,8 +10,11 @@ void interfaz_generica(String nombre) {
 
     enviar_nombre_interfaz(nombre, conexion_kernel);
 
-    while(1)
+    while(1) {
         generic_procesar_instrucciones(conexion_kernel);
+        enviar_operacion(OK, conexion_kernel);
+    }
+        
 
     close(conexion_kernel);
 }

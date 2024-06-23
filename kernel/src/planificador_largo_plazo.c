@@ -1,12 +1,16 @@
 //#include "../../utils/src/pcb.h"
 #include "planificador_largo_plazo.h"
 #include "scheduler.h"
+#include "planificador_corto_plazo.h"
+//#include "semaforos.h"
+//#include "recursos.h"
 
 extern t_log* extra_logger;
 extern t_kernel_config* kernel_config;
 extern int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_server;
 extern scheduler_t* scheduler;
-extern sem_t sem_dispatch, sem_interrupcion, sem_multiprogramacion_ready;
+extern bool VRR_modo;
+extern sem_t sem_dispatch, sem_interrupcion, sem_multiprogramacion_ready, sem_hay_encolado_VRR;
 
 void planificador_largo_plazo() {
     pthread_t thread_largo_new_a_ready;
@@ -26,6 +30,9 @@ void *planificador_largo_new_a_ready(){
     while(1) {
         sem_wait(&sem_multiprogramacion_ready);
         cola_new_a_ready();
+        //log_info(extra_logger, "Paso sem iniciar dispather largo plazo");
+        if (VRR_modo) sem_post(&sem_hay_encolado_VRR);
+        //log_info(extra_logger, "Paso sem hay encolado largo plazo");
     }
     
     return NULL;

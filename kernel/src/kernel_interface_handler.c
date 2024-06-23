@@ -5,6 +5,9 @@
 t_dictionary *interfaces;
 extern bool VRR_modo;
 
+extern t_log* extra_logger;
+extern sem_t sem_hay_encolado_VRR;
+
 void manejador_de_interfaces(int fd_servidor) {
 
     pthread_t thread_interfaces;
@@ -111,6 +114,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
     interfaz_t *interfaz = malloc(sizeof(interfaz_t));
     interfaz->socket = socket_interfaz;
     sem_init(&interfaz->sem_IO_ejecucion, 0, 0);
+    pthread_mutex_init(&interfaz->mutex_IO_instruccion, NULL);
     interfaz->instruccion_IO = list_create();
 
     switch (handshake) {
@@ -143,8 +147,12 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     while(1){
         sem_wait(&interfaz->sem_IO_ejecucion);
-        String instruccion = list_pop(interfaz->instruccion_IO);
-        ejecutar_IO(split_string(instruccion));
+        log_info(extra_logger, "Paso el wait IO");
+        pthread_mutex_lock(&interfaz->mutex_IO_instruccion);
+        char** instruccion = (char**)list_pop(interfaz->instruccion_IO);
+        pthread_mutex_unlock(&interfaz->mutex_IO_instruccion);
+
+        ejecutar_IO(socket_interfaz, instruccion);
         
      // int respuesta = ejecutar_IO(split_string(instruccion));
     /*    if(respuesta ==OK){
@@ -155,8 +163,11 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
             liberar_memoria();
         }
     */
-        if(VRR_modo) {
+      log_info(extra_logger, "Ejecuto la IO");
+        if (VRR_modo) {
             cola_blocked_a_aux_blocked(nombre);
+            sem_post(&sem_hay_encolado_VRR); //Si es VRR
+            log_info(extra_logger, "Paso la cosa a aux blocked");
         } else {
             cola_blocked_a_ready(nombre);
         }

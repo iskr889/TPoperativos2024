@@ -16,6 +16,7 @@ typedef struct {
     tipo_io_t tipo;
     t_list *instruccion_IO;
     sem_t sem_IO_ejecucion;
+    pthread_mutex_t mutex_IO_instruccion;
 } interfaz_t;
 
 /**

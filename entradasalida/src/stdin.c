@@ -12,8 +12,11 @@ void interfaz_stdin(String nombre) {
 
     enviar_nombre_interfaz(nombre, conexion_kernel);
 
-    while (stdin_procesar_instrucciones(conexion_kernel, conexion_memoria));
-
+    while(1){
+            stdin_procesar_instrucciones(conexion_kernel, conexion_memoria);
+            enviar_operacion(OK, conexion_kernel);
+        } 
+        
     close(conexion_kernel);
     close(conexion_memoria);
 }
