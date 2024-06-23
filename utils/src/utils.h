@@ -103,7 +103,9 @@ typedef enum {
     EBX,
     ECX,
     EDX,
-    PC
+    PC,
+    SI,
+    DI
 } registro_t;
 
 typedef struct {
