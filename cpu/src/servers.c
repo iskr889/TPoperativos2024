@@ -19,7 +19,7 @@ void* iniciar_dispatch() {
 
         sleep(1);
 
-        ciclo_instruccion(pcb);
+        ciclo_instruccion(pcb);   
     }
 
     return NULL;
@@ -39,7 +39,7 @@ void* iniciar_interrupt() {
 
         log_debug(extra_logger, "PCB con PID %d ha terminado en EXIT", current_pcb->pid);
 
-        enviar_interrupcion_FINALIZADO(conexion_interrupt, current_pcb);
+        enviar_interrupcion_FINALIZADO(conexion_dispatch, current_pcb);
 
         free(current_pcb);
         current_pcb = NULL;
