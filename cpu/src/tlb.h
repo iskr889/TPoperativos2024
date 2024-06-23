@@ -23,7 +23,7 @@ uint32_t obtenerMarcoTLB(uint16_t pid, uint32_t pagina);
 void agregarEntradaTLB(uint16_t pid, uint32_t pagina, uint32_t marco);
 void actualizarTLB(uint16_t pid, uint32_t pagina, uint32_t marco);
 void imprimirTLB();
-void init_TLB();
+void iniciar_TLB();
 void destruir_TLB();
 
 #endif

@@ -8,9 +8,8 @@ uint16_t temp_pid; // Guarda un pid para ser accedido por la función is_entry_m
 uint32_t temp_pagina; // Guarda un numero de pagina para ser accedido por la función is_entry_match()
 tlb_entry_t *oldest_entry; // Guarda el entry mas viejo de la tlb
 
-void init_TLB() {
+void iniciar_TLB() {
     tlb = list_create();
-    printf("TLB INICIADA\n");
 }
 
 static bool is_entry_match(void *entry) {
@@ -61,7 +60,6 @@ void agregarEntradaTLB(uint16_t pid, uint32_t pagina, uint32_t marco) {
 
 void destruir_TLB() {
     list_destroy_and_destroy_elements(tlb, free);
-    printf("TLB DESTROY\n");
 }
 
 static void imprimirEntradaTLB(void *entry_tlb) {

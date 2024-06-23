@@ -72,9 +72,8 @@ typedef enum {
     MEMORY_PAGE_SIZE,               // Envia el tamaño de pagina a la cpu
 } instruccionesMemoria_t; // Codigo de operación para cada instrucción de Memoria
 
-// TODO: REVISAR DEBAJO DE ESTA LINEA
 typedef enum {
-    I_SET,
+    I_SET = 300,
     I_SUM,
     I_SUB,
     I_JNZ,
@@ -96,7 +95,7 @@ typedef enum {
 } tipo_instruccion_t;
 
 typedef enum {
-    AX,
+    AX = 400,
     BX,
     CX,
     DX,
@@ -109,24 +108,13 @@ typedef enum {
     DI
 } registro_t;
 
-typedef struct {
-    tipo_instruccion_t tipo;
-    registro_t registro1;
-    registro_t registro2;
-    uint32_t valor;
-    char *interfaz;
-    char *recurso;
-    char *nombreArchivo;
-} instruccion_t;
-
 typedef enum {
-    FINALIZADO=1,
+    FINALIZADO = 500,
     IO,
     DESALOJO_QUANTUM,
     WAIT,
     SIGNAL,
 } interrupciones_t;
-// TODO: REVISAR ARRIBA DE ESTA LINEA
 
 /**
 * @fn    Inicia un logger
