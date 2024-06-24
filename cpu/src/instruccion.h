@@ -16,14 +16,13 @@ int obtener_tipo_instruccion(const char* tipo_str);
 char** split_string(char* str);
 void actualizar_registro(cpu_reg_t* registros, registro_t registro, uint32_t valor, operacion_t operacion);
 char* fetch(pcb_t* pcb);
-void decode(char* instruccion, pcb_t* pcb);
+char* decode(char* instruccion, pcb_t* pcb);
 void execute(char* instruccion, pcb_t* pcb);
 void* obtener_registro(cpu_reg_t* registros, registro_t registro);
 
 char *recibir_instruccion(int socket);
 
 void solicitar_intruccion(int socket, uint16_t pid, uint32_t pc);
-void* obtener_valor_registro(pcb_t *pcb, char* registro);
 void i_io_fs_operation(char *t_instruccion, char *interfaz, char *nombre_archivo, char *direccion, char *tamanio, char *puntero_archivo, uint16_t cod, pcb_t *pcb);
 void i_io_stdin_operation(char *t_instruccion, char *interfaz, char *direccion, char *tamanio, uint16_t cod, pcb_t *pcb);
 bool leer_memoria(uint32_t direccion_fisica, void* buffer, uint32_t size);
