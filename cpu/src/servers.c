@@ -60,10 +60,8 @@ void ciclo_instruccion(pcb_t* pcb) {
 
     while ((instruccion = fetch(pcb)) != NULL) {
 
-        decode(instruccion, pcb);
-
-        execute(instruccion, pcb);
-
+        char *instruccion_deco = decode(instruccion, pcb);
+        execute(instruccion_deco, pcb);
         free(instruccion);
 
         imprimir_pcb(pcb);
