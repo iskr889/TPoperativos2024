@@ -159,6 +159,10 @@ void execute(char* instruccion, pcb_t* pcb) {
             enviar_interrupcion(conexion_dispatch, pcb, instruccion, SIGNAL);
             break;
         case I_IO_GEN_SLEEP:
+            pcb->estado = BLOCKED;
+            i_io_generic_operation(tokens[0],tokens[1],tokens[2], IO, pcb);
+            break;
+
         case I_IO_STDIN_READ:
         case I_IO_STDOUT_WRITE:
         case I_IO_FS_CREATE:
@@ -363,7 +367,13 @@ void io_fs_write(pcb_t *pcb, char* path, char* data, uint32_t direccion_logica, 
     free(instruccion);
 }
 
-
+void i_io_generic_operation(char *t_instruccion, char *interfaz, char *tiempo_sleep, uint16_t cod, pcb_t *pcb) {
+    size_t instruccion_len = snprintf(NULL, 0, "%s %s %s",t_instruccion, interfaz, tiempo_sleep) + 1;
+    char *instruccion = (char*)malloc(instruccion_len);
+    snprintf(instruccion, instruccion_len, "%s %s %s",t_instruccion, interfaz, tiempo_sleep);
+    enviar_interrupcion(conexion_dispatch, pcb, instruccion, cod);
+    free(instruccion);
+}
 
 void resize(pcb_t *pcb, uint32_t nuevo_tamano) {
     int resultado = solicitar_resize_memoria(pcb->pid, nuevo_tamano);

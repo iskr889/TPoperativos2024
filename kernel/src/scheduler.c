@@ -157,7 +157,7 @@ void proceso_exec_a_ready() {
 }
 
 void pcb_a_ready(pcb_t* proceso){
-     pthread_mutex_lock(&scheduler->mutex_exec);
+    pthread_mutex_lock(&scheduler->mutex_exec);
     if (scheduler->proceso_ejecutando != NULL) {
         free(scheduler->proceso_ejecutando);
         scheduler->proceso_ejecutando = NULL; // Evitar uso posterior
@@ -182,6 +182,8 @@ void cola_blocked_a_ready(char* nombre_cola) {
     }
     pcb_t* proceso = list_pop(cola_bloqueada);
     pthread_mutex_unlock(&scheduler->mutex_blocked);
+
+    log_debug(extra_logger, "Proceso %d movido de BLOCKED a READY", proceso->pid);
 
     pthread_mutex_lock(&scheduler->mutex_ready);
     proceso->estado = READY;

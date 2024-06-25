@@ -38,17 +38,18 @@ void interrupt_handler() {
 void* manejo_interrupciones_cpu(){
 
     while(1){
-
+        sem_wait(&sem_interrupcion);
         paquete_t *paquete = recibir_interrupcion(conexion_dispatch);
 
         //VRR
-        pthread_mutex_lock(&mutex_tiempoVRR);
+        
         if(VRR_modo){
+            pthread_mutex_lock(&mutex_tiempoVRR);
             tiempo_VRR_restante = temporal_gettime(tiempoVRR);
             temporal_destroy(tiempoVRR);
+            pthread_mutex_unlock(&mutex_tiempoVRR);
         }
-        pthread_mutex_unlock(&mutex_tiempoVRR);
-
+        
         int codigo_operacion = paquete->operacion;
         interrupcion_t *interrupcion = interrupcion_deserializar(paquete->payload);
 
@@ -57,7 +58,7 @@ void* manejo_interrupciones_cpu(){
         switch(codigo_operacion){
             case FINALIZADO:
             
-                sem_wait(&sem_interrupcion);
+                //sem_wait(&sem_interrupcion);
                 imprimir_pcb(interrupcion->pcb);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
                 pcb_a_exit(interrupcion->pcb);
@@ -70,18 +71,19 @@ void* manejo_interrupciones_cpu(){
 
             case DESALOJO_QUANTUM:
 
-                sem_wait(&sem_interrupcion);
+                //sem_wait(&sem_interrupcion);
                 if (VRR_modo) actualizar_quantum(interrupcion->pcb, kernel_config->quantum);
                 pcb_a_ready(interrupcion->pcb);
                 if (VRR_modo) sem_post(&sem_hay_encolado_VRR);
                 log_info(extra_logger, "PID: %d - Desalojado por Fin de Quantum", interrupcion->pcb->pid);
+                log_debug(extra_logger, "Proceso %d movido de EXEC a READY", interrupcion->pcb->pid);
                 sem_post(&sem_dispatch);
 
             break;
 
             case IO:
             
-                sem_wait(&sem_interrupcion);
+                //sem_wait(&sem_interrupcion);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
 
                 if (VRR_modo) actualizar_quantum(interrupcion->pcb, tiempo_VRR_restante);
@@ -104,6 +106,7 @@ void* manejo_interrupciones_cpu(){
                     interfaz_t *interfaz = dictionary_get(interfaces, tokens[1]);
                     pcb_a_blocked(interrupcion->pcb, tokens[1]); //SI existe
                     log_info(extra_logger, "PID: %d Bloqueado por: %s",interrupcion->pcb->pid, tokens[1]);
+                    log_debug(extra_logger, "Proceso %d movido de EXEC a BLOCKED", interrupcion->pcb->pid);
                     agregar_instruccion(interfaz, tokens);
                     sem_post(&interfaz->sem_IO_ejecucion);
                 }
@@ -114,7 +117,7 @@ void* manejo_interrupciones_cpu(){
 
             case WAIT:
 
-                sem_wait(&sem_interrupcion);
+                //sem_wait(&sem_interrupcion);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
                 
                 if (VRR_modo) actualizar_quantum(interrupcion->pcb, kernel_config->quantum);
@@ -143,7 +146,7 @@ void* manejo_interrupciones_cpu(){
 
             case SIGNAL:
 
-                sem_wait(&sem_interrupcion);
+                //sem_wait(&sem_interrupcion);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
 
                 if (VRR_modo) actualizar_quantum(interrupcion->pcb, kernel_config->quantum);

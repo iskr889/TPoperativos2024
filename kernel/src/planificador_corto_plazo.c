@@ -54,7 +54,7 @@ void* dispatcher(){
             cola_ready_a_exec();
             
             send_pcb(conexion_dispatch, scheduler->proceso_ejecutando);
-            printf("%d", kernel_config->quantum);
+            //printf("%d", kernel_config->quantum);
 
             if (pthread_create(&thread_quantum, NULL, thread_hilo_quantum, &kernel_config->quantum) != 0) {
                 perror("No se pudo crear el hilo para manejar quantum");

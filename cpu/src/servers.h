@@ -5,5 +5,6 @@
 
 void* hilo_ciclo_instruccion();
 void ciclo_instruccion(pcb_t* pcb);
+void* hilo_interrupcion();
 
 #endif

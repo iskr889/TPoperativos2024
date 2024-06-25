@@ -22,9 +22,15 @@ void load_cpu_config(String path);
 
 /**
 * @fn    Manejo del ciclo de instrucción
-* @brief Inicia el manejo del ciclo de instrucción en un hilo a parte
+* @brief Inicia el manejo del ciclo de instrucción en un hilo aparte
 */
 void manejar_ciclo_intruccion();
+
+/**
+* @fn    Manejo de la interrupcion
+* @brief Inicia el manejo de interrupción en un hilo aparte
+*/
+void manejar_interrupcion();
 
 typedef struct {
     String ip_memoria;

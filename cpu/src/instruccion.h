@@ -24,6 +24,7 @@ char *recibir_instruccion(int socket);
 
 void solicitar_intruccion(int socket, uint16_t pid, uint32_t pc);
 void i_io_fs_operation(char *t_instruccion, char *interfaz, char *nombre_archivo, char *direccion, char *tamanio, char *puntero_archivo, uint16_t cod, pcb_t *pcb);
+void i_io_generic_operation(char *t_instruccion, char *interfaz, char *tiempo_sleep, uint16_t cod, pcb_t *pcb);
 void i_io_stdin_operation(char *t_instruccion, char *interfaz, char *direccion, char *tamanio, uint16_t cod, pcb_t *pcb);
 bool leer_memoria(uint32_t direccion_fisica, void* buffer, uint32_t size);
 bool escribir_memoria(uint32_t direccion_fisica, void* buffer, uint32_t size);

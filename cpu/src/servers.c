@@ -5,6 +5,7 @@ extern t_cpu_config cpu_config;
 extern t_log* logger;
 extern t_log* extra_logger;
 extern int conexion_dispatch, conexion_interrupt;
+extern int interrupcion; //Agrego esta variable global, puede tomar FINALIZADO o DESALOJO_QUANTUM
 
 void* hilo_ciclo_instruccion() {
 
@@ -40,5 +41,27 @@ void ciclo_instruccion(pcb_t* pcb) {
 
         if (pcb->estado == EXIT)
             break;
+        
+        if (pcb->estado == BLOCKED)
+            break;
+
+        if (interrupcion == FINALIZADO) {
+            interrupcion = OK;
+            enviar_interrupcion(conexion_dispatch, pcb, "EXIT", FINALIZADO);
+            break;
+        } 
+
+        if (interrupcion == DESALOJO_QUANTUM) {
+            interrupcion = OK;
+            enviar_interrupcion(conexion_dispatch, pcb, "DESALOJO_QUANTUM", DESALOJO_QUANTUM);
+            break;
+        }
+    }
+}
+
+void *hilo_interrupcion() {
+
+    while(1) {
+        interrupcion = recibir_operacion(conexion_interrupt);
     }
 }
