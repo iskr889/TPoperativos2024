@@ -20,6 +20,12 @@ void liberar_cpu();
 */
 void load_cpu_config(String path);
 
+/**
+* @fn    Manejo del ciclo de instrucción
+* @brief Inicia el manejo del ciclo de instrucción en un hilo a parte
+*/
+void manejar_ciclo_intruccion();
+
 typedef struct {
     String ip_memoria;
     String puerto_memoria;

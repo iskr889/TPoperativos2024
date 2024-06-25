@@ -7,7 +7,7 @@
 * @fn    Maneja las conexiones de las interfaces
 * @brief En un hilo distinto atiende multiples conexiones de interfaces sin bloquear el programa
 */
-void manejador_de_interfaces(int fd_servidor);
+void manejar_interfaces(int fd_servidor);
 
 /**
 * @fn    Nuevo hilo para aceptar interfaz

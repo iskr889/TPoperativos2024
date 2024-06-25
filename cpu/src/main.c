@@ -37,6 +37,7 @@ int main(int argc, char* argv[]) {
 
     if(conexion_dispatch < 0) {
         log_error(extra_logger, "MODULO KERNEL NO PUDO CONECTARSE CON CPU DISPATCH!");
+        liberar_cpu();
         exit(EXIT_FAILURE);
     }
 
@@ -47,18 +48,13 @@ int main(int argc, char* argv[]) {
 
     if(conexion_interrupt < 0) {
         log_error(extra_logger, "MODULO KERNEL NO PUDO CONECTARSE CON CPU INTERRUPT!");
+        liberar_cpu();
         exit(EXIT_FAILURE);
     }
 
     log_debug(extra_logger, "MODULO KERNEL CONECTO CON CPU INTERRUPT EXITOSAMENTE!");
 
-    // Creo los hilos de dispatch e interrupt para manejar la comunicación con el kernel
-    pthread_t thread_dispatch, thread_interrupt;
-    pthread_create(&thread_dispatch, NULL, iniciar_dispatch, NULL);
-    pthread_detach(thread_dispatch);
-    pthread_create(&thread_interrupt, NULL, iniciar_interrupt, NULL);
-    pthread_detach(thread_interrupt);
-    pthread_exit(0);
+    manejar_ciclo_intruccion();
 
     liberar_cpu();
     destruir_TLB();
@@ -93,4 +89,10 @@ void load_cpu_config(String path) {
     cpu_config.puerto_escucha_interrupt = config_get_string_value(config,"PUERTO_ESCUCHA_INTERRUPT");
     cpu_config.cantidad_entradas = config_get_int_value(config,"CANTIDAD_ENTRADAS_TLB");
     cpu_config.algoritmo_tlb = config_get_string_value(config,"ALGORITMO_TLB");
+}
+
+void manejar_ciclo_intruccion() {
+    pthread_t thread_ciclo_intruccion;
+    pthread_create(&thread_ciclo_intruccion, NULL, hilo_ciclo_instruccion, NULL);
+    pthread_join(thread_ciclo_intruccion, NULL);
 }

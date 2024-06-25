@@ -55,14 +55,11 @@ int main(int argc, char* argv[]) {
 
     log_debug(extra_logger, "MODULO KERNEL CONECTO CON LA MEMORIA EXITOSAMENTE!");
 
-    // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
-    manejador_de_interfaces(memoria_server);
+    manejar_interfaces(memoria_server);
 
     manejar_instrucciones_cpu();
 
-    manejar_instrucciones_kernel();
-
-    pthread_exit(0);
+    manejar_instrucciones_kernel();    
 
     liberar_memoria();
 

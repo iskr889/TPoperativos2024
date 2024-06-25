@@ -5,7 +5,7 @@ extern t_log* logger;
 extern t_log* extra_logger;
 extern t_memoria_config *memoria_config;
 
-void manejador_de_interfaces(int fd_servidor) {
+void manejar_interfaces(int fd_servidor) {
 
     pthread_t thread_interfaces;
 

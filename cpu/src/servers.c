@@ -6,8 +6,9 @@ extern t_log* logger;
 extern t_log* extra_logger;
 extern int conexion_dispatch, conexion_interrupt;
 
-void* iniciar_dispatch() {
-    log_debug(extra_logger, "INICIO HILO DISPATCH");
+void* hilo_ciclo_instruccion() {
+
+    log_debug(extra_logger, "INICIÓ EL CICLO DE INSTRUCCIÓN");
 
     while(1) {
 
@@ -21,11 +22,6 @@ void* iniciar_dispatch() {
 
         free(pcb);
     }
-
-    return NULL;
-}
-
-void* iniciar_interrupt() {
 
     return NULL;
 }

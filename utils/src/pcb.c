@@ -99,7 +99,7 @@ void send_pcb(int socket, pcb_t *pcb) {
     payload_t *payload = pcb_serializar(pcb);
     paquete_t *paquete = crear_paquete(1, payload); // 1 es un ejemplo de código de operación
     if(enviar_paquete(socket, paquete) != OK)
-        exit(EXIT_FAILURE);
+        pthread_exit(0);
     payload_destroy(payload);
     liberar_paquete(paquete);
 }
@@ -107,7 +107,7 @@ void send_pcb(int socket, pcb_t *pcb) {
 pcb_t *receive_pcb(int socket) {
     paquete_t *paquete = recibir_paquete(socket);
     if(paquete == NULL)
-        exit(EXIT_FAILURE);
+        pthread_exit(0);
     pcb_t *pcb = pcb_deserializar(paquete->payload);
     payload_destroy(paquete->payload);
     liberar_paquete(paquete);

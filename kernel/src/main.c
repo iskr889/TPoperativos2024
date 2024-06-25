@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     kernel_server = escuchar_conexiones_de("INTERFACES I/O", kernel_config->puerto_escucha, extra_logger);
 
     // Acepto interfaces en un thread aparte asi no frena la ejecución del programa
-    manejador_de_interfaces(kernel_server);
+    manejar_interfaces(kernel_server);
 
     // Inicio la planificación de largo plazo en un hilo a parte
     planificador_largo_plazo();

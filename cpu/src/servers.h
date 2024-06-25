@@ -3,8 +3,7 @@
 
 #include "main.h"
 
-void* iniciar_dispatch();
-void* iniciar_interrupt();
+void* hilo_ciclo_instruccion();
 void ciclo_instruccion(pcb_t* pcb);
 
 #endif

@@ -17,7 +17,7 @@ void manejar_instrucciones_kernel() {
         exit(EXIT_FAILURE);
     }
 
-    pthread_detach(hilo_instrucciones_kernel);
+    pthread_join(hilo_instrucciones_kernel, NULL); // Para que no cierre el main()
 }
 
 void *thread_instrucciones_kernel(void *arg) {
@@ -28,8 +28,7 @@ void *thread_instrucciones_kernel(void *arg) {
 
         if(paquete == NULL) {
             fprintf(stderr, "Error al recibir paquete del Kernel\n");
-            liberar_memoria();
-            exit(EXIT_FAILURE);
+            pthread_exit(0);
         }
 
         ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
@@ -72,8 +71,7 @@ void *thread_instrucciones_cpu(void *arg) {
 
         if(paquete == NULL) {
             fprintf(stderr, "Error al recibir paquete de la CPU\n");
-            liberar_memoria();
-            exit(EXIT_FAILURE);
+            pthread_exit(0);
         }
 
         ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);

@@ -8,7 +8,7 @@ extern bool VRR_modo;
 extern t_log* extra_logger;
 extern sem_t sem_hay_encolado_VRR;
 
-void manejador_de_interfaces(int fd_servidor) {
+void manejar_interfaces(int fd_servidor) {
 
     pthread_t thread_interfaces;
         

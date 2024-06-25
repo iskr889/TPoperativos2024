@@ -278,7 +278,7 @@ void solicitar_intruccion(int socket, uint16_t pid, uint32_t pc) {
     payload_add(payload, &pc, sizeof(uint32_t));
     paquete_t *paquete = crear_paquete(MEMORY_PID_PSEUDOCODE, payload);
     if(enviar_paquete(socket, paquete) != OK)
-        exit(EXIT_FAILURE);
+        pthread_exit(0);
     payload_destroy(payload);
     liberar_paquete(paquete);
 }
@@ -286,7 +286,7 @@ void solicitar_intruccion(int socket, uint16_t pid, uint32_t pc) {
 char *recibir_instruccion(int socket) {
     paquete_t *paquete = recibir_paquete(socket);
     if(paquete == NULL || paquete->operacion != MEMORY_PID_PSEUDOCODE)
-        exit(EXIT_FAILURE);
+        pthread_exit(0);
     char *instruccion = payload_read_string(paquete->payload);
     payload_destroy(paquete->payload);
     liberar_paquete(paquete);
