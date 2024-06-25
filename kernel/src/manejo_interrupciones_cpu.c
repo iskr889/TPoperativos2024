@@ -58,12 +58,11 @@ void* manejo_interrupciones_cpu(){
             case FINALIZADO:
             
                 sem_wait(&sem_interrupcion);
-                printf("Proceso finalizado \n");
                 imprimir_pcb(interrupcion->pcb);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
                 pcb_a_exit(interrupcion->pcb);
                 //finalizar_proceso_en_memoria(interrupcion->pcb->pid);
-                log_info(extra_logger, "Finalizo proceso %d - Motivo: SUCCESS", interrupcion->pcb->pid);
+                log_debug(extra_logger, "Finalizo proceso %d - Motivo: SUCCESS", interrupcion->pcb->pid);
                 sem_post(&sem_dispatch);
                 sem_post(&sem_multiprogramacion_ready);//aumento grado multi
                 
@@ -91,7 +90,7 @@ void* manejo_interrupciones_cpu(){
 
                     pcb_a_exit(interrupcion->pcb);//si No existe
                     finalizar_proceso_en_memoria(interrupcion->pcb->pid);
-                    log_info(extra_logger, "Finalizo proceso %d - Motivo: INVALID_WRITE", interrupcion->pcb->pid);
+                    log_debug(extra_logger, "Finalizo proceso %d - Motivo: INVALID_WRITE", interrupcion->pcb->pid);
                     sem_post(&sem_multiprogramacion_ready);//aumento grado multi
 
                 } else if (!verificar_instruccion(interfaces, tokens)) {//Si NO existe
@@ -124,7 +123,7 @@ void* manejo_interrupciones_cpu(){
 
                     pcb_a_exit(interrupcion->pcb);
                     finalizar_proceso_en_memoria(interrupcion->pcb->pid);
-                    log_info(extra_logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", interrupcion->pcb->pid);
+                    log_debug(extra_logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", interrupcion->pcb->pid);
                     sem_post(&sem_multiprogramacion_ready);//aumento grado multi
 
                 } else if (obtenerInstancia(recursos, tokens[1]) > 0) {
@@ -152,7 +151,7 @@ void* manejo_interrupciones_cpu(){
                 if (!dictionary_has_key(recursos, tokens[1])) {
                     pcb_a_exit(interrupcion->pcb);
                     finalizar_proceso_en_memoria(interrupcion->pcb->pid);
-                    log_info(extra_logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", interrupcion->pcb->pid);
+                    log_debug(extra_logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", interrupcion->pcb->pid);
                     sem_post(&sem_multiprogramacion_ready);//aumento grado multi
 
                 } else if (obtenerInstancia(recursos, tokens[1]) > 0) {
@@ -248,10 +247,15 @@ int ejecutar_IO(int socket_interfaz, char **instruccion_tokens) {
 char** split_string(char* str) {
     int spaces = 0;
     char* temp = str;
-    //char* save_ptr;
+
+    if (str == NULL) {
+        fprintf(stderr, "split_string: String nulo!\n");
+        exit(EXIT_FAILURE);
+    }
 
     while (*temp) {
-        if (*temp == ' ') spaces++;
+        if (*temp == ' ')
+            spaces++;
         temp++;
     }
 

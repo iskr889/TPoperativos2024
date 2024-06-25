@@ -5,12 +5,9 @@ extern int tam_pagina;
 extern int conexion_dispatch;
 
 char* fetch(pcb_t* pcb) {
-    uint32_t pc = pcb->registros.pc;
-    uint16_t pid = pcb->pid;
-    solicitar_intruccion(conexion_memoria, pid, pc);
-    char* instruccion = recibir_instruccion(conexion_memoria);
-    pcb->registros.pc += 1;
-    return instruccion;
+    solicitar_intruccion(conexion_memoria, pcb->pid, pcb->registros.pc);
+    (pcb->registros.pc)++;
+    return recibir_instruccion(conexion_memoria);
 }
 
 char* decode(char* instruccion, pcb_t* pcb) {
@@ -18,15 +15,10 @@ char* decode(char* instruccion, pcb_t* pcb) {
     char *instruccion_traducida = NULL;
 
     switch (obtener_tipo_instruccion(tokens[0])) {
-        case I_SET:
-        case I_SUM:
-        case I_SUB:
-        case I_JNZ:
-            break;
         case I_IO_FS_TRUNCATE: {
             uint32_t tamanio = *(uint32_t*)obtener_registro(&pcb->registros, getTipoRegistro(tokens[3]));
             size_t instruccion_len = snprintf(NULL, 0, "I_IO_FS_TRUNCATE %s %s %u", tokens[1], tokens[2], tamanio) + 1;
-            instruccion_traducida = (char*)malloc(instruccion_len);
+            instruccion_traducida = malloc(instruccion_len);
             snprintf(instruccion_traducida, instruccion_len, "%s %s %s %u", tokens[0], tokens[1], tokens[2], tamanio);
             break;
         }
@@ -34,7 +26,7 @@ char* decode(char* instruccion, pcb_t* pcb) {
             uint32_t direccion_logica = *(uint32_t*)obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
             size_t instruccion_len = snprintf(NULL, 0, "%s %s %u", tokens[0], tokens[1], direccion_fisica) + 1;
-            instruccion_traducida = (char*)malloc(instruccion_len);
+            instruccion_traducida = malloc(instruccion_len);
             snprintf(instruccion_traducida, instruccion_len, "%s %s %u", tokens[0], tokens[1], direccion_fisica);
             break;
         }
@@ -43,7 +35,7 @@ char* decode(char* instruccion, pcb_t* pcb) {
             uint32_t direccion_logica = *(uint32_t *)obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
             size_t instruccion_len = snprintf(NULL, 0, "%s %u %u", tokens[0], reg_dato, direccion_fisica) + 1;
-            instruccion_traducida = (char*)malloc(instruccion_len);
+            instruccion_traducida = malloc(instruccion_len);
             snprintf(instruccion_traducida, instruccion_len, "%s %u %u", tokens[0], reg_dato, direccion_fisica);
             break;
         }
@@ -53,7 +45,7 @@ char* decode(char* instruccion, pcb_t* pcb) {
             uint32_t direccion_fisica_si = traducir_direccion_logica(direccion_si, pcb->pid, conexion_memoria, tam_pagina);
             uint32_t direccion_fisica_di = traducir_direccion_logica(direccion_di, pcb->pid, conexion_memoria, tam_pagina);
             size_t instruccion_len = snprintf(NULL, 0, "%s %s %u %u", tokens[0], tokens[1], direccion_fisica_si, direccion_fisica_di) + 1;
-            instruccion_traducida = (char*)malloc(instruccion_len);
+            instruccion_traducida = malloc(instruccion_len);
             snprintf(instruccion_traducida, instruccion_len, "%s %s %u %u", tokens[0], tokens[1], direccion_fisica_si, direccion_fisica_di);
             break;
         }
@@ -63,7 +55,7 @@ char* decode(char* instruccion, pcb_t* pcb) {
             uint32_t tam = *(uint32_t*)obtener_registro(&pcb->registros, getTipoRegistro(tokens[3]));
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
             size_t instruccion_len = snprintf(NULL, 0, "%s %s %u %u", tokens[0], tokens[1], direccion_fisica, tam) + 1;
-            instruccion_traducida = (char*)malloc(instruccion_len);
+            instruccion_traducida = malloc(instruccion_len);
             snprintf(instruccion_traducida, instruccion_len, "%s %s %u %u", tokens[0], tokens[1], direccion_fisica, tam);
             break;
         }
@@ -74,16 +66,17 @@ char* decode(char* instruccion, pcb_t* pcb) {
             uint32_t puntero_file = *(uint32_t*)obtener_registro(&pcb->registros, getTipoRegistro(tokens[5]));
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
             size_t instruccion_len = snprintf(NULL, 0, "%s %s %s %u %u %u", tokens[0], tokens[1], tokens[2], direccion_fisica, tam, puntero_file) + 1;
-            instruccion_traducida = (char*)malloc(instruccion_len);
+            instruccion_traducida = malloc(instruccion_len);
             snprintf(instruccion_traducida, instruccion_len, "%s %s %s %u %u %u", tokens[0], tokens[1], tokens[2], direccion_fisica, tam, puntero_file);
             break;
         }
-        default:
+        default: // Para el resto de instrucciones I_SET, I_SUM, I_SUB, I_JNZ no requieren traducción 
             instruccion_traducida = strdup(instruccion);
             break;
     }
 
     free(tokens);
+    free(instruccion);
     return instruccion_traducida;
 }
 
@@ -114,27 +107,24 @@ void execute(char* instruccion, pcb_t* pcb) {
         case I_JNZ: {
             void* reg1 = obtener_registro(&pcb->registros, getTipoRegistro(tokens[1]));
             uint32_t valor1 = (getTipoRegistro(tokens[1]) <= DX) ? *((uint8_t*)reg1) : *((uint32_t*)reg1);
-            if (valor1 != 0) {
+            if (valor1 != 0)
                 pcb->registros.pc = atoi(tokens[2]);
-            }
             break;
         }
         case I_MOV_IN: {
             uint32_t direccion_fisica = atoi(tokens[2]);
             uint32_t valor_memoria;
-            if (leer_memoria(direccion_fisica, &valor_memoria, sizeof(uint32_t))) {
+            if (leer_memoria(direccion_fisica, &valor_memoria, sizeof(uint32_t)))
                 actualizar_registro(&pcb->registros, getTipoRegistro(tokens[1]), valor_memoria, ASIGNACION);
-            } else {
+            else
                 fprintf(stderr, "[ERROR] Error al leer memoria en la dirección física: %d\n", direccion_fisica);
-            }
             break;
         }
         case I_MOV_OUT: {
             uint32_t dato = atoi(tokens[1]);
             uint32_t direccion_fisica = atoi(tokens[2]);
-            if (!escribir_memoria(direccion_fisica, &dato, sizeof(uint32_t))) {
+            if (!escribir_memoria(direccion_fisica, &dato, sizeof(uint32_t)))
                 fprintf(stderr, "[ERROR] Error al escribir en memoria en la dirección física: %d\n", direccion_fisica);
-            }
             break;
         }
         case I_RESIZE:
@@ -144,7 +134,7 @@ void execute(char* instruccion, pcb_t* pcb) {
             uint32_t size = atoi(tokens[1]);
             uint32_t direccion_fisica_si = atoi(tokens[2]);
             uint32_t direccion_fisica_di = atoi(tokens[3]);
-            char* buffer = (char*)malloc(size);
+            char* buffer = malloc(size);
             if (!buffer) {
                 fprintf(stderr, "[ERROR] No se pudo asignar memoria para el buffer de COPY_STRING\n");
                 break;
@@ -179,14 +169,16 @@ void execute(char* instruccion, pcb_t* pcb) {
             enviar_interrupcion(conexion_dispatch, pcb, instruccion, IO);
             break;
         case I_EXIT:
-            printf("I_EXIT\n");
             pcb->estado = EXIT;
+            enviar_interrupcion(conexion_dispatch, pcb, instruccion, FINALIZADO);
             break;
 
         default:
             fprintf(stderr, "[ERROR] Instrucción no reconocida\n");
             break;
     }
+    free(tokens);
+    free(instruccion);
 }
 
 int getTipoRegistro(char *tipo) {
@@ -247,7 +239,7 @@ char** split_string(char* str) {
     char* temp = str;
 
     if (str == NULL) {
-        fprintf(stderr, "Error: String vacio!\n");
+        fprintf(stderr, "split_string: String nulo!\n");
         exit(EXIT_FAILURE);
     }
 

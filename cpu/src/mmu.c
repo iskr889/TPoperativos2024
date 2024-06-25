@@ -7,11 +7,8 @@ uint32_t traducir_direccion_logica(uint32_t direccion_logica, uint16_t pid, int 
     uint32_t pagina = floor((double)direccion_logica / (double)tam_pagina); // Para no perder precisión
     uint32_t desplazamiento = direccion_logica - pagina * tam_pagina;
     uint32_t marco;
-    uint8_t respuesta;
-    if(estaActivaTLB())
-        respuesta = buscarPaginaTLB(pid, pagina);
-    else
-        respuesta = TLB_DESACTIVADA;
+
+    uint8_t respuesta = cpu_config.cantidad_entradas > 0 ? buscarPaginaTLB(pid, pagina) : TLB_DESACTIVADA;
 
     switch (respuesta) {
         case TLB_HIT:
@@ -26,11 +23,6 @@ uint32_t traducir_direccion_logica(uint32_t direccion_logica, uint16_t pid, int 
             break;
     }
     return marco * tam_pagina + desplazamiento;
-}
-
-uint16_t estaActivaTLB() {
-    int entradas = cpu_config.cantidad_entradas;
-    return entradas > 0;
 }
 
 uint32_t solicitarMarco(int socket_memoria, uint32_t pagina, uint16_t pid) {

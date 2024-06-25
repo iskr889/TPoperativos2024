@@ -68,7 +68,7 @@ pcb_t *pcb_deserializar(payload_t *payload) {
 }
 
 void imprimir_pcb(pcb_t* pcb) {
-    puts("Imprimiendo pcb...\n");
+    puts("\nImprimiendo PCB");
     printf("PID: %d\n", pcb->pid);
     printf("Quantum: %d\n", pcb->quantum);
     printf("Registros:\n");
@@ -76,7 +76,23 @@ void imprimir_pcb(pcb_t* pcb) {
     printf("\tAX: %d, BX: %d, CX: %d, DX: %d\n", pcb->registros.ax, pcb->registros.bx, pcb->registros.cx, pcb->registros.dx);
     printf("\tEAX: %d, EBX: %d, ECX: %d, EDX: %d\n", pcb->registros.eax, pcb->registros.ebx, pcb->registros.ecx, pcb->registros.edx);
     printf("\tSI: %d, DI: %d\n", pcb->registros.si, pcb->registros.di);
-    printf("Estado: %d\n", pcb->estado);
+    switch (pcb->estado) {
+        case NEW:
+            printf("Estado: %s\n", "NEW");
+        break;
+        case READY:
+            printf("Estado: %s\n", "READY");
+        break;
+        case EXEC:
+            printf("Estado: %s\n", "EXEC");
+        break;
+        case BLOCKED:
+            printf("Estado: %s\n", "BLOCKED");
+        break;
+        case EXIT:
+            printf("Estado: %s\n", "EXIT");
+        break;
+    }
 }
 
 void send_pcb(int socket, pcb_t *pcb) {
@@ -95,8 +111,5 @@ pcb_t *receive_pcb(int socket) {
     pcb_t *pcb = pcb_deserializar(paquete->payload);
     payload_destroy(paquete->payload);
     liberar_paquete(paquete);
-
-    imprimir_pcb(pcb);
-
     return pcb;
 }
