@@ -7,7 +7,6 @@
 #include "../../utils/src/pcb.h"
 #include "../../utils/src/serializacion.h"
 
-
 /**
 * @fn    Libera todo la cpu
 * @brief Cierra los fd y libera las estructuras config y loggers
@@ -27,10 +26,10 @@ void load_cpu_config(String path);
 void manejar_ciclo_intruccion();
 
 /**
-* @fn    Manejo de la interrupcion
-* @brief Inicia el manejo de interrupción en un hilo aparte
+* @fn    Manejo de las interrupciones
+* @brief Inicia el manejo de las interrupciones en un hilo aparte
 */
-void manejar_interrupcion();
+void manejar_interrupciones();
 
 typedef struct {
     String ip_memoria;

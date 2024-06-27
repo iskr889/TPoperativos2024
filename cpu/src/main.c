@@ -9,9 +9,6 @@ t_log* logger;
 t_log* extra_logger;
 uint32_t tam_pagina;
 int conexion_memoria, dispatch_server, interrupt_server, conexion_dispatch, conexion_interrupt;
-int interrupcion; //Agrego la variable global para manejar interrupciones
-pthread_t thread_ciclo_intruccion;
-pthread_t thread_ciclo_interrupcion;
 
 int main(int argc, char* argv[]) {
 
@@ -58,13 +55,13 @@ int main(int argc, char* argv[]) {
     log_debug(extra_logger, "MODULO KERNEL CONECTO CON CPU INTERRUPT EXITOSAMENTE!");
 
     manejar_ciclo_intruccion();
-    manejar_interrupcion();
 
-    pthread_join(thread_ciclo_interrupcion, NULL);
-    pthread_join(thread_ciclo_interrupcion, NULL);
+    manejar_interrupciones();
 
     liberar_cpu();
+
     destruir_TLB();
+
     puts("\nCerrando CPU...");
 
     return OK;
@@ -99,14 +96,13 @@ void load_cpu_config(String path) {
 }
 
 void manejar_ciclo_intruccion() {
-    //pthread_t thread_ciclo_intruccion;
+    pthread_t thread_ciclo_intruccion;
     pthread_create(&thread_ciclo_intruccion, NULL, hilo_ciclo_instruccion, NULL);
-    //pthread_join(thread_ciclo_intruccion, NULL);
+    pthread_detach(thread_ciclo_intruccion);
 }
 
-void manejar_interrupcion() {
-    //pthread_t thread_ciclo_interrupcion;
+void manejar_interrupciones() {
+    pthread_t thread_ciclo_interrupcion;
     pthread_create(&thread_ciclo_interrupcion, NULL, hilo_interrupcion, NULL);
-    printf("empezo las interrupciones");
-    //pthread_join(thread_ciclo_interrupcion, NULL);
+    pthread_join(thread_ciclo_interrupcion, NULL);
 }

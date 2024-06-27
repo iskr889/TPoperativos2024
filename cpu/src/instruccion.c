@@ -153,16 +153,17 @@ void execute(char* instruccion, pcb_t* pcb) {
             break;
         }
         case I_WAIT:
+            pcb->estado = BLOCKED;
             enviar_interrupcion(conexion_dispatch, pcb, instruccion, WAIT);
             break;
         case I_SIGNAL:
+            pcb->estado = BLOCKED;
             enviar_interrupcion(conexion_dispatch, pcb, instruccion, SIGNAL);
             break;
         case I_IO_GEN_SLEEP:
             pcb->estado = BLOCKED;
-            i_io_generic_operation(tokens[0],tokens[1],tokens[2], IO, pcb);
+            i_io_generic_operation(tokens[0], tokens[1], tokens[2], IO, pcb);
             break;
-
         case I_IO_STDIN_READ:
         case I_IO_STDOUT_WRITE:
         case I_IO_FS_CREATE:
