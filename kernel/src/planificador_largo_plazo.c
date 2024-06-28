@@ -29,6 +29,7 @@ void *planificador_largo_new_a_ready(){
 
     while(1) {
         sem_wait(&sem_multiprogramacion_ready);
+        esperar_confirmacion_memoria();
         cola_new_a_ready();
         //log_info(extra_logger, "Paso sem iniciar dispather largo plazo");
         if (VRR_modo) sem_post(&sem_hay_encolado_VRR);
@@ -51,4 +52,9 @@ void cambiar_grado_multiprogramacion(int nuevo_grado_multi) {
             sem_wait(&sem_multiprogramacion_ready);
         }
     }
+}
+
+void esperar_confirmacion_memoria() {
+    if(recibir_operacion(conexion_memoria) != MEMORY_PROCESS_CREATE)
+        exit(EXIT_FAILURE);
 }

@@ -131,8 +131,9 @@ void instruccion_process_create(payload_t* payload) {
 
     log_debug(extra_logger, "Proceso [PID: %d] creado", pid);
     log_debug(extra_logger, "Pseudocodigo en: %s", full_path);
-
     // imprimir_instrucciones(instrucciones);
+
+    enviar_operacion(MEMORY_PROCESS_CREATE, conexion_kernel);
 }
 
 void instruccion_process_terminate(payload_t* payload) {

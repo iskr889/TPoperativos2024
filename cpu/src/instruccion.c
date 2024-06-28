@@ -166,6 +166,7 @@ void execute(char* instruccion, pcb_t* pcb) {
             break;
         case I_IO_STDIN_READ:
         case I_IO_STDOUT_WRITE:
+            pcb->estado = BLOCKED;
         case I_IO_FS_CREATE:
         case I_IO_FS_DELETE:
         case I_IO_FS_TRUNCATE: 
@@ -392,7 +393,7 @@ int solicitar_resize_memoria(uint16_t pid, uint32_t nuevo_tamano) {
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &nuevo_tamano, sizeof(uint32_t));
 
-    paquete_t *paquete = crear_paquete(IO, payload);
+    paquete_t *paquete = crear_paquete(MEMORY_PROCESS_RESIZE, payload);
     enviar_paquete(conexion_memoria, paquete);
     payload_destroy(payload);
     liberar_paquete(paquete);

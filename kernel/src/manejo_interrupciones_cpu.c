@@ -55,7 +55,6 @@ void* manejo_interrupciones_cpu(){
         switch(codigo_operacion){
             case FINALIZADO:
             
-                //sem_wait(&sem_interrupcion);
                 imprimir_pcb(contexto->pcb);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
                 pcb_a_exit(contexto->pcb);
@@ -68,7 +67,6 @@ void* manejo_interrupciones_cpu(){
 
             case DESALOJO_QUANTUM:
 
-                //sem_wait(&sem_interrupcion);
                 if (VRR_modo) actualizar_quantum(contexto->pcb, kernel_config->quantum);
                 pcb_a_ready(contexto->pcb);
                 if (VRR_modo) sem_post(&sem_hay_encolado_VRR);
@@ -80,12 +78,11 @@ void* manejo_interrupciones_cpu(){
 
             case IO:
             
-                //sem_wait(&sem_interrupcion);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
 
                 if (VRR_modo) actualizar_quantum(contexto->pcb, tiempo_VRR_restante);
                 
-                if (!dictionary_has_key(interfaces,tokens[1])) {//verifico que existe la interfaz
+                if (!dictionary_has_key(interfaces, tokens[1])) {//verifico que existe la interfaz
 
                     pcb_a_exit(contexto->pcb);//si No existe
                     finalizar_proceso_en_memoria(contexto->pcb->pid);
@@ -114,7 +111,6 @@ void* manejo_interrupciones_cpu(){
 
             case WAIT:
 
-                //sem_wait(&sem_interrupcion);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
                 
                 if (VRR_modo) actualizar_quantum(contexto->pcb, kernel_config->quantum);
@@ -143,7 +139,6 @@ void* manejo_interrupciones_cpu(){
 
             case SIGNAL:
 
-                //sem_wait(&sem_interrupcion);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
 
                 if (VRR_modo) actualizar_quantum(contexto->pcb, kernel_config->quantum);
