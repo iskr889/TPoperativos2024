@@ -1,6 +1,6 @@
 #include "interrupcion.h"
 
-payload_t *interrupcion_serializar(pcb_t *pcb, String instruccion){
+payload_t *contexto_serializar(pcb_t *pcb, String instruccion){
     
     uint32_t instruccion_length = strlen(instruccion) + 1;
 
@@ -34,11 +34,10 @@ payload_t *interrupcion_serializar(pcb_t *pcb, String instruccion){
     return payload;
 }
 
-
-interrupcion_t *interrupcion_deserializar(payload_t *payload) {
+contexto_t *contexto_deserializar(payload_t *payload) {
     
     pcb_t *pcb = malloc(sizeof(pcb_t));
-    interrupcion_t *interrupcion = malloc(sizeof(interrupcion_t));
+    contexto_t *contexto = malloc(sizeof(contexto_t));
 
     payload->offset = 0;
     payload_read(payload, &pcb->pid, sizeof(uint16_t));
@@ -59,15 +58,14 @@ interrupcion_t *interrupcion_deserializar(payload_t *payload) {
     // Deserializar strings
     String instruccion = payload_read_string(payload);
 
-    interrupcion->pcb = pcb;
-    interrupcion->instruccion = instruccion;
+    contexto->pcb = pcb;
+    contexto->instruccion = instruccion;
 
-    return interrupcion;
+    return contexto;
 }
 
-
-void enviar_interrupcion(int socket, pcb_t *pcb, String instruccion, int codigo_operacion) {
-    payload_t *payload = interrupcion_serializar(pcb, instruccion);
+void enviar_contexto(int socket, pcb_t *pcb, String instruccion, int codigo_operacion) {
+    payload_t *payload = contexto_serializar(pcb, instruccion);
     paquete_t *paquete = crear_paquete(codigo_operacion, payload); // 1 es un ejemplo de código de operación
     if(enviar_paquete(socket, paquete) != OK)
         exit(EXIT_FAILURE);
@@ -75,7 +73,7 @@ void enviar_interrupcion(int socket, pcb_t *pcb, String instruccion, int codigo_
     liberar_paquete(paquete);
 }
 
-paquete_t *recibir_interrupcion(int socket) {
+paquete_t *recibir_contexto(int socket) {
     paquete_t *paquete = recibir_paquete(socket);
     if(paquete == NULL)
         exit(EXIT_FAILURE);

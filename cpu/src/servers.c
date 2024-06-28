@@ -1,6 +1,8 @@
 #include "servers.h"
 #include "instruccion.h"
 
+#define CLEAR_INTERRUPT 0
+
 extern t_cpu_config cpu_config;
 extern t_log* logger;
 extern t_log* extra_logger;
@@ -17,8 +19,6 @@ void* hilo_ciclo_instruccion() {
 
         imprimir_pcb(pcb);
 
-        sleep(1); // Espera que se cree el pcb en la memoria, buscar una mejor solución
-
         ciclo_instruccion(pcb);
 
         free(pcb);
@@ -28,6 +28,8 @@ void* hilo_ciclo_instruccion() {
 }
 
 void ciclo_instruccion(pcb_t* pcb) {
+
+    interrupcion = CLEAR_INTERRUPT;
 
     char* instruction;
 
@@ -46,15 +48,15 @@ void ciclo_instruccion(pcb_t* pcb) {
             break;
 
         if (interrupcion == FINALIZADO) {
-            interrupcion = OK;
             pcb->estado = EXIT;
-            enviar_interrupcion(conexion_dispatch, pcb, "EXIT", FINALIZADO);
+            responder_interrupcion(pcb, FINALIZADO);
+            log_debug(extra_logger, "INTERRUPCIÓN RECIBIDA: FINALIZADO");
             break;
         }
 
         if (interrupcion == DESALOJO_QUANTUM) {
-            interrupcion = OK;
-            enviar_interrupcion(conexion_dispatch, pcb, "DESALOJO_QUANTUM", DESALOJO_QUANTUM);
+            responder_interrupcion(pcb, DESALOJO_QUANTUM);
+            log_debug(extra_logger, "INTERRUPCIÓN RECIBIDA: DESALOJO_QUANTUM");
             break;
         }
     }
@@ -66,4 +68,8 @@ void *hilo_interrupcion() {
         if(interrupcion < 0)
             pthread_exit(0);
     }
+}
+
+void responder_interrupcion(pcb_t *pcb, int codigo_operacion) {
+    enviar_contexto(conexion_dispatch, pcb, " ", codigo_operacion);
 }

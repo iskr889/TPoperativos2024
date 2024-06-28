@@ -1,7 +1,7 @@
 //#include "../../utils/src/pcb.h"
 #include "planificador_largo_plazo.h"
 #include "scheduler.h"
-#include "planificador_corto_plazo.h"
+// #include "planificador_corto_plazo.h"
 //#include "semaforos.h"
 //#include "recursos.h"
 

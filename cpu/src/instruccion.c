@@ -154,11 +154,11 @@ void execute(char* instruccion, pcb_t* pcb) {
         }
         case I_WAIT:
             pcb->estado = BLOCKED;
-            enviar_interrupcion(conexion_dispatch, pcb, instruccion, WAIT);
+            enviar_contexto(conexion_dispatch, pcb, instruccion, WAIT);
             break;
         case I_SIGNAL:
             pcb->estado = BLOCKED;
-            enviar_interrupcion(conexion_dispatch, pcb, instruccion, SIGNAL);
+            enviar_contexto(conexion_dispatch, pcb, instruccion, SIGNAL);
             break;
         case I_IO_GEN_SLEEP:
             pcb->estado = BLOCKED;
@@ -171,11 +171,11 @@ void execute(char* instruccion, pcb_t* pcb) {
         case I_IO_FS_TRUNCATE: 
         case I_IO_FS_WRITE:
         case I_IO_FS_READ:
-            enviar_interrupcion(conexion_dispatch, pcb, instruccion, IO);
+            enviar_contexto(conexion_dispatch, pcb, instruccion, IO);
             break;
         case I_EXIT:
             pcb->estado = EXIT;
-            enviar_interrupcion(conexion_dispatch, pcb, instruccion, FINALIZADO);
+            enviar_contexto(conexion_dispatch, pcb, instruccion, FINALIZADO);
             break;
 
         default:
@@ -364,7 +364,7 @@ void io_fs_write(pcb_t *pcb, char* path, char* data, uint32_t direccion_logica, 
     char *instruccion = malloc(instruccion_len);
     snprintf(instruccion, instruccion_len, "IO_FS_WRITE %s %u %u %s", path, direccion_fisica, size, data);
 
-    enviar_interrupcion(conexion_dispatch, pcb, instruccion, I_IO_FS_WRITE);
+    enviar_contexto(conexion_dispatch, pcb, instruccion, I_IO_FS_WRITE);
     free(instruccion);
 }
 
@@ -372,7 +372,7 @@ void i_io_generic_operation(char *t_instruccion, char *interfaz, char *tiempo_sl
     size_t instruccion_len = snprintf(NULL, 0, "%s %s %s",t_instruccion, interfaz, tiempo_sleep) + 1;
     char *instruccion = (char*)malloc(instruccion_len);
     snprintf(instruccion, instruccion_len, "%s %s %s",t_instruccion, interfaz, tiempo_sleep);
-    enviar_interrupcion(conexion_dispatch, pcb, instruccion, cod);
+    enviar_contexto(conexion_dispatch, pcb, instruccion, cod);
     free(instruccion);
 }
 
@@ -382,7 +382,7 @@ void resize(pcb_t *pcb, uint32_t nuevo_tamano) {
         size_t instruccion_len = snprintf(NULL, 0, "RESIZE OUT_OF_MEMORY") + 1;
         char *instruccion = malloc(instruccion_len);
         snprintf(instruccion, instruccion_len, "RESIZE OUT_OF_MEMORY");
-        enviar_interrupcion(conexion_dispatch, pcb, instruccion, I_RESIZE);
+        enviar_contexto(conexion_dispatch, pcb, instruccion, I_RESIZE);
         free(instruccion);
     }
 }
