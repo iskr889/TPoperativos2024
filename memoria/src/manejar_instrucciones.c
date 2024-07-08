@@ -204,9 +204,8 @@ void instruccion_process_resize(payload_t* payload) {
     }
 
     int cod_op = resize_proceso(proceso, new_size) ? MEMORY_RESPONSE_OK : OUT_OF_MEMORY;
-    paquete_t *respuesta = crear_paquete(cod_op, NULL);
-    enviar_paquete(conexion_cpu, respuesta); // Envia paquete vacio con cod_op OK o Out of memory
-    liberar_paquete(respuesta);
+
+    enviar_operacion(cod_op, conexion_cpu);
 
     log_debug(extra_logger, "Proceso [PID: %d] redimensionado a %d paginas", pid, new_size);
 }

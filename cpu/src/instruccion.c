@@ -405,16 +405,7 @@ int solicitar_resize_memoria(uint16_t pid, uint32_t nuevo_tamano) {
     enviar_paquete(conexion_memoria, paquete);
     payload_destroy(payload);
     liberar_paquete(paquete);
-    uint32_t resultado;
-    paquete_t *respuesta = recibir_paquete(conexion_memoria);
-    if (respuesta == NULL || respuesta->operacion != MEMORY_RESPONSE_OK) {
-        liberar_paquete(respuesta);
-        return OUT_OF_MEMORY;
-    }
-    payload_read(respuesta->payload, &resultado, sizeof(uint32_t));
-    liberar_paquete(respuesta);
-    payload_destroy(respuesta->payload);
-    return resultado;
+    return recibir_operacion(conexion_memoria);
 }
 
 void actualizar_registro(cpu_reg_t* registros, registro_t registro, uint32_t valor, operacion_t operacion) {
