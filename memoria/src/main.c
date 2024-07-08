@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
 
     logger = iniciar_logger("memoria.log", "MEMORIA", 1, LOG_LEVEL_INFO);
 
-    extra_logger = iniciar_logger("memoria_debug.log", "MEMORIA", 1, LOG_LEVEL_DEBUG);
+    extra_logger = iniciar_logger("memoria_debug.log", "MEMORIA", 0, LOG_LEVEL_DEBUG);
 
     inicializar_memoria();
 
@@ -159,6 +159,7 @@ void crear_proceso(uint16_t pid, t_list *instrucciones) {
     char str_pid[8];
     snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
     dictionary_put(procesos, str_pid, proceso);
+    log_info(logger, "PID: %d - Tamaño: %d", pid, list_size(proceso->paginas)); // LOG OBLIGATORIO
 }
 
 void liberar_proceso(uint16_t pid) {
@@ -168,6 +169,7 @@ void liberar_proceso(uint16_t pid) {
     Proceso_t* proceso = dictionary_get(procesos, str_pid);
     if (proceso == NULL)
         return;
+    log_info(logger, "PID: %d - Tamaño: %d", pid, list_size(proceso->paginas)); // LOG OBLIGATORIO
     list_destroy_and_destroy_elements(proceso->paginas, liberar_pagina);
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
     dictionary_remove_and_destroy(procesos, str_pid, free);
@@ -224,14 +226,17 @@ bool resize_proceso(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
 
     uint32_t cant_paginas = list_size(proceso->paginas);
 
-    if (nueva_cant_paginas > cant_paginas) // Ampliación del proceso
+    if (nueva_cant_paginas > cant_paginas) { // Ampliación del proceso
+        log_info(logger, "PID: %d - Tamaño Actual: %d - Tamaño a Ampliar: %d", proceso->pid, cant_paginas, nueva_cant_paginas); // LOG OBLIGATORIO
         return asignar_paginas(proceso, nueva_cant_paginas - cant_paginas);
+    }
 
     if (nueva_cant_paginas < cant_paginas) { // Reducción del proceso
         for (int i = cant_paginas - 1; i >= nueva_cant_paginas; i--) {
             PageTable_t *pagina = list_remove(proceso->paginas, i);
             liberar_pagina(pagina);
         }
+        log_info(logger, "PID: %d - Tamaño Actual: %d - Tamaño a Reducir: %d", proceso->pid, cant_paginas, nueva_cant_paginas); // LOG OBLIGATORIO
     }
 
     return true;

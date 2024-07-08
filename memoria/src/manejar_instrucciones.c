@@ -181,6 +181,8 @@ void instruccion_pageTable_access(payload_t* payload) {
     liberar_paquete(respuesta);
 
     log_debug(extra_logger, "Proceso [PID: %d] enviando marco %d correspondiente a la pagina %d", pid, marco, numero_pagina);
+
+    log_info(logger, "PID: %d - Pagina: %d - Marco: %d", pid, numero_pagina, marco); // LOG OBLIGATORIO
 }
 
 void instruccion_process_resize(payload_t* payload) {
@@ -262,6 +264,8 @@ void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
     free(buffer_data);
 
     log_debug(extra_logger, "Accediendo %d posiciones de memoria desde la dirección %d", size, address);
+
+    log_info(logger, "PID: <PID> - Accion: %c - Direccion fisica: %d - Tamaño: %d", operacion, address, size); // LOG OBLIGATORIO
 }
 
 void instruccion_enviar_pseudocodigo(payload_t* payload) {
