@@ -169,17 +169,14 @@ void execute(char* instruccion, pcb_t* pcb) {
             enviar_contexto(conexion_dispatch, pcb, instruccion, SIGNAL);
             break;
         case I_IO_GEN_SLEEP:
-            pcb->estado = BLOCKED;
-            i_io_generic_operation(tokens[0], tokens[1], tokens[2], IO, pcb);
-            break;
         case I_IO_STDIN_READ:
         case I_IO_STDOUT_WRITE:
-            pcb->estado = BLOCKED;
         case I_IO_FS_CREATE:
         case I_IO_FS_DELETE:
         case I_IO_FS_TRUNCATE: 
         case I_IO_FS_WRITE:
         case I_IO_FS_READ:
+            pcb->estado = BLOCKED;
             enviar_contexto(conexion_dispatch, pcb, instruccion, IO);
             break;
         case I_EXIT:
@@ -365,24 +362,6 @@ bool escribir_memoria(uint32_t direccion_fisica, void* buffer, uint32_t size) {
     liberar_paquete(respuesta);
 
     return true;
-}
-
-void io_fs_write(pcb_t *pcb, char* path, char* data, uint32_t direccion_logica, uint32_t size) {
-    uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
-    size_t instruccion_len = snprintf(NULL, 0, "IO_FS_WRITE %s %u %u %s", path, direccion_fisica, size, data) + 1;
-    char *instruccion = malloc(instruccion_len);
-    snprintf(instruccion, instruccion_len, "IO_FS_WRITE %s %u %u %s", path, direccion_fisica, size, data);
-
-    enviar_contexto(conexion_dispatch, pcb, instruccion, I_IO_FS_WRITE);
-    free(instruccion);
-}
-
-void i_io_generic_operation(char *t_instruccion, char *interfaz, char *tiempo_sleep, uint16_t cod, pcb_t *pcb) {
-    size_t instruccion_len = snprintf(NULL, 0, "%s %s %s",t_instruccion, interfaz, tiempo_sleep) + 1;
-    char *instruccion = (char*)malloc(instruccion_len);
-    snprintf(instruccion, instruccion_len, "%s %s %s",t_instruccion, interfaz, tiempo_sleep);
-    enviar_contexto(conexion_dispatch, pcb, instruccion, cod);
-    free(instruccion);
 }
 
 void resize(pcb_t *pcb, uint32_t nuevo_tamano) {
