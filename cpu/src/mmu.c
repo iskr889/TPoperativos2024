@@ -12,9 +12,11 @@ uint32_t traducir_direccion_logica(uint32_t direccion_logica, uint16_t pid, int 
 
     switch (respuesta) {
         case TLB_HIT:
+            log_info(logger, "PID: %d - TLB HIT - Pagina: %d", pid, pagina);
             marco = obtenerMarcoTLB(pid, pagina);
             break;
         case TLB_MISS:
+            log_info(logger, "PID: %d - TLB MISS - Pagina: %d", pid, pagina);
             marco = solicitarMarco(socket_memoria, pagina, pid);
             agregarEntradaTLB(pid, pagina, marco);
             break;
@@ -34,7 +36,9 @@ uint32_t solicitarMarco(int socket_memoria, uint32_t pagina, uint16_t pid) {
         exit(EXIT_FAILURE);
     payload_destroy(payload);
     liberar_paquete(paquete);
-    return recibirMarco(socket_memoria);
+    uint32_t marco = recibirMarco(socket_memoria);
+    log_info(logger, "PID: %d - OBTENER MARCO - Página: %d - Marco: %d", pid, marco, pagina);
+    return marco;
 }
 
 uint32_t recibirMarco(int socket_memoria) {

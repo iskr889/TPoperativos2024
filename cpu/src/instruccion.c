@@ -3,9 +3,11 @@
 extern int conexion_memoria;
 extern int tam_pagina;
 extern int conexion_dispatch;
+extern t_log* logger;
 
 char* fetch(pcb_t* pcb) {
     solicitar_intruccion(conexion_memoria, pcb->pid, pcb->registros.pc);
+    log_info(logger, "PID: %d - FETCH - Program Counter: %d", pcb->pid, pcb->registros.pc);
     (pcb->registros.pc)++;
     return recibir_instruccion(conexion_memoria);
 }
@@ -81,6 +83,7 @@ char* decode(char* instruccion, pcb_t* pcb) {
 }
 
 void execute(char* instruccion, pcb_t* pcb) {
+    log_info(logger, "PID: %d - FETCH - Ejecutando: %s", pcb->pid, instruccion);
     char **tokens = split_string(instruccion);
     switch (obtener_tipo_instruccion(tokens[0])) {
         case I_SET:
@@ -114,8 +117,10 @@ void execute(char* instruccion, pcb_t* pcb) {
         case I_MOV_IN: {
             uint32_t direccion_fisica = atoi(tokens[2]);
             uint32_t valor_memoria;
-            if (leer_memoria(direccion_fisica, &valor_memoria, sizeof(uint32_t)))
+            if (leer_memoria(direccion_fisica, &valor_memoria, sizeof(uint32_t))) {
+                log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pcb->pid, direccion_fisica, valor_memoria);
                 actualizar_registro(&pcb->registros, getTipoRegistro(tokens[1]), valor_memoria, ASIGNACION);
+            }
             else
                 fprintf(stderr, "[ERROR] Error al leer memoria en la dirección física: %d\n", direccion_fisica);
             break;
@@ -123,6 +128,7 @@ void execute(char* instruccion, pcb_t* pcb) {
         case I_MOV_OUT: {
             uint32_t dato = atoi(tokens[1]);
             uint32_t direccion_fisica = atoi(tokens[2]);
+            log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb->pid, direccion_fisica, dato);
             if (!escribir_memoria(direccion_fisica, &dato, sizeof(uint32_t)))
                 fprintf(stderr, "[ERROR] Error al escribir en memoria en la dirección física: %d\n", direccion_fisica);
             break;
@@ -144,11 +150,13 @@ void execute(char* instruccion, pcb_t* pcb) {
                 free(buffer);
                 break;
             }
+            log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pcb->pid, direccion_fisica_si, buffer);
             if (!escribir_memoria(direccion_fisica_di, buffer, size)) {
                 fprintf(stderr, "[ERROR] Error al escribir en memoria en la dirección física: %d\n", direccion_fisica_di);
                 free(buffer);
                 break;
             }
+            log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %s", pcb->pid, direccion_fisica_di, buffer);
             free(buffer);
             break;
         }
@@ -398,10 +406,14 @@ int solicitar_resize_memoria(uint16_t pid, uint32_t nuevo_tamano) {
     payload_destroy(payload);
     liberar_paquete(paquete);
     uint32_t resultado;
-    paquete = recibir_paquete(conexion_memoria);
-    payload_read(paquete->payload, &resultado, sizeof(uint32_t));
-    liberar_paquete(paquete);
-    payload_destroy(payload);
+    paquete_t *respuesta = recibir_paquete(conexion_memoria);
+    if (respuesta == NULL || respuesta->operacion != MEMORY_RESPONSE_OK) {
+        liberar_paquete(respuesta);
+        return OUT_OF_MEMORY;
+    }
+    payload_read(respuesta->payload, &resultado, sizeof(uint32_t));
+    liberar_paquete(respuesta);
+    payload_destroy(respuesta->payload);
     return resultado;
 }
 
