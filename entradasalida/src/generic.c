@@ -30,12 +30,16 @@ void generic_procesar_instrucciones(int socket) {
         return;
     }
 
+    uint16_t pid;
     uint32_t tiempo_sleep;
 
+    payload_read(paquete->payload, &pid, sizeof(uint16_t));
     payload_read(paquete->payload, &tiempo_sleep, sizeof(uint32_t));
 
     payload_destroy(paquete->payload);
     liberar_paquete(paquete);
+
+    log_info(logger, "PID: %d - Operacion: IO_GEN_SLEEP", pid); // LOG OBLIGATORIO
 
     io_gen_sleep(tiempo_sleep);
 }

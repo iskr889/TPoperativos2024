@@ -215,9 +215,11 @@ void instruccion_process_resize(payload_t* payload) {
 void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
 
     char operacion;
+    uint16_t pid;
     uint32_t address;
     uint32_t size;
 
+    payload_read(payload, &pid, sizeof(uint16_t));
     payload_read(payload, &operacion, sizeof(char));
     payload_read(payload, &address, sizeof(uint32_t));
     payload_read(payload, &size, sizeof(uint32_t));
@@ -265,7 +267,7 @@ void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
 
     log_debug(extra_logger, "Accediendo %d posiciones de memoria desde la dirección %d", size, address);
 
-    log_info(logger, "PID: <PID> - Accion: %c - Direccion fisica: %d - Tamaño: %d", operacion, address, size); // LOG OBLIGATORIO
+    log_info(logger, "PID: %d - Accion: %c - Direccion fisica: %d - Tamaño: %d", pid, operacion, address, size); // LOG OBLIGATORIO
 }
 
 void instruccion_enviar_pseudocodigo(payload_t* payload) {

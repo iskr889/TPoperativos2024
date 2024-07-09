@@ -40,7 +40,9 @@ bool stdin_procesar_instrucciones(int fd_kernel, int fd_memoria) {
         return false;
     }
 
+    uint16_t pid;
     uint32_t direccion, cant_caracteres;
+    payload_read(paquete->payload, &pid, sizeof(uint16_t));
     payload_read(paquete->payload, &direccion, sizeof(uint32_t));
     payload_read(paquete->payload, &cant_caracteres, sizeof(uint32_t));
 
@@ -49,6 +51,7 @@ bool stdin_procesar_instrucciones(int fd_kernel, int fd_memoria) {
     payload_t *payload_a_enviar = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + cant_caracteres);
 
     char operacion = 'W'; // Necesario para escribir memoria en espacio de usuario
+    payload_add(payload_a_enviar, &pid, sizeof(uint16_t));
     payload_add(payload_a_enviar, &operacion, sizeof(char));
     payload_add(payload_a_enviar, &direccion, sizeof(uint32_t));
     payload_add(payload_a_enviar, &cant_caracteres, sizeof(uint32_t));
@@ -60,6 +63,8 @@ bool stdin_procesar_instrucciones(int fd_kernel, int fd_memoria) {
         log_error(extra_logger, "No se pudo enviar el paquete a la memoria!");
         return false;
     }
+
+    log_info(logger, "PID: %d - Operacion: IO_STDIN_READ", pid); // LOG OBLIGATORIO
 
     payload_destroy(paquete->payload);
     liberar_paquete(paquete);

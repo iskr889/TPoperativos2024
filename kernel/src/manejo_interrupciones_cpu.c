@@ -211,26 +211,26 @@ bool verificar_instruccion(t_dictionary *diccionario, char **tokens) {
 }
 
 
-int ejecutar_IO(int socket_interfaz, char **instruccion_tokens) {
+int ejecutar_IO(int socket_interfaz, uint16_t pid, char **instruccion_tokens) {
 
     //int socket_interfaz = *(int*)dictionary_get(interfaces,instruccion_tokens[1]);
     
     switch(obtener_tipo_instruccion(instruccion_tokens[0])){
 
         case I_IO_GEN_SLEEP:
-            send_io_gen_sleep(socket_interfaz, atoi(instruccion_tokens[2]));
+            send_io_gen_sleep(socket_interfaz, pid, atoi(instruccion_tokens[2]));
         break;
 
         case I_IO_STDIN_READ:
-            send_io_stdin_read(socket_interfaz, atoi(instruccion_tokens[2]), atoi(instruccion_tokens[3]));
+            send_io_stdin_read(socket_interfaz, pid, atoi(instruccion_tokens[2]), atoi(instruccion_tokens[3]));
         break;
 
         case I_IO_STDOUT_WRITE:
-            send_io_stdout_write(socket_interfaz, atoi(instruccion_tokens[2]), atoi(instruccion_tokens[3]));
+            send_io_stdout_write(socket_interfaz, pid, atoi(instruccion_tokens[2]), atoi(instruccion_tokens[3]));
         break;
 
         default:
-        printf("Fallo lectura instruccion");
+            printf("Fallo lectura instruccion");
         break;
 
     }

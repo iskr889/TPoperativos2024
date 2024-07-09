@@ -117,7 +117,7 @@ void execute(char* instruccion, pcb_t* pcb) {
         case I_MOV_IN: {
             uint32_t direccion_fisica = atoi(tokens[2]);
             uint32_t valor_memoria;
-            if (leer_memoria(direccion_fisica, &valor_memoria, sizeof(uint32_t))) {
+            if (leer_memoria(pcb->pid, direccion_fisica, &valor_memoria, sizeof(uint32_t))) {
                 log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %d", pcb->pid, direccion_fisica, valor_memoria);
                 actualizar_registro(&pcb->registros, getTipoRegistro(tokens[1]), valor_memoria, ASIGNACION);
             }
@@ -129,7 +129,7 @@ void execute(char* instruccion, pcb_t* pcb) {
             uint32_t dato = atoi(tokens[1]);
             uint32_t direccion_fisica = atoi(tokens[2]);
             log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb->pid, direccion_fisica, dato);
-            if (!escribir_memoria(direccion_fisica, &dato, sizeof(uint32_t)))
+            if (!escribir_memoria(pcb->pid, direccion_fisica, &dato, sizeof(uint32_t)))
                 fprintf(stderr, "[ERROR] Error al escribir en memoria en la dirección física: %d\n", direccion_fisica);
             break;
         }
@@ -145,13 +145,13 @@ void execute(char* instruccion, pcb_t* pcb) {
                 fprintf(stderr, "[ERROR] No se pudo asignar memoria para el buffer de COPY_STRING\n");
                 break;
             }
-            if (!leer_memoria(direccion_fisica_si, buffer, size)) {
+            if (!leer_memoria(pcb->pid, direccion_fisica_si, buffer, size)) {
                 fprintf(stderr, "[ERROR] Error al leer memoria en la dirección física: %d\n", direccion_fisica_si);
                 free(buffer);
                 break;
             }
             log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pcb->pid, direccion_fisica_si, buffer);
-            if (!escribir_memoria(direccion_fisica_di, buffer, size)) {
+            if (!escribir_memoria(pcb->pid, direccion_fisica_di, buffer, size)) {
                 fprintf(stderr, "[ERROR] Error al escribir en memoria en la dirección física: %d\n", direccion_fisica_di);
                 free(buffer);
                 break;
@@ -305,9 +305,10 @@ char *recibir_instruccion(int socket) {
 }
 
 
-bool leer_memoria(uint32_t direccion_fisica, void* buffer, uint32_t size) {
+bool leer_memoria(uint16_t pid, uint32_t direccion_fisica, void* buffer, uint32_t size) {
     payload_t *payload = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t));
     char operacion = 'R';
+    payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &operacion, sizeof(char));
     payload_add(payload, &direccion_fisica, sizeof(uint32_t));
     payload_add(payload, &size, sizeof(uint32_t));
@@ -335,9 +336,10 @@ bool leer_memoria(uint32_t direccion_fisica, void* buffer, uint32_t size) {
     return true;
 }
 
-bool escribir_memoria(uint32_t direccion_fisica, void* buffer, uint32_t size) {
+bool escribir_memoria(uint16_t pid, uint32_t direccion_fisica, void* buffer, uint32_t size) {
     payload_t *payload = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + size);
     char operacion = 'W';
+    payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &operacion, sizeof(char));
     payload_add(payload, &direccion_fisica, sizeof(uint32_t));
     payload_add(payload, &size, sizeof(uint32_t));

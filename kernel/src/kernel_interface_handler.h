@@ -65,18 +65,18 @@ String recibir_nombre_interfaz(int socket);
 * @fn    Envia IO_GEN_SLEEP
 * @brief Envia la instrucción IO_GEN_SLEEP a la interfaz generica conectada
 */
-void send_io_gen_sleep(int socket, uint32_t tiempo);
+void send_io_gen_sleep(int fd_io, uint16_t pid, uint32_t tiempo);
 
 /**
 * @fn    Envia IO_STDIN_READ
 * @brief Envia la instrucción IO_STDIN_READ a la interfaz stdin conectada
 */
-void send_io_stdin_read(int socket, uint32_t direccion, uint32_t cant_caracteres);
+void send_io_stdin_read(int fd_io, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres);
 
 /**
  * @fn Envia IO_STDOUT_WRITE
  * @brief Envia la instruccion IO_STDOUT_WRITE a la interfas stdout conectada 
 */
-void send_io_stdout_write(int fd_io, uint32_t direccion, uint32_t cant_caracteres);
+void send_io_stdout_write(int fd_io, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres);
 
 #endif

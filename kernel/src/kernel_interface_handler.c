@@ -149,21 +149,21 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         sem_wait(&interfaz->sem_IO_ejecucion);
         log_info(extra_logger, "Paso el wait IO");
         pthread_mutex_lock(&interfaz->mutex_IO_instruccion);
-        char** instruccion = (char**)list_pop(interfaz->instruccion_IO);
+        char** instruccion = list_pop(interfaz->instruccion_IO);
         pthread_mutex_unlock(&interfaz->mutex_IO_instruccion);
 
-        ejecutar_IO(socket_interfaz, instruccion);
+        ejecutar_IO(socket_interfaz, 0, instruccion); // Envio un PID invalido. TODO: Hay que buscar la forma de obtener el pid del proceso que ejecuta la IO
         
-     // int respuesta = ejecutar_IO(split_string(instruccion));
-    /*    if(respuesta ==OK){
-            cola_blocked_a_ready(nombre);
-        }else{
-            cola_block_a_exit(nombre);
-            aumentar_programacion();
-            liberar_memoria();
-        }
-    */
-      log_info(extra_logger, "Ejecuto la IO");
+        // int respuesta = ejecutar_IO(split_string(instruccion));
+        /*    if(respuesta ==OK){
+                cola_blocked_a_ready(nombre);
+            }else{
+                cola_block_a_exit(nombre);
+                aumentar_programacion();
+                liberar_memoria();
+            }
+        */
+        log_info(extra_logger, "Ejecuto la IO");
         if (VRR_modo) {
             cola_blocked_a_aux_blocked(nombre);
             sem_post(&sem_hay_encolado_VRR); //Si es VRR
@@ -192,10 +192,11 @@ String recibir_nombre_interfaz(int socket) {
     return nombre;
 }
 
-void send_io_gen_sleep(int socket, uint32_t tiempo) {
+void send_io_gen_sleep(int socket, uint16_t pid, uint32_t tiempo) {
 
     payload_t *payload = payload_create(sizeof(uint32_t));
 
+    payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &tiempo, sizeof(uint32_t));
 
     paquete_t *paquete = crear_paquete(IO_GEN_SLEEP, payload);
@@ -207,10 +208,11 @@ void send_io_gen_sleep(int socket, uint32_t tiempo) {
     liberar_paquete(paquete);
 }
 
-void send_io_stdin_read(int socket, uint32_t direccion, uint32_t cant_caracteres) {
+void send_io_stdin_read(int socket, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres) {
 
     payload_t *payload = payload_create(sizeof(uint32_t) + sizeof(uint32_t));
 
+    payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &direccion, sizeof(uint32_t));
     payload_add(payload, &cant_caracteres, sizeof(uint32_t));
 
@@ -225,10 +227,11 @@ void send_io_stdin_read(int socket, uint32_t direccion, uint32_t cant_caracteres
     liberar_paquete(paquete);
 }
 
-void send_io_stdout_write(int fd_io, uint32_t direccion, uint32_t cant_caracteres) {
+void send_io_stdout_write(int fd_io, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres) {
 
     payload_t *payload = payload_create(sizeof(uint32_t) + sizeof(uint32_t));
 
+    payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &direccion, sizeof(uint32_t));
     payload_add(payload, &cant_caracteres, sizeof(uint32_t));
 
