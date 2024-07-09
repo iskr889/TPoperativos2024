@@ -203,6 +203,7 @@ int getTipoRegistro(char *tipo) {
     if (strcmp(tipo, "EDX") == 0) return EDX;
     if (strcmp(tipo, "SI") == 0) return SI;
     if (strcmp(tipo, "DI") == 0) return DI;
+    if (strcmp(tipo, "PC") == 0) return PC;
     return -1;
 }
 
@@ -218,6 +219,7 @@ void* obtener_registro(cpu_reg_t* registros, registro_t registro) {
         case EDX: return &registros->edx;
         case SI: return &registros->si;
         case DI: return &registros->di;
+        case PC: return &registros->pc;
         default: return NULL;
     }
 }

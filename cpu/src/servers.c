@@ -17,7 +17,7 @@ void* hilo_ciclo_instruccion() {
 
         pcb_t* pcb = receive_pcb(conexion_dispatch);
 
-        imprimir_pcb(pcb);
+        //imprimir_pcb(pcb);
 
         ciclo_instruccion(pcb);
 
@@ -39,7 +39,7 @@ void ciclo_instruccion(pcb_t* pcb) {
 
         execute(decoded_instruction, pcb);
 
-        imprimir_pcb(pcb);
+        //imprimir_pcb(pcb);
 
         if (pcb->estado == EXIT)
             break;

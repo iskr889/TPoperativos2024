@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
 
     logger = iniciar_logger("cpu.log", "CPU", 1, LOG_LEVEL_INFO);
 
-    extra_logger = iniciar_logger("cpu_debug.log", "CPU", 1, LOG_LEVEL_DEBUG);
+    extra_logger = iniciar_logger("cpu_debug.log", "CPU", 0, LOG_LEVEL_DEBUG);
 
     // El Kernel intenta conectarse con la memoria
     conexion_memoria = conectarse_a_modulo("MEMORIA", cpu_config.ip_memoria, cpu_config.puerto_memoria, CPU_CON_MEMORIA, extra_logger);
