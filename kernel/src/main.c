@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 
     logger = iniciar_logger("kernel.log", "KERNEL", 1, LOG_LEVEL_INFO);
 
-    extra_logger = iniciar_logger("kernel_debug.log", "KERNEL", 1, LOG_LEVEL_DEBUG);
+    extra_logger = iniciar_logger("kernel_debug.log", "KERNEL", 0, LOG_LEVEL_DEBUG);
 
     init_scheduler();
 

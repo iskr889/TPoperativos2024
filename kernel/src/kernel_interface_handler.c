@@ -2,6 +2,7 @@
 #include "manejo_interrupciones_cpu.h"
 #include "scheduler.h"
 
+extern scheduler_t *scheduler;
 t_dictionary *interfaces;
 extern bool VRR_modo;
 
@@ -146,23 +147,21 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
     dictionary_put(interfaces, nombre, interfaz); // Guardo la conexión en un diccionario y uso el nombre de la interfaz como key
 
     while(1){
+        
         sem_wait(&interfaz->sem_IO_ejecucion);
         log_info(extra_logger, "Paso el wait IO");
+        
         pthread_mutex_lock(&interfaz->mutex_IO_instruccion);
-        char** instruccion = list_pop(interfaz->instruccion_IO);
+        char** instruccion = list_get(interfaz->instruccion_IO, 0);
         pthread_mutex_unlock(&interfaz->mutex_IO_instruccion);
 
-        ejecutar_IO(socket_interfaz, 0, instruccion); // Envio un PID invalido. TODO: Hay que buscar la forma de obtener el pid del proceso que ejecuta la IO
-        
-        // int respuesta = ejecutar_IO(split_string(instruccion));
-        /*    if(respuesta ==OK){
-                cola_blocked_a_ready(nombre);
-            }else{
-                cola_block_a_exit(nombre);
-                aumentar_programacion();
-                liberar_memoria();
-            }
-        */
+        pthread_mutex_lock(&scheduler->mutex_blocked);
+        t_list *cola_bloqueados = dictionary_get(scheduler->colas_blocked, nombre);
+        pcb_t *pcb = list_get(cola_bloqueados, 0); //Obtengo el primer elemento de la cola
+        pthread_mutex_unlock(&scheduler->mutex_blocked);
+
+        ejecutar_IO(socket_interfaz, pcb->pid, instruccion); 
+ 
         log_info(extra_logger, "Ejecuto la IO");
         if (VRR_modo) {
             cola_blocked_a_aux_blocked(nombre);
@@ -171,6 +170,11 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         } else {
             cola_blocked_a_ready(nombre);
         }
+
+        pthread_mutex_lock(&interfaz->mutex_IO_instruccion);
+        list_remove_and_destroy_element(interfaz->instruccion_IO, 0, free);
+        pthread_mutex_unlock(&interfaz->mutex_IO_instruccion);
+
     }
 
     free(nombre);
