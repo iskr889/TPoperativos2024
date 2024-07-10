@@ -5,6 +5,7 @@
 extern scheduler_t *scheduler;
 t_dictionary *interfaces;
 extern bool VRR_modo;
+extern bool estado_planificacion_activa;
 
 extern t_log* extra_logger;
 extern sem_t sem_hay_encolado_VRR;
@@ -115,6 +116,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
     interfaz_t *interfaz = malloc(sizeof(interfaz_t));
     interfaz->socket = socket_interfaz;
     sem_init(&interfaz->sem_IO_ejecucion, 0, 0);
+    sem_init(&interfaz->sem_interfaz_comando, 0, 0);
     pthread_mutex_init(&interfaz->mutex_IO_instruccion, NULL);
     interfaz->instruccion_IO = list_create();
 
@@ -160,7 +162,11 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         pcb_t *pcb = list_get(cola_bloqueados, 0); //Obtengo el primer elemento de la cola
         pthread_mutex_unlock(&scheduler->mutex_blocked);
 
-        ejecutar_IO(socket_interfaz, pcb->pid, instruccion); 
+        ejecutar_IO(socket_interfaz, pcb->pid, instruccion);
+
+        if (!estado_planificacion_activa) {
+                sem_wait(&interfaz->sem_interfaz_comando);
+        }
  
         log_info(extra_logger, "Ejecuto la IO");
         if (VRR_modo) {

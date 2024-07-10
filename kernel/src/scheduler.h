@@ -40,7 +40,7 @@ void cola_ready_a_exec();
 
 void cola_aux_blocked_a_exec();
 
-void proceso_exec_a_blocked(pcb_t* proceso, char* nombre_cola);
+void proceso_exec_a_blocked(char* nombre_cola);
 
 void proceso_exec_a_ready();
 

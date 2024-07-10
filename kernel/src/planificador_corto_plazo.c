@@ -8,8 +8,8 @@ extern t_log* extra_logger;
 extern t_kernel_config* kernel_config;
 extern int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_server;
 extern scheduler_t* scheduler;
-extern sem_t sem_dispatch, sem_interrupcion, sem_iniciar_dispatcher, sem_hay_encolado_VRR;
-
+extern sem_t sem_dispatch, sem_interrupcion, sem_iniciar_dispatcher, sem_hay_encolado_VRR, sem_planificador_corto_comando;
+extern bool estado_planificacion_activa;
 pthread_t thread_quantum;
 
 bool VRR_modo = false;
@@ -38,6 +38,10 @@ void* dispatcher(){
 
         while(1) { 
             sem_wait(&sem_dispatch);
+            
+            if (!estado_planificacion_activa) {
+                sem_wait(&sem_planificador_corto_comando);
+            }
 
             cola_ready_a_exec();
             
@@ -50,6 +54,11 @@ void* dispatcher(){
     
         while(1) { 
             sem_wait(&sem_dispatch);
+
+            if (!estado_planificacion_activa) {
+                sem_wait(&sem_planificador_corto_comando);
+            }
+
             
             cola_ready_a_exec();
             
@@ -72,6 +81,10 @@ void* dispatcher(){
             log_info(extra_logger, "Paso sem_dispatch");//Prueba
             sem_wait(&sem_hay_encolado_VRR);
             log_info(extra_logger, "Paso sem_encolado_VRR");//Prueba
+
+            if (!estado_planificacion_activa) {
+                sem_wait(&sem_planificador_corto_comando);
+            }
 
             //verifico si la lista aux_bloqueados esta vacia, por las prioridades
             pthread_mutex_lock(&scheduler->mutex_aux_blocked);

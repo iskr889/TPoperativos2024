@@ -27,6 +27,8 @@ void proceso_estado(const String _);
 
 void imprimir_proceso(void* proceso);
 
+void sem_post_interfaces(char *key, void *element);
+
 /**
 * @fn    Recibe un comando y lo maneja
 * @brief Recibe un comando y chequea que sea correcto para luego ejecutarlo

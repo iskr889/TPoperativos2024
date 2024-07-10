@@ -109,10 +109,11 @@ void cola_aux_blocked_a_exec() {
     pthread_mutex_unlock(&scheduler->mutex_exec);
 }
 
-void proceso_exec_a_blocked(pcb_t* proceso, char* nombre_cola) {
+void proceso_exec_a_blocked(char* nombre_cola) {
+
     pthread_mutex_lock(&scheduler->mutex_exec);
+    pcb_t* proceso = scheduler->proceso_ejecutando;
     scheduler->proceso_ejecutando = NULL;
-    proceso->estado = BLOCKED;
     pthread_mutex_unlock(&scheduler->mutex_exec);
 
     pthread_mutex_lock(&scheduler->mutex_blocked);
@@ -121,6 +122,7 @@ void proceso_exec_a_blocked(pcb_t* proceso, char* nombre_cola) {
         cola_bloqueada = list_create();
         dictionary_put(scheduler->colas_blocked, nombre_cola, cola_bloqueada);
     }
+    proceso->estado = BLOCKED;
     list_push(cola_bloqueada, proceso);
     pthread_mutex_unlock(&scheduler->mutex_blocked);
 }
@@ -155,7 +157,7 @@ void proceso_exec_a_ready() {
     pthread_cond_signal(&scheduler->cond_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
 }
-
+//TODO: elminar pcb_a_ready
 void pcb_a_ready(pcb_t* proceso){
     pthread_mutex_lock(&scheduler->mutex_exec);
     if (scheduler->proceso_ejecutando != NULL) {
