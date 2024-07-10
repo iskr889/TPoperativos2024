@@ -64,6 +64,12 @@ contexto_t *contexto_deserializar(payload_t *payload) {
     return contexto;
 }
 
+void liberar_contexto(contexto_t *contexto) {
+    free(contexto->instruccion);
+    free(contexto->pcb);
+    free(contexto);
+}
+
 void enviar_contexto(int socket, pcb_t *pcb, String instruccion, int codigo_operacion) {
     payload_t *payload = contexto_serializar(pcb, instruccion);
     paquete_t *paquete = crear_paquete(codigo_operacion, payload); // 1 es un ejemplo de código de operación

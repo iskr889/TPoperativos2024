@@ -209,7 +209,6 @@ void cola_blocked_a_aux_blocked(char* nombre_cola) {
     pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
 }
 
-// TODO: Esta funcion tendria que cambiar tipo el exit no va a estar actualizado
 void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_cola_actual) {
     pthread_mutex_lock(mutex_cola_actual);
     list_pop(cola_actual);
@@ -245,4 +244,22 @@ void* list_pop(t_list* queue) {
     if (list_is_empty(queue))
         return NULL;
     return list_remove(queue, 0);
+}
+
+void actualizar_contexto_de_ejecucion(pcb_t *old_pcb, pcb_t *new_pcb) {
+    if (old_pcb->pid != new_pcb->pid) {
+        fprintf(stderr, "Se recibio un PID que no coincide con el proceso actual en ejecución!");
+        exit(EXIT_FAILURE);
+    }
+    old_pcb->estado = new_pcb->estado;
+    old_pcb->registros.ax = new_pcb->registros.ax;
+    old_pcb->registros.bx = new_pcb->registros.bx;
+    old_pcb->registros.cx = new_pcb->registros.cx;
+    old_pcb->registros.dx = new_pcb->registros.dx;
+    old_pcb->registros.eax = new_pcb->registros.eax;
+    old_pcb->registros.ebx = new_pcb->registros.ebx;
+    old_pcb->registros.ecx = new_pcb->registros.ecx;
+    old_pcb->registros.edx = new_pcb->registros.edx;
+    old_pcb->registros.pc = new_pcb->registros.pc;
+    old_pcb->registros.si = new_pcb->registros.si;
 }

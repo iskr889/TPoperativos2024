@@ -45,20 +45,23 @@ void* manejo_interrupciones_cpu(){
             pthread_mutex_unlock(&mutex_tiempoVRR);
         }
 
-        int codigo_operacion = paquete->operacion;
         contexto_t *contexto = contexto_deserializar(paquete->payload);
+
+        actualizar_contexto_de_ejecucion(scheduler->proceso_ejecutando, contexto->pcb);
 
         char **tokens = split_string(contexto->instruccion);
 
-        switch (codigo_operacion) {
+        liberar_contexto(contexto);
+
+        switch (paquete->operacion) {
             case FINALIZADO:
 
-                // imprimir_pcb(contexto->pcb);
+                // imprimir_pcb(scheduler->proceso_ejecutando);
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
-                // liberar_recursos_de_proceso(contexto->pcb->pid);
-                pcb_a_exit(contexto->pcb);
-                finalizar_proceso_en_memoria(contexto->pcb->pid);
-                log_debug(extra_logger, "Finalizo proceso %d - Motivo: SUCCESS", contexto->pcb->pid);
+                // liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
+                pcb_a_exit(scheduler->proceso_ejecutando);
+                finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                log_debug(extra_logger, "Finalizo proceso %d - Motivo: SUCCESS", scheduler->proceso_ejecutando->pid);
                 sem_post(&sem_dispatch);
                 sem_post(&sem_multiprogramacion_ready); // Aumento grado multi
 
@@ -66,11 +69,11 @@ void* manejo_interrupciones_cpu(){
 
             case DESALOJO_QUANTUM:
 
-                if (VRR_modo) actualizar_quantum(contexto->pcb, kernel_config->quantum);
-                pcb_a_ready(contexto->pcb);
+                if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
+                pcb_a_ready(scheduler->proceso_ejecutando);
                 if (VRR_modo) sem_post(&sem_hay_encolado_VRR);
-                log_info(extra_logger, "PID: %d - Desalojado por Fin de Quantum", contexto->pcb->pid);
-                log_debug(extra_logger, "Proceso %d movido de EXEC a READY", contexto->pcb->pid);
+                log_info(extra_logger, "PID: %d - Desalojado por Fin de Quantum", scheduler->proceso_ejecutando->pid);
+                log_debug(extra_logger, "Proceso %d movido de EXEC a READY", scheduler->proceso_ejecutando->pid);
                 sem_post(&sem_dispatch);
 
             break;
@@ -79,27 +82,27 @@ void* manejo_interrupciones_cpu(){
 
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
 
-                if (VRR_modo) actualizar_quantum(contexto->pcb, tiempo_VRR_restante);
+                if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, tiempo_VRR_restante);
 
                 if (!dictionary_has_key(interfaces, tokens[1])) { // Verifico que existe la interfaz
 
-                    pcb_a_exit(contexto->pcb);//si No existe
-                    finalizar_proceso_en_memoria(contexto->pcb->pid);
-                    log_debug(extra_logger, "Finalizo proceso %d - Motivo: INVALID_WRITE", contexto->pcb->pid);
+                    pcb_a_exit(scheduler->proceso_ejecutando);//si No existe
+                    finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                    log_debug(extra_logger, "Finalizo proceso %d - Motivo: INVALID_WRITE", scheduler->proceso_ejecutando->pid);
                     sem_post(&sem_multiprogramacion_ready);//aumento grado multi
 
                 } else if (!verificar_instruccion(interfaces, tokens)) {//Si NO existe
 
-                    pcb_a_exit(contexto->pcb);//si No existe
-                    finalizar_proceso_en_memoria(contexto->pcb->pid);
+                    pcb_a_exit(scheduler->proceso_ejecutando);//si No existe
+                    finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     sem_post(&sem_multiprogramacion_ready);//aumento grado multi
 
                 } else {
 
                     interfaz_t *interfaz = dictionary_get(interfaces, tokens[1]);
-                    pcb_a_blocked(contexto->pcb, tokens[1]); //SI existe
-                    log_info(logger, "PID: %d Bloqueado por: %s", contexto->pcb->pid, tokens[1]);
-                    log_debug(extra_logger, "Proceso %d movido de EXEC a BLOCKED", contexto->pcb->pid);
+                    pcb_a_blocked(scheduler->proceso_ejecutando, tokens[1]); //SI existe
+                    log_info(logger, "PID: %d Bloqueado por: %s", scheduler->proceso_ejecutando->pid, tokens[1]);
+                    log_debug(extra_logger, "Proceso %d movido de EXEC a BLOCKED", scheduler->proceso_ejecutando->pid);
                     agregar_instruccion(interfaz, tokens);
                     sem_post(&interfaz->sem_IO_ejecucion);
                 }
@@ -112,29 +115,29 @@ void* manejo_interrupciones_cpu(){
 
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
 
-                if (VRR_modo) actualizar_quantum(contexto->pcb, kernel_config->quantum);
+                if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
 
                 if (!dictionary_has_key(recursos, tokens[1])) {
 
-                    pcb_a_exit(contexto->pcb);
-                    finalizar_proceso_en_memoria(contexto->pcb->pid);
-                    log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", contexto->pcb->pid);
+                    pcb_a_exit(scheduler->proceso_ejecutando);
+                    finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                    log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
                     sem_post(&sem_multiprogramacion_ready);//aumento grado multi
 
                 } else {
-                    asignar_recurso_a_proceso(contexto->pcb->pid, tokens[1]);
+                    asignar_recurso_a_proceso(scheduler->proceso_ejecutando->pid, tokens[1]);
                     restar_recurso(recursos,tokens[1]);
                 }
 
                 if (obtenerInstancia(recursos, tokens[1]) < 0) {
 
-                    pcb_a_blocked(contexto->pcb,tokens[1]);
-                    log_info(logger, "PID: %d Bloqueado por: %s", contexto->pcb->pid, tokens[1]);
+                    pcb_a_blocked(scheduler->proceso_ejecutando,tokens[1]);
+                    log_info(logger, "PID: %d Bloqueado por: %s", scheduler->proceso_ejecutando->pid, tokens[1]);
                     sem_post(&sem_dispatch);
 
                 } else {
 
-                    send_pcb(conexion_dispatch, contexto->pcb);
+                    send_pcb(conexion_dispatch, scheduler->proceso_ejecutando);
                     sem_post(&sem_interrupcion);
                 }
 
@@ -144,17 +147,17 @@ void* manejo_interrupciones_cpu(){
 
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
 
-                if (VRR_modo) actualizar_quantum(contexto->pcb, kernel_config->quantum);
+                if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
 
                 if (!dictionary_has_key(recursos, tokens[1])) {
-                    pcb_a_exit(contexto->pcb);
-                    finalizar_proceso_en_memoria(contexto->pcb->pid);
-                    log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", contexto->pcb->pid);
+                    pcb_a_exit(scheduler->proceso_ejecutando);
+                    finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                    log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
                     sem_post(&sem_multiprogramacion_ready);//aumento grado multi
 
                 } else {
 
-                    liberar_recurso_de_proceso(contexto->pcb->pid, tokens[1]);
+                    liberar_recurso_de_proceso(scheduler->proceso_ejecutando->pid, tokens[1]);
                     sumar_recurso(recursos, tokens[1]);
                 }
 
@@ -163,7 +166,7 @@ void* manejo_interrupciones_cpu(){
                     if (VRR_modo) sem_post(&sem_hay_encolado_VRR);
                 }
 
-                send_pcb(conexion_dispatch, contexto->pcb);
+                send_pcb(conexion_dispatch, scheduler->proceso_ejecutando);
                 sem_post(&sem_interrupcion);
 
             break;

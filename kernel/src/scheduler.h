@@ -60,4 +60,6 @@ void list_push(t_list* queue, void* element);
 
 void* list_pop(t_list* queue);
 
+void actualizar_contexto_de_ejecucion(pcb_t *old_pcb, pcb_t *new_pcb);
+
 #endif

@@ -10,6 +10,7 @@ typedef struct{
 
 payload_t *contexto_serializar(pcb_t *pcb, String instruccion);
 contexto_t *contexto_deserializar(payload_t *payload);
+void liberar_contexto(contexto_t *contexto);
 void enviar_contexto(int socket, pcb_t *pcb, String instruccion, int codigo_operacion);
 paquete_t *recibir_contexto(int socket);
 
