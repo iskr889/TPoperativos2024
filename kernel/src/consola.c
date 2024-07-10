@@ -97,18 +97,16 @@ void iniciar_proceso(const String path) {
         return;
     }
 
-    //char str_pid[8];
-    //snprintf(str_pid, sizeof(str_pid), "%d", pcb->pid); // Convierto el pid a string para poder usarlo como key en el diccionario
+    char str_pid[8];
+    snprintf(str_pid, sizeof(str_pid), "%d", pcb->pid); // Convierto el pid a string para poder usarlo como key en el diccionario
 
-    //dictionary_put(scheduler->procesos, str_pid, pcb);
-    //necesito pasar la pcb a la cola de new
+    dictionary_put(scheduler->procesos, str_pid, pcb);
     
-
-    //log_debug(extra_logger, "PROCESO CREADO [PID: %s]", str_pid);
+    log_debug(extra_logger, "PROCESO CREADO [PID: %s]", str_pid);
 
     crear_proceso_en_memoria(pcb->pid, path);
 
-    proceso_a_cola_new(pcb); //paso el proceso a la cola new
+    proceso_a_cola_new(pcb); // Paso el proceso a la cola new
 }
 
 void finalizar_proceso(const String str_pid) {

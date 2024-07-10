@@ -54,7 +54,6 @@ void* dispatcher(){
             cola_ready_a_exec();
             
             send_pcb(conexion_dispatch, scheduler->proceso_ejecutando);
-            //printf("%d", kernel_config->quantum);
 
             if (pthread_create(&thread_quantum, NULL, thread_hilo_quantum, &kernel_config->quantum) != 0) {
                 perror("No se pudo crear el hilo para manejar quantum");
@@ -80,11 +79,11 @@ void* dispatcher(){
             if (!list_is_empty(scheduler->cola_aux_blocked)) {
                 pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
                 cola_aux_blocked_a_exec();
-                printf("COLA AUX BLOQUEADOS \n");
+                log_debug(extra_logger, "Paso proceso cola de Aux Bloqueados");
             } else {
                 pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
                 cola_ready_a_exec();
-                printf("COLA DE READYS \n");
+                log_debug(extra_logger, "Paso proceso cola de Ready");
             }
 
             send_pcb(conexion_dispatch, scheduler->proceso_ejecutando);
@@ -107,10 +106,9 @@ void* dispatcher(){
 }
 
 void* thread_hilo_quantum(void *tiempo) {
-    printf("inicio quantum \n");
+    log_debug(extra_logger, "Inicio Quantum: %d", *(uint16_t*)tiempo);
     ESPERAR_X_MILISEGUNDOS(*(uint16_t*)tiempo);
-    //envio orden de desalojo
-    enviar_operacion(DESALOJO_QUANTUM, conexion_interrupt);
-    printf("Finalizo quantum \n");
+    enviar_operacion(DESALOJO_QUANTUM, conexion_interrupt); // Envio orden de desalojo
+    log_debug(extra_logger, "Finalizo Quantum");
     pthread_exit(NULL);
 }
