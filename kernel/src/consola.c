@@ -13,6 +13,8 @@ extern sem_t sem_iniciar_planificacion, sem_proceso_a_new, sem_planificador_cort
 extern bool estado_planificacion_activa;
 extern scheduler_t *scheduler;   // Estructura de planificacion general
 extern t_dictionary *interfaces; // Guarda las interfaces conectadas al kernel
+extern t_dictionary *instrucciones;
+extern pthread_mutex_t diccionario_instrucciones_mutex;
 
 uint16_t numero_de_procesos = 0;
 
@@ -135,16 +137,39 @@ void finalizar_proceso(const String str_pid) {
         return proceso->pid == pid;
     }
 
-    if (scheduler->proceso_ejecutando != NULL || scheduler->proceso_ejecutando->pid == pid) {
+    pthread_mutex_lock(&scheduler->mutex_exec);
+    if (scheduler->proceso_ejecutando != NULL || scheduler->proceso_ejecutando->pid == pid)
         enviar_operacion(FINALIZADO, conexion_interrupt);
+    pthread_mutex_unlock(&scheduler->mutex_exec);
+
+    pthread_mutex_lock(&scheduler->mutex_new);
+    list_remove_and_destroy_by_condition(scheduler->cola_new, comparar_pid, free);
+    pthread_mutex_unlock(&scheduler->mutex_new);
+
+    pthread_mutex_lock(&scheduler->mutex_ready);
+    list_remove_and_destroy_by_condition(scheduler->cola_ready, comparar_pid, free);
+    pthread_mutex_unlock(&scheduler->mutex_ready);
+
+    pthread_mutex_lock(&scheduler->mutex_aux_blocked);
+    list_remove_and_destroy_by_condition(scheduler->cola_aux_blocked, comparar_pid, free);
+    pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
+
+    pthread_mutex_lock(&scheduler->mutex_exit);
+    list_remove_and_destroy_by_condition(scheduler->cola_exit, comparar_pid, free);
+    pthread_mutex_unlock(&scheduler->mutex_exit);
+
+    void buscar_proceso_diccionario(char *key, void *element){
+        list_remove_and_destroy_by_condition(element, comparar_pid, free);
+        if (dictionary_has_key(interfaces, key)) {
+            pthread_mutex_lock(&diccionario_instrucciones_mutex);
+            dictionary_remove_and_destroy(instrucciones, str_pid, free);
+            pthread_mutex_unlock(&diccionario_instrucciones_mutex);
+        }
     }
 
-    list_remove_and_destroy_by_condition(scheduler->cola_new, comparar_pid, free);
-    list_remove_and_destroy_by_condition(scheduler->cola_ready, comparar_pid, free);
-    list_remove_and_destroy_by_condition(scheduler->cola_aux_blocked, comparar_pid, free);
-    list_remove_and_destroy_by_condition(scheduler->cola_exit, comparar_pid, free);
-
-    
+    pthread_mutex_lock(&scheduler->mutex_blocked);
+    dictionary_iterator(scheduler->colas_blocked, buscar_proceso_diccionario);
+    pthread_mutex_unlock(&scheduler->mutex_blocked);
 
     finalizar_proceso_en_memoria(pid);
     log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid);
