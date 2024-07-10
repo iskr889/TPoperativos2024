@@ -14,6 +14,7 @@ typedef enum {
 int getTipoRegistro(char *tipo);
 int obtener_tipo_instruccion(const char* tipo_str);
 char** split_string(char* str);
+void free_tokens(char** tokens);
 void actualizar_registro(cpu_reg_t* registros, registro_t registro, uint32_t valor, operacion_t operacion);
 char* fetch(pcb_t* pcb);
 char* decode(char* instruccion, pcb_t* pcb);

@@ -77,7 +77,7 @@ char* decode(char* instruccion, pcb_t* pcb) {
             break;
     }
 
-    free(tokens);
+    free_tokens(tokens);
     free(instruccion);
     return instruccion_traducida;
 }
@@ -188,7 +188,7 @@ void execute(char* instruccion, pcb_t* pcb) {
             fprintf(stderr, "[ERROR] Instrucción no reconocida\n");
             break;
     }
-    free(tokens);
+    free_tokens(tokens);
     free(instruccion);
 }
 
@@ -283,6 +283,14 @@ char** split_string(char* str) {
     result[idx] = NULL;
 
     return result;
+}
+
+void free_tokens(char** tokens) {
+    if (tokens == NULL)
+        return;
+    for (uint32_t i = 0; tokens[i] != NULL; i++)
+        free(tokens[i]);
+    free(tokens);
 }
 
 void solicitar_intruccion(int socket, uint16_t pid, uint32_t pc) {
