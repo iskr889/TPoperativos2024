@@ -11,9 +11,10 @@ extern scheduler_t* scheduler;
 extern pthread_t thread_quantum;
 extern sem_t sem_dispatch, sem_interrupcion, sem_multiprogramacion_ready, sem_hay_encolado_VRR, sem_manejo_interrupciones_comando;
 extern t_dictionary *interfaces;
+extern t_dictionary *instrucciones;
+extern pthread_mutex_t diccionario_instrucciones_mutex;
 extern t_temporal *tiempoVRR;
 int64_t tiempo_VRR_restante;
-//pthread_t thread_mock_IO;
 extern t_dictionary *recursos;
 extern bool VRR_modo, FIFO_modo;
 extern bool estado_planificacion_activa;
@@ -118,9 +119,9 @@ void* manejo_interrupciones_cpu(){
                     interfaz_t *interfaz = dictionary_get(interfaces, tokens[1]);
                     log_info(logger, "PID: %d Bloqueado por: %s", scheduler->proceso_ejecutando->pid, tokens[1]);
                     log_debug(extra_logger, "Proceso %d movido de EXEC a BLOCKED", scheduler->proceso_ejecutando->pid);
+                    agregar_instruccion(scheduler->proceso_ejecutando->pid, tokens);
                     proceso_exec_a_blocked(tokens[1]);
                     //pcb_a_blocked(scheduler->proceso_ejecutando, tokens[1]); //SI existe
-                    agregar_instruccion(interfaz, tokens);
                     sem_post(&interfaz->sem_IO_ejecucion);
                 }
 
@@ -318,8 +319,10 @@ int obtener_tipo_instruccion(const char* tipo_str) {
     return -1;
 }
 
-void agregar_instruccion(interfaz_t *interfaz, char** tokens) {
-    pthread_mutex_lock(&interfaz->mutex_IO_instruccion); // Mutex para proteger la lista
-    list_push(interfaz->instruccion_IO, tokens);
-    pthread_mutex_unlock(&interfaz->mutex_IO_instruccion);
+void agregar_instruccion(uint16_t pid, char** tokens) {
+    char str_pid[8];
+    snprintf(str_pid, sizeof(str_pid), "%d", pid);
+    pthread_mutex_lock(&diccionario_instrucciones_mutex);
+    dictionary_put(instrucciones, str_pid, tokens);
+    pthread_mutex_unlock(&diccionario_instrucciones_mutex);
 }

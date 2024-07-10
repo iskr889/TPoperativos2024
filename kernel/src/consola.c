@@ -144,6 +144,8 @@ void finalizar_proceso(const String str_pid) {
     list_remove_and_destroy_by_condition(scheduler->cola_aux_blocked, comparar_pid, free);
     list_remove_and_destroy_by_condition(scheduler->cola_exit, comparar_pid, free);
 
+    
+
     finalizar_proceso_en_memoria(pid);
     log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid);
 }
@@ -153,12 +155,17 @@ void iniciar_planificacion(const String s) {
         puts("El comando no deberia contener argumentos!");
         return;
     }
+
+    if (estado_planificacion_activa) {
+        puts("El planificador ya esta activado");
+        return;
+    }
+
     estado_planificacion_activa = true;
 
     sem_post(&sem_planificador_corto_comando);
     sem_post(&sem_planificador_largo_comando);
     sem_post(&sem_manejo_interrupciones_comando);
-
     dictionary_iterator(interfaces, sem_post_interfaces);
 
     puts("Reanudando planificador");

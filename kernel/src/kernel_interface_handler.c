@@ -4,16 +4,19 @@
 
 extern scheduler_t *scheduler;
 t_dictionary *interfaces;
+t_dictionary *instrucciones;
 extern bool VRR_modo;
 extern bool estado_planificacion_activa;
-
 extern t_log* extra_logger;
 extern sem_t sem_hay_encolado_VRR;
+pthread_mutex_t diccionario_instrucciones_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void manejar_interfaces(int fd_servidor) {
 
     pthread_t thread_interfaces;
-        
+    
+    instrucciones = dictionary_create();
+
     int* fd_servidor_p = malloc(sizeof(int));
 
     if (fd_servidor_p == NULL) {
@@ -152,15 +155,17 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         
         sem_wait(&interfaz->sem_IO_ejecucion);
         log_info(extra_logger, "Paso el wait IO");
-        
-        pthread_mutex_lock(&interfaz->mutex_IO_instruccion);
-        char** instruccion = list_get(interfaz->instruccion_IO, 0);
-        pthread_mutex_unlock(&interfaz->mutex_IO_instruccion);
 
         pthread_mutex_lock(&scheduler->mutex_blocked);
         t_list *cola_bloqueados = dictionary_get(scheduler->colas_blocked, nombre);
         pcb_t *pcb = list_get(cola_bloqueados, 0); //Obtengo el primer elemento de la cola
         pthread_mutex_unlock(&scheduler->mutex_blocked);
+
+        char str_pid[8];
+        snprintf(str_pid, sizeof(str_pid), "%d", pcb->pid);
+        pthread_mutex_lock(&diccionario_instrucciones_mutex);
+        char **instruccion = dictionary_get(instrucciones, str_pid);
+        pthread_mutex_unlock(&diccionario_instrucciones_mutex);
 
         ejecutar_IO(socket_interfaz, pcb->pid, instruccion);
 
@@ -177,9 +182,9 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
             cola_blocked_a_ready(nombre);
         }
 
-        pthread_mutex_lock(&interfaz->mutex_IO_instruccion);
-        list_remove_and_destroy_element(interfaz->instruccion_IO, 0, free);
-        pthread_mutex_unlock(&interfaz->mutex_IO_instruccion);
+        pthread_mutex_lock(&diccionario_instrucciones_mutex);
+        dictionary_remove_and_destroy(instrucciones, str_pid, free);
+        pthread_mutex_unlock(&diccionario_instrucciones_mutex);
 
     }
 
