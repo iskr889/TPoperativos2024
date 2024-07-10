@@ -130,6 +130,20 @@ void finalizar_proceso(const String str_pid) {
         return;
     }
 
+    bool comparar_pid(void* elemento) {
+        pcb_t* proceso = (pcb_t*) elemento;
+        return proceso->pid == pid;
+    }
+
+    if (scheduler->proceso_ejecutando != NULL || scheduler->proceso_ejecutando->pid == pid) {
+        enviar_operacion(FINALIZADO, conexion_interrupt);
+    }
+
+    list_remove_and_destroy_by_condition(scheduler->cola_new, comparar_pid, free);
+    list_remove_and_destroy_by_condition(scheduler->cola_ready, comparar_pid, free);
+    list_remove_and_destroy_by_condition(scheduler->cola_aux_blocked, comparar_pid, free);
+    list_remove_and_destroy_by_condition(scheduler->cola_exit, comparar_pid, free);
+
     finalizar_proceso_en_memoria(pid);
     log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid);
 }

@@ -165,7 +165,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         ejecutar_IO(socket_interfaz, pcb->pid, instruccion);
 
         if (!estado_planificacion_activa) {
-                sem_wait(&interfaz->sem_interfaz_comando);
+            sem_wait(&interfaz->sem_interfaz_comando);
         }
  
         log_info(extra_logger, "Ejecuto la IO");

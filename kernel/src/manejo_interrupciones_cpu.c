@@ -57,8 +57,8 @@ void* manejo_interrupciones_cpu(){
         liberar_contexto(contexto);
 
         if(!estado_planificacion_activa){
-                sem_wait(&sem_manejo_interrupciones_comando);
-            }
+            sem_wait(&sem_manejo_interrupciones_comando);
+        }
 
         switch (paquete->operacion) {
             case FINALIZADO:
