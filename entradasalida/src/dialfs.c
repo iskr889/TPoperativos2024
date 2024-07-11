@@ -32,6 +32,8 @@ void interfaz_dialFS(String nombre)
     fd_kernel = 3;
     fd_memoria = 2;
     
+    //liberar_espacio_bitmap(0, cantidad_bloques * tamanio_bloques);
+
     while(1){
         dialfd_procesar_instrucciones(fd_kernel, fd_memoria);
     }
@@ -60,8 +62,8 @@ void dialfd_procesar_instrucciones(int fd_kernel, int fd_memoria)
     */
     
     int pid = 1234;
-    char* nombre = "prr8";
-    int operacion = IO_FS_CREATE;    
+    char* nombre = "prr3";
+    int operacion = IO_FS_DELETE;    
 
     switch (operacion)//(paquete->operacion)
     {
@@ -71,18 +73,24 @@ void dialfd_procesar_instrucciones(int fd_kernel, int fd_memoria)
         
         //payload_destroy(paquete->payload);
         //liberar_paquete(paquete);
+        
         mostrar_bitmap();
+        
         exit(EXIT_SUCCESS);
+        
         break;
 
-    // case IO_FS_DELETE:
+    case IO_FS_DELETE:
         
-    //     eliminar_archivo(nombre);
+        eliminar_archivo(pid, nombre);
         
-    //     payload_destroy(paquete->payload);
-    //     liberar_paquete(paquete);
+        // payload_destroy(paquete->payload);
+        // liberar_paquete(paquete);
         
-    //     break;
+        mostrar_bitmap();
+        exit(EXIT_SUCCESS);
+
+        break;
 
     // case IO_FS_READ:
         
@@ -124,7 +132,7 @@ void dialfd_procesar_instrucciones(int fd_kernel, int fd_memoria)
 
     default:
 
-        log_error(logger, "Numero de instruccion invalido!");
+        log_error(logger, "Instruccion invalida!");
         
         //payload_destroy(paquete->payload);
         //liberar_paquete(paquete);
@@ -168,7 +176,7 @@ void inicializar_bloques(String ruta_bloques){
 
 void inicializar_bitmap(String ruta_bitmap)
 	{
-		int tamanioBitmap = ceil(cantidad_bloques / 8);
+		int tamanioBitmap = (cantidad_bloques + 7) / 8;;
 
 		int file_descriptor = open(ruta_bitmap, O_CREAT | O_RDWR, 0664);
 		if (file_descriptor == -1)
@@ -197,20 +205,17 @@ void inicializar_bitmap(String ruta_bitmap)
 			close(file_descriptor);
 			return;
 		}
-		
-        int tamanioBitmapPosta = bitarray_get_max_bit(bufferBitmap);
-		//log_info(logger_fileSystem, "Tamanio bitmap: %d", tamanioBitmapPosta);
 
-		for (int i = 0; i < tamanioBitmap; i++)
-		{
-			bitarray_clean_bit(bufferBitmap, i);
-		}
+		// for (int i = 0; i < tamanioBitmap; i++)
+		// {
+		// 	bitarray_clean_bit(bufferBitmap, i);
+		// }
 
 		msync(string_bitmap, tamanioBitmap, MS_SYNC);
 
 		close(file_descriptor);
 
-        printf("Se monto en memoria el archivo bitmap.dat\n");
+        log_info(logger, "Se monto en memoria el archivo bitmap.dat");
 
         printf("\n");
 	}
@@ -220,7 +225,12 @@ void inicializar_bitmap(String ruta_bitmap)
 // crea un archivo con tamaño cero, y su metadata
 void crear_archivo(uint16_t pid, String nombre_archivo){
     
-    size_t bloque_inicial = buscar_bloque_libre();
+    int bloque_inicial = buscar_bloque_libre();
+    if(bloque_inicial == -1){
+        log_info(logger, "No se pudo crear el archivo, no hay bloques vacios");
+        exit(EXIT_FAILURE);
+    }
+    
     bitarray_set_bit(bufferBitmap, bloque_inicial);
 	
     //abre el archivo en forma w para crearlo y lo cierra
@@ -230,7 +240,7 @@ void crear_archivo(uint16_t pid, String nombre_archivo){
 	
 	//lo abre como config para cargarle los datos principales
 	t_config * nuevoArchivo= iniciar_config(path);
-	config_set_value(nuevoArchivo, "BLOQUE_INICIAL", string_itoa(bloque_inicial)); // modificar
+	config_set_value(nuevoArchivo, "BLOQUE_INICIAL", string_itoa(bloque_inicial));
 	config_set_value(nuevoArchivo, "TAMANIO_ARCHIVO", string_itoa(0));
 	config_save(nuevoArchivo);
 	config_destroy(nuevoArchivo);
@@ -239,76 +249,85 @@ void crear_archivo(uint16_t pid, String nombre_archivo){
     return;
 }
 
-// void eliminar_archivo(String nombre_archivo)
-// {   
-//     char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
-//     t_config *valores = config_create(pathArchivo);
-//     int bloque_inicial = config_get_int_value(valores, "BLOQUE_INICIAL");
-//     int tamanio = config_get_int_value(valores, "TAMANIO_ARCHIVO");
-    
-//     liberar_espacio_bitmap(bloque_inicial, tamanio);
+void eliminar_archivo(uint16_t pid, String nombre_archivo)
+{   
+    char *pathArchivo = string_from_format("%s/%s.txt", ruta_metadata, nombre_archivo);
 
-//     if(remove(pathArchivo) != 0){
-//         log_info(logger, "No se puedo eliminar el archivo %s", nombre_archivo);
+    if(access(pathArchivo, F_OK) == -1 ){
+        log_info(logger, "No existe le archivo");
+        exit(EXIT_FAILURE);
+    }
+    
+    t_config *valores = config_create(pathArchivo);
+    
+    int bloque_inicial = config_get_int_value(valores, "BLOQUE_INICIAL");
+    
+    int tamanio_archivo = config_get_int_value(valores, "TAMANIO_ARCHIVO");
+    
+    liberar_espacio_bitmap(bloque_inicial, tamanio_archivo);
+    //limpiar_bloques(bloque_inicial, tamanio_archivo);
+
+    if(remove(pathArchivo) != 0){
+        log_info(logger, "No se puedo eliminar el archivo %s", nombre_archivo);
         
-//         config_destroy(valores);
-//         free(pathArchivo);
-//         exit(EXIT_FAILURE);
-//     }
+        config_destroy(valores);
+        free(pathArchivo);
+        exit(EXIT_FAILURE);
+    }
 
-//     config_destroy(valores);
-//     free(pathArchivo);
+    config_destroy(valores);
+    free(pathArchivo);
 
-//     log_info(logger,"Eliminar Archivo: %s", nombre_archivo);
-// }
+    log_info(logger,"PID: %i, Eliminar Archivo: %s", pid, nombre_archivo);
+}
 
-// void truncar_archivo(String nombre_archivo, size_t nuevo_tamanio) {
+void truncar_archivo(String nombre_archivo, size_t nuevo_tamanio) {
     
-//     char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
+    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
     
-//     t_config *metadata_archivo = config_create(pathArchivo);
+    t_config *metadata_archivo = config_create(pathArchivo);
 
-//     if (metadata_archivo == NULL) {
-//         log_error(extra_logger, "No se pudo abrir el archivo para truncar: %s", nombre_archivo);
-//         free(pathArchivo);
-//         return;
-//     }
+    if (metadata_archivo == NULL) {
+        log_error(extra_logger, "No se pudo abrir el archivo para truncar: %s", nombre_archivo);
+        free(pathArchivo);
+        return;
+    }
 
-//     int bloque_inicial = config_get_int_value(metadata_archivo, "BLOQUE_INICIAL");
-//     int tamanio_actual = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
+    int bloque_inicial = config_get_int_value(metadata_archivo, "BLOQUE_INICIAL");
+    int tamanio_actual = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
     
-//     int bloques_requeridos = (nuevo_tamanio + interfaz_config->block_size - 1) / interfaz_config->block_size;
-//     int bloques_actuales = (tamanio_actual + interfaz_config->block_size - 1) / interfaz_config->block_size;
+    int bloques_requeridos = (nuevo_tamanio + interfaz_config->block_size - 1) / interfaz_config->block_size;
+    int bloques_actuales = (tamanio_actual + interfaz_config->block_size - 1) / interfaz_config->block_size;
 
-//     if (nuevo_tamanio < tamanio_actual) {
-//         // Liberar bloques adicionales
-//         for (int i = bloques_requeridos; i < bloques_actuales; i++) {
-//             bitarray_clean_bit(bufferBitmap, bloque_inicial + i);
-//         }
-//     } else if (nuevo_tamanio > tamanio_actual) {
-//         // Asignar bloques adicionales
-//         for (int i = bloques_actuales; i < bloques_requeridos; i++) {
-//             int nuevo_bloque = buscar_lugar_vacio_bitmap();
-//             if (nuevo_bloque == -1) {
-//                 log_error(extra_logger, "No hay suficiente espacio para truncar el archivo: %s", nombre_archivo);
-//                 config_destroy(metadata_archivo);
-//                 free(pathArchivo);
-//                 return;
-//             }
-//             bitarray_set_bit(bufferBitmap, nuevo_bloque);
-//         }
-//     }
+    if (nuevo_tamanio < tamanio_actual) {
+        // Liberar bloques adicionales
+        for (int i = bloques_requeridos; i < bloques_actuales; i++) {
+            bitarray_clean_bit(bufferBitmap, bloque_inicial + i);
+        }
+    } else if (nuevo_tamanio > tamanio_actual) {
+        // Asignar bloques adicionales
+        for (int i = bloques_actuales; i < bloques_requeridos; i++) {
+            int nuevo_bloque = buscar_lugar_vacio_bitmap();
+            if (nuevo_bloque == -1) {
+                log_error(extra_logger, "No hay suficiente espacio para truncar el archivo: %s", nombre_archivo);
+                config_destroy(metadata_archivo);
+                free(pathArchivo);
+                return;
+            }
+            bitarray_set_bit(bufferBitmap, nuevo_bloque);
+        }
+    }
 
-//     char *nuevo_tamanio_str = string_itoa(nuevo_tamanio);
-//     dictionary_put(metadata_archivo->properties, "TAMANIO_ARCHIVO", nuevo_tamanio_str);
+    char *nuevo_tamanio_str = string_itoa(nuevo_tamanio);
+    dictionary_put(metadata_archivo->properties, "TAMANIO_ARCHIVO", nuevo_tamanio_str);
 
-//     config_save(metadata_archivo);
-//     config_destroy(metadata_archivo);
-//     free(pathArchivo);
-//     free(nuevo_tamanio_str);
+    config_save(metadata_archivo);
+    config_destroy(metadata_archivo);
+    free(pathArchivo);
+    free(nuevo_tamanio_str);
 
-//     log_info(logger, "Truncar Archivo: %s Tamaño: %zu", nombre_archivo, nuevo_tamanio);
-// }
+    log_info(logger, "Truncar Archivo: %s Tamaño: %zu", nombre_archivo, nuevo_tamanio);
+}
 
 // void escribir_archivo(String nombre_archivo, int direccion_memoria, int cant_caracteres, int puntero_archivo){
     
@@ -452,11 +471,12 @@ void crear_archivo(uint16_t pid, String nombre_archivo){
 
 // devuelve el primer bloque vacio dentro del bitmap
 int buscar_bloque_libre() {
+    
     int tam = bitarray_get_max_bit(bufferBitmap);
 
     for(int i = 0; i < tam; i++){
             bool pos = bitarray_test_bit(bufferBitmap, i);
-            if(pos != false){
+            if(pos == false){
                 return i;
             }
     }
@@ -508,15 +528,20 @@ void mostrar_bitmap(t_bitarray *bitmap) {
 		}
 }
 
-//verirficar
-void liberar_espacio_bitmap(int bloque_inicial, int tamanio) {
+void liberar_espacio_bitmap(int bloque_inicial, int tamanio_archivo) {
     
-    int cant_bloques = tamanio / interfaz_config->block_size;
-
-    for(int i = bloque_inicial; i < cant_bloques; i++){
+    int cant_bloques = ceil(tamanio_archivo / tamanio_bloques) + bloque_inicial;
+    
+    if(cant_bloques == bloque_inicial){
         
-        bitarray_clean_bit(bufferBitmap, i);
+        bitarray_clean_bit(bufferBitmap, bloque_inicial);
+    }else{
 
+        for(int i = bloque_inicial; i < cant_bloques; i++){
+
+            bitarray_clean_bit(bufferBitmap, i);
+
+        }
     }
 }
 
