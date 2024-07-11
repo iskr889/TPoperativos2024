@@ -18,11 +18,14 @@ void inicializar_bloques           (String ruta_bloques);
 
 // funciones auxiliares
 void mostrar_bloques               (String vector, int elementos_totales, int block_size);
+void mostrar_bitmap                ();
 int buscar_bloque_libre            ();
 void liberar_espacio_bitmap        (int bloque_inicial, int tamanio);
-void escribir_bloques              (int primer_bloque, size_t tam_archivo, int puntero_archivo, char* texto);
 int obtener_inicio_bloque          (int numero_bloque);
-void mostrar_bitmap                ();
+int buscar_espacio_bitmap          (int tamanio);
+void mostra_archivo                (int primer_bloque, int tamanio_archivo);
+void escribir_texto_en_bloques     (int primer_bloque, int tamanio_archivo, int puntero_archivo, char *texto);
+void limpiar_bloques               (int primer_bloque, int tamanio_limpiar);
 
 // operaciones
 void crear_archivo                 (uint16_t pid, String nombre);
