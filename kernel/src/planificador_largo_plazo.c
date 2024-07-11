@@ -54,10 +54,10 @@ void *planificador_largo_new_a_ready(){
 
 void cambiar_grado_multiprogramacion(int nuevo_grado_multi) {
     int diferencia =  nuevo_grado_multi - kernel_config->grado_multiprogramacion;
-    if (diferencia > 0) {
-        for(int i = 0; i < diferencia; i++)
-            sem_post(&sem_multiprogramacion_ready);
-    }
+
+    while(diferencia-- > 0)
+        sem_post(&sem_multiprogramacion_ready);
+
     kernel_config->grado_multiprogramacion = nuevo_grado_multi;
 }
 
