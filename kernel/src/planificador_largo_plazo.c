@@ -33,7 +33,7 @@ void *planificador_largo_new_a_ready(){
     while(1) {
         
         sem_wait(&sem_multiprogramacion_ready); 
-
+        
         if (!estado_planificacion_activa) {
                 sem_wait(&sem_planificador_largo_comando);
         }
@@ -53,9 +53,12 @@ void *planificador_largo_new_a_ready(){
 }
 
 void cambiar_grado_multiprogramacion(int nuevo_grado_multi) {
-
+    int diferencia =  nuevo_grado_multi - kernel_config->grado_multiprogramacion;
+    if (diferencia > 0) {
+        for(int i = 0; i < diferencia; i++)
+            sem_post(&sem_multiprogramacion_ready);
+    }
     kernel_config->grado_multiprogramacion = nuevo_grado_multi;
-
 }
 
 void esperar_confirmacion_memoria() {

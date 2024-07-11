@@ -13,5 +13,6 @@ bool verificar_instruccion(t_dictionary *diccionario, char **tokens);
 char** split_string(char* str);
 int obtener_tipo_instruccion(const char* tipo_str);
 void agregar_instruccion(uint16_t pid, char** tokens);
+void aumentar_grado_multiprogramacion();
 
 #endif

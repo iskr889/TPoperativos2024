@@ -117,8 +117,6 @@ static void free_tokens(void *element) {
     char** tokens = (char **)element;
     if (tokens == NULL)
         return;
-    for (uint32_t i = 0; tokens[i] != NULL; i++)
-        free(tokens[i]);
     free(tokens);
 }
 

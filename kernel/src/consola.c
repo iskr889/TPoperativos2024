@@ -2,6 +2,7 @@
 #include "scheduler.h"
 #include <errno.h>
 #include "kernel_interface_handler.h"
+#include "planificador_largo_plazo.h"
 //#include "semaforos.h"
 
 extern t_kernel_config* kernel_config;
@@ -118,8 +119,6 @@ static void free_tokens(void *element) {
     char** tokens = (char **)element;
     if (tokens == NULL)
         return;
-    for (uint32_t i = 0; tokens[i] != NULL; i++)
-        free(tokens[i]);
     free(tokens);
 }
 
@@ -131,10 +130,9 @@ static bool remover_proceso_lista(void* elemento) {
 static void remover_proceso_diccionario(char *key, void *proceso) {
     list_remove_and_destroy_by_condition(proceso, remover_proceso_lista, free);
 
-    char str_pid[8];
-    snprintf(str_pid, sizeof(str_pid), "%d", pid_a_finalizar);
-
-    if (dictionary_has_key(interfaces, str_pid)) {
+    if (dictionary_has_key(interfaces, key)) {
+        char str_pid[8];
+        snprintf(str_pid, sizeof(str_pid), "%d", pid_a_finalizar);
         pthread_mutex_lock(&diccionario_instrucciones_mutex);
         dictionary_remove_and_destroy(instrucciones, str_pid, free_tokens);
         pthread_mutex_unlock(&diccionario_instrucciones_mutex);
@@ -161,8 +159,11 @@ void finalizar_proceso(const String str_pid) {
     }
 
     pthread_mutex_lock(&scheduler->mutex_exec);
-    if (scheduler->proceso_ejecutando != NULL || scheduler->proceso_ejecutando->pid == pid_a_finalizar)
+    if (scheduler->proceso_ejecutando != NULL || scheduler->proceso_ejecutando->pid == pid_a_finalizar) {
         enviar_operacion(FINALIZADO, conexion_interrupt);
+        pthread_mutex_unlock(&scheduler->mutex_exec);
+        return;
+    }    
     pthread_mutex_unlock(&scheduler->mutex_exec);
 
     pthread_mutex_lock(&scheduler->mutex_new);
@@ -187,6 +188,7 @@ void finalizar_proceso(const String str_pid) {
 
     finalizar_proceso_en_memoria(pid_a_finalizar);
     log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid_a_finalizar);
+    log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS", pid_a_finalizar);
 }
 
 void iniciar_planificacion(const String s) {
@@ -243,7 +245,7 @@ void multiprogramacion(const String valor) {
         return;
     }
 
-    kernel_config->grado_multiprogramacion = multiprogramacion;
+    cambiar_grado_multiprogramacion(multiprogramacion);
 
     log_debug(extra_logger, "Cambiando multiprogramacion a %d\n", kernel_config->grado_multiprogramacion);
 

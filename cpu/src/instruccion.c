@@ -288,8 +288,6 @@ char** split_string(char* str) {
 void free_tokens(char** tokens) {
     if (tokens == NULL)
         return;
-    for (uint32_t i = 0; tokens[i] != NULL; i++)
-        free(tokens[i]);
     free(tokens);
 }
 

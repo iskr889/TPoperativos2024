@@ -68,18 +68,10 @@ void* manejo_interrupciones_cpu(){
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
                 // liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
                 finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
-                log_debug(extra_logger, "Finalizo proceso %d - Motivo: SUCCESS", scheduler->proceso_ejecutando->pid);
+                log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS", scheduler->proceso_ejecutando->pid);
                 pcb_a_exit(scheduler->proceso_ejecutando);
                 sem_post(&sem_dispatch);
-
-                if (cantidad_procesos_ejecuntandose < kernel_config->grado_multiprogramacion) {
-                    sem_post(&sem_multiprogramacion_ready);
-                } 
-
-                pthread_mutex_lock(&cantidad_procesos_ejecuntandose_mutex);
-                cantidad_procesos_ejecuntandose--;
-                pthread_mutex_unlock(&cantidad_procesos_ejecuntandose_mutex);
-                //sem_post(&sem_multiprogramacion_ready); // Aumento grado multi
+                aumentar_grado_multiprogramacion();
 
             break;
 
@@ -106,13 +98,13 @@ void* manejo_interrupciones_cpu(){
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_debug(extra_logger, "Finalizo proceso %d - Motivo: INVALID_WRITE", scheduler->proceso_ejecutando->pid);
                     pcb_a_exit(scheduler->proceso_ejecutando);//si No existe
-                    sem_post(&sem_multiprogramacion_ready);//aumento grado multi
+                    aumentar_grado_multiprogramacion();
 
                 } else if (!verificar_instruccion(interfaces, tokens)) {//Si NO existe
 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     pcb_a_exit(scheduler->proceso_ejecutando);//si No existe
-                    sem_post(&sem_multiprogramacion_ready);//aumento grado multi
+                    aumentar_grado_multiprogramacion();
 
                 } else {
 
@@ -140,7 +132,7 @@ void* manejo_interrupciones_cpu(){
                     pcb_a_exit(scheduler->proceso_ejecutando);
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
-                    sem_post(&sem_multiprogramacion_ready);//aumento grado multi
+                    aumentar_grado_multiprogramacion();
 
                 } else {
                     asignar_recurso_a_proceso(scheduler->proceso_ejecutando->pid, tokens[1]);
@@ -172,7 +164,7 @@ void* manejo_interrupciones_cpu(){
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
                     pcb_a_exit(scheduler->proceso_ejecutando);
-                    sem_post(&sem_multiprogramacion_ready);//aumento grado multi
+                    aumentar_grado_multiprogramacion();
 
                 } else {
 
@@ -325,4 +317,14 @@ void agregar_instruccion(uint16_t pid, char** tokens) {
     pthread_mutex_lock(&diccionario_instrucciones_mutex);
     dictionary_put(instrucciones, str_pid, tokens);
     pthread_mutex_unlock(&diccionario_instrucciones_mutex);
+}
+
+void aumentar_grado_multiprogramacion() {
+    if (cantidad_procesos_ejecuntandose <= kernel_config->grado_multiprogramacion) {
+        sem_post(&sem_multiprogramacion_ready);
+    }
+
+    pthread_mutex_lock(&cantidad_procesos_ejecuntandose_mutex);
+    cantidad_procesos_ejecuntandose--;
+    pthread_mutex_unlock(&cantidad_procesos_ejecuntandose_mutex);
 }
