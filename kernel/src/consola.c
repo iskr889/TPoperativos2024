@@ -114,6 +114,8 @@ void iniciar_proceso(const String path) {
     crear_proceso_en_memoria(pcb->pid, path);
 
     proceso_a_cola_new(pcb); // Paso el proceso a la cola new
+
+    log_info(logger, "Se crea el proceso %s en NEW", str_pid);
 }
 
 static void free_tokens(void *element) {

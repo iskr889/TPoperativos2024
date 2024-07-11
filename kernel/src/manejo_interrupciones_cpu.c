@@ -70,7 +70,7 @@ void* manejo_interrupciones_cpu(){
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
                 // liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
                 finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
-                log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS", scheduler->proceso_ejecutando->pid);
+                log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS/OUT_OF_MEMOYY/INTERRUPTED_BY_USER", scheduler->proceso_ejecutando->pid);
                 pcb_a_exit(scheduler->proceso_ejecutando);
                 sem_post(&sem_dispatch);
                 aumentar_grado_multiprogramacion();
@@ -82,8 +82,7 @@ void* manejo_interrupciones_cpu(){
                 if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
                 //pcb_a_ready(scheduler->proceso_ejecutando);
                 if (VRR_modo) sem_post(&sem_hay_encolado_VRR);
-                log_info(extra_logger, "PID: %d - Desalojado por Fin de Quantum", scheduler->proceso_ejecutando->pid);
-                log_debug(extra_logger, "Proceso %d movido de EXEC a READY", scheduler->proceso_ejecutando->pid);
+                log_info(logger, "PID: %d - Desalojado por Fin de Quantum", scheduler->proceso_ejecutando->pid);
                 proceso_exec_a_ready();
                 sem_post(&sem_dispatch);
 
@@ -98,21 +97,21 @@ void* manejo_interrupciones_cpu(){
                 if (!dictionary_has_key(interfaces, tokens[1])) { // Verifico que existe la interfaz
 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
-                    log_debug(extra_logger, "Finalizo proceso %d - Motivo: INVALID_WRITE", scheduler->proceso_ejecutando->pid);
+                    log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", scheduler->proceso_ejecutando->pid);
                     pcb_a_exit(scheduler->proceso_ejecutando);//si No existe
                     aumentar_grado_multiprogramacion();
 
                 } else if (!verificar_instruccion(interfaces, tokens)) {//Si NO existe
 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                    log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", scheduler->proceso_ejecutando->pid);
                     pcb_a_exit(scheduler->proceso_ejecutando);//si No existe
                     aumentar_grado_multiprogramacion();
 
                 } else {
 
                     interfaz_t *interfaz = dictionary_get(interfaces, tokens[1]);
-                    log_info(logger, "PID: %d Bloqueado por: %s", scheduler->proceso_ejecutando->pid, tokens[1]);
-                    log_debug(extra_logger, "Proceso %d movido de EXEC a BLOCKED", scheduler->proceso_ejecutando->pid);
+                    log_info(logger, "PID: %d - Bloqueado por: %s", scheduler->proceso_ejecutando->pid, tokens[1]);
                     agregar_instruccion(scheduler->proceso_ejecutando->pid, tokens);
                     proceso_exec_a_blocked(tokens[1]);
                     //pcb_a_blocked(scheduler->proceso_ejecutando, tokens[1]); //SI existe
@@ -143,7 +142,7 @@ void* manejo_interrupciones_cpu(){
 
                 if (obtenerInstancia(recursos, tokens[1]) < 0) {
 
-                    log_info(logger, "PID: %d Bloqueado por: %s", scheduler->proceso_ejecutando->pid, tokens[1]);
+                    log_info(logger, "PID: %d - Bloqueado por: %s", scheduler->proceso_ejecutando->pid, tokens[1]);
                     proceso_exec_a_blocked(tokens[1]);
                     sem_post(&sem_dispatch);
 

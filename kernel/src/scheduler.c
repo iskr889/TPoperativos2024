@@ -2,7 +2,7 @@
 
 scheduler_t *scheduler = NULL;
 
-extern t_log* extra_logger;
+extern t_log* extra_logger, *logger;
 
 // Función para inicializar el planificador
 void init_scheduler() {
@@ -68,13 +68,13 @@ void cola_new_a_ready() {
     pcb_t* proceso = list_pop(scheduler->cola_new);
     pthread_mutex_unlock(&scheduler->mutex_new);
 
-    log_debug(extra_logger, "Proceso %d movido de NEW a READY", proceso->pid);
-
     pthread_mutex_lock(&scheduler->mutex_ready);
     proceso->estado = READY;
     list_push(scheduler->cola_ready, proceso);
     pthread_cond_signal(&scheduler->cond_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
+
+    log_info(logger, "PID: %d - Estado Anterior: NEW - Estado Actual: READY", proceso->pid);
 }
 
 void cola_ready_a_exec() {
@@ -85,13 +85,13 @@ void cola_ready_a_exec() {
     pcb_t* proceso = list_pop(scheduler->cola_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
 
-    log_debug(extra_logger, "Proceso %d movido de READY a EXEC", proceso->pid);
-
     pthread_mutex_lock(&scheduler->mutex_exec);
     scheduler->proceso_ejecutando = proceso;
     proceso->estado = EXEC;
     pthread_cond_signal(&scheduler->cond_exec);
     pthread_mutex_unlock(&scheduler->mutex_exec);
+
+    log_info(logger, "PID: %d - Estado Anterior: READY - Estado Actual: EXEC", proceso->pid);
 }
 //funcion para cola auxiliar de bloqueados a ejecutados
 void cola_aux_blocked_a_exec() {
@@ -107,6 +107,8 @@ void cola_aux_blocked_a_exec() {
     proceso->estado = EXEC;
     pthread_cond_signal(&scheduler->cond_exec);
     pthread_mutex_unlock(&scheduler->mutex_exec);
+
+    log_info(logger, "PID: %d - Estado Anterior: AUX_BLOCKED - Estado Actual: EXEC", proceso->pid);
 }
 
 void proceso_exec_a_blocked(char* nombre_cola) {
@@ -125,6 +127,8 @@ void proceso_exec_a_blocked(char* nombre_cola) {
     proceso->estado = BLOCKED;
     list_push(cola_bloqueada, proceso);
     pthread_mutex_unlock(&scheduler->mutex_blocked);
+
+    log_info(logger, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED", proceso->pid);
 }
 
 void pcb_a_blocked(pcb_t* proceso, char* nombre_cola) {
@@ -156,6 +160,8 @@ void proceso_exec_a_ready() {
     list_push(scheduler->cola_ready, proceso);
     pthread_cond_signal(&scheduler->cond_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
+
+    log_info(logger, "PID: %d - Estado Anterior: EXEC - Estado Actual: READY", proceso->pid);
 }
 //TODO: elminar pcb_a_ready
 void pcb_a_ready(pcb_t* proceso){
@@ -185,13 +191,13 @@ void cola_blocked_a_ready(char* nombre_cola) {
     pcb_t* proceso = list_pop(cola_bloqueada);
     pthread_mutex_unlock(&scheduler->mutex_blocked);
 
-    log_debug(extra_logger, "Proceso %d movido de BLOCKED a READY", proceso->pid);
-
     pthread_mutex_lock(&scheduler->mutex_ready);
     proceso->estado = READY;
     list_push(scheduler->cola_ready, proceso);
     pthread_cond_signal(&scheduler->cond_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
+
+    log_info(logger, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: READY", proceso->pid);
 }
 
 void cola_blocked_a_aux_blocked(char* nombre_cola) {
@@ -209,6 +215,8 @@ void cola_blocked_a_aux_blocked(char* nombre_cola) {
     list_push(scheduler->cola_aux_blocked, proceso);
     pthread_cond_signal(&scheduler->cond_aux_blocked);
     pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
+
+    log_info(logger, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: AUX_BLOCKED", proceso->pid);
 }
 
 void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_cola_actual) {
@@ -234,6 +242,8 @@ void pcb_a_exit(pcb_t* proceso) {
     proceso->estado = EXIT;
     list_push(scheduler->cola_exit, proceso);
     pthread_mutex_unlock(&scheduler->mutex_exit);
+
+    log_info(logger, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso->pid);
 }
 
 // Función para hacer push (agregar al final) en la lista
