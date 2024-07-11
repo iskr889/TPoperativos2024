@@ -113,6 +113,15 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
     pthread_exit(NULL);
 }
 
+static void free_tokens(void *element) {
+    char** tokens = (char **)element;
+    if (tokens == NULL)
+        return;
+    for (uint32_t i = 0; tokens[i] != NULL; i++)
+        free(tokens[i]);
+    free(tokens);
+}
+
 int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     String nombre = recibir_nombre_interfaz(socket_interfaz);
@@ -183,7 +192,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         }
 
         pthread_mutex_lock(&diccionario_instrucciones_mutex);
-        dictionary_remove_and_destroy(instrucciones, str_pid, free);
+        dictionary_remove_and_destroy(instrucciones, str_pid, free_tokens);
         pthread_mutex_unlock(&diccionario_instrucciones_mutex);
 
     }

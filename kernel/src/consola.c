@@ -17,6 +17,7 @@ extern t_dictionary *instrucciones;
 extern pthread_mutex_t diccionario_instrucciones_mutex;
 
 uint16_t numero_de_procesos = 0;
+uint16_t pid_a_finalizar = 0; // Necesario para las funciones estaticas
 
 ///////////// FUNCIONES PARA DEBUGEAR /////////////
 static void print_io_name(void *key) {
@@ -113,6 +114,33 @@ void iniciar_proceso(const String path) {
     proceso_a_cola_new(pcb); // Paso el proceso a la cola new
 }
 
+static void free_tokens(void *element) {
+    char** tokens = (char **)element;
+    if (tokens == NULL)
+        return;
+    for (uint32_t i = 0; tokens[i] != NULL; i++)
+        free(tokens[i]);
+    free(tokens);
+}
+
+static bool remover_proceso_lista(void* elemento) {
+    pcb_t* proceso = (pcb_t*)elemento;
+    return proceso->pid == pid_a_finalizar;
+}
+
+static void remover_proceso_diccionario(char *key, void *proceso) {
+    list_remove_and_destroy_by_condition(proceso, remover_proceso_lista, free);
+
+    char str_pid[8];
+    snprintf(str_pid, sizeof(str_pid), "%d", pid_a_finalizar);
+
+    if (dictionary_has_key(interfaces, str_pid)) {
+        pthread_mutex_lock(&diccionario_instrucciones_mutex);
+        dictionary_remove_and_destroy(instrucciones, str_pid, free_tokens);
+        pthread_mutex_unlock(&diccionario_instrucciones_mutex);
+    }
+}
+
 void finalizar_proceso(const String str_pid) {
 
     if (str_pid == NULL) {
@@ -125,54 +153,40 @@ void finalizar_proceso(const String str_pid) {
         return;
     }
 
-    uint16_t pid = atoi(str_pid);
+    pid_a_finalizar = atoi(str_pid);
 
-    if(pid == 0) {
+    if(pid_a_finalizar == 0) {
         puts("PID INVALIDO!");
         return;
     }
 
-    bool comparar_pid(void* elemento) {
-        pcb_t* proceso = (pcb_t*) elemento;
-        return proceso->pid == pid;
-    }
-
     pthread_mutex_lock(&scheduler->mutex_exec);
-    if (scheduler->proceso_ejecutando != NULL || scheduler->proceso_ejecutando->pid == pid)
+    if (scheduler->proceso_ejecutando != NULL || scheduler->proceso_ejecutando->pid == pid_a_finalizar)
         enviar_operacion(FINALIZADO, conexion_interrupt);
     pthread_mutex_unlock(&scheduler->mutex_exec);
 
     pthread_mutex_lock(&scheduler->mutex_new);
-    list_remove_and_destroy_by_condition(scheduler->cola_new, comparar_pid, free);
+    list_remove_and_destroy_by_condition(scheduler->cola_new, remover_proceso_lista, free);
     pthread_mutex_unlock(&scheduler->mutex_new);
 
     pthread_mutex_lock(&scheduler->mutex_ready);
-    list_remove_and_destroy_by_condition(scheduler->cola_ready, comparar_pid, free);
+    list_remove_and_destroy_by_condition(scheduler->cola_ready, remover_proceso_lista, free);
     pthread_mutex_unlock(&scheduler->mutex_ready);
 
     pthread_mutex_lock(&scheduler->mutex_aux_blocked);
-    list_remove_and_destroy_by_condition(scheduler->cola_aux_blocked, comparar_pid, free);
+    list_remove_and_destroy_by_condition(scheduler->cola_aux_blocked, remover_proceso_lista, free);
     pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
 
     pthread_mutex_lock(&scheduler->mutex_exit);
-    list_remove_and_destroy_by_condition(scheduler->cola_exit, comparar_pid, free);
+    list_remove_and_destroy_by_condition(scheduler->cola_exit, remover_proceso_lista, free);
     pthread_mutex_unlock(&scheduler->mutex_exit);
 
-    void buscar_proceso_diccionario(char *key, void *element){
-        list_remove_and_destroy_by_condition(element, comparar_pid, free);
-        if (dictionary_has_key(interfaces, key)) {
-            pthread_mutex_lock(&diccionario_instrucciones_mutex);
-            dictionary_remove_and_destroy(instrucciones, str_pid, free);
-            pthread_mutex_unlock(&diccionario_instrucciones_mutex);
-        }
-    }
-
     pthread_mutex_lock(&scheduler->mutex_blocked);
-    dictionary_iterator(scheduler->colas_blocked, buscar_proceso_diccionario);
+    dictionary_iterator(scheduler->colas_blocked, remover_proceso_diccionario);
     pthread_mutex_unlock(&scheduler->mutex_blocked);
 
-    finalizar_proceso_en_memoria(pid);
-    log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid);
+    finalizar_proceso_en_memoria(pid_a_finalizar);
+    log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid_a_finalizar);
 }
 
 void iniciar_planificacion(const String s) {

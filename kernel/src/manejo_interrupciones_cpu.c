@@ -57,7 +57,7 @@ void* manejo_interrupciones_cpu(){
 
         liberar_contexto(contexto);
 
-        if(!estado_planificacion_activa){
+        if (!estado_planificacion_activa) {
             sem_wait(&sem_manejo_interrupciones_comando);
         }
 
