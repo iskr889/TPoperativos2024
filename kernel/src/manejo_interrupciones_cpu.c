@@ -38,6 +38,8 @@ void interrupt_handler() {
 void* manejo_interrupciones_cpu(){
 
     while(1) {
+
+
         sem_wait(&sem_interrupcion);
         paquete_t *paquete = recibir_contexto(conexion_dispatch);
 
@@ -128,10 +130,10 @@ void* manejo_interrupciones_cpu(){
                 if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
 
                 if (!dictionary_has_key(recursos, tokens[1])) {
-
-                    pcb_a_exit(scheduler->proceso_ejecutando);
+                    
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
+                    pcb_a_exit(scheduler->proceso_ejecutando);
                     aumentar_grado_multiprogramacion();
 
                 } else {

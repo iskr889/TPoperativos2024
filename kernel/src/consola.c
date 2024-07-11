@@ -3,6 +3,7 @@
 #include <errno.h>
 #include "kernel_interface_handler.h"
 #include "planificador_largo_plazo.h"
+#include "recursos.h"
 //#include "semaforos.h"
 
 extern t_kernel_config* kernel_config;
@@ -160,7 +161,7 @@ void finalizar_proceso(const String str_pid) {
     }
 
     pthread_mutex_lock(&scheduler->mutex_exec);
-    if (scheduler->proceso_ejecutando != NULL || scheduler->proceso_ejecutando->pid == pid_a_finalizar) {
+    if (scheduler->proceso_ejecutando != NULL && scheduler->proceso_ejecutando->pid == pid_a_finalizar) {
         enviar_operacion(FINALIZADO, conexion_interrupt);
         pthread_mutex_unlock(&scheduler->mutex_exec);
         return;
@@ -188,6 +189,8 @@ void finalizar_proceso(const String str_pid) {
     pthread_mutex_unlock(&scheduler->mutex_blocked);
 
     finalizar_proceso_en_memoria(pid_a_finalizar);
+    liberar_recursos_de_proceso(pid_a_finalizar);
+    
     log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid_a_finalizar);
     log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS", pid_a_finalizar);
 }

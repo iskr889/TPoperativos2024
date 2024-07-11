@@ -93,7 +93,7 @@ void liberar_recursos_de_proceso(int pid) {
 void liberar_recurso_aux(char *key, void *instancia) {
     int *instancia_recurso = (int*)instancia;
     sumar_recursos(recursos, key, *instancia_recurso);
-    if ((obtenerInstancia(recursos, key) > 0)) {
+    if ((obtenerInstancia(recursos, key) >= 0)) { // TODO: Revisar esta condicion
         cola_blocked_a_ready(key);
     }
 }

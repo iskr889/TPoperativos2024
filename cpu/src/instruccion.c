@@ -380,8 +380,9 @@ void resize(pcb_t *pcb, uint32_t nuevo_tamano) {
     if (resultado == OUT_OF_MEMORY) {
         size_t instruccion_len = snprintf(NULL, 0, "RESIZE OUT_OF_MEMORY") + 1;
         char *instruccion = malloc(instruccion_len);
+        pcb->estado = EXIT; // Agrego cambio importante, chequea que tiene que estar finalizado
         snprintf(instruccion, instruccion_len, "RESIZE OUT_OF_MEMORY");
-        enviar_contexto(conexion_dispatch, pcb, instruccion, I_RESIZE);
+        enviar_contexto(conexion_dispatch, pcb, instruccion, FINALIZADO); //TODO: implementar Out Of Memory 
         free(instruccion);
     }
 }
