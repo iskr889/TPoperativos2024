@@ -385,7 +385,6 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, size_t nuevo_tamanio) 
 void escribir_archivo(uint16_t pid, String nombre_archivo, int direccion_memoria, int cant_caracteres, int puntero_archivo){
     
     //log_info(extra_logger, "Escribiendo Archivo");
-    int estado_operacion = 0;
 
     char *pathArchivo = string_from_format("%s/%s.txt", ruta_metadata, nombre_archivo);
     
@@ -473,25 +472,25 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion_memoria, in
         free(pathArchivo);
         return;
     }
+    
     // obtener el texto de los bloques
-    char* texto = obtener_texto();//falta
-    int cant_caracteres = strlent(texto);
+    char* texto = obtener_texto(bloque_inicial, puntero_archivo, tamanio_archivo, tamanio_leer);
 
     // envio el texto leido de los bloques
-    payload_t *payload_a_enviar = payload_create(sizeof(uint16_t) + sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + cant_caracteres);
+    payload_t *payload_a_enviar = payload_create(sizeof(uint16_t) + sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + tamanio_leer);
 
     char operacion = 'W'; // Necesario para escribir memoria en espacio de usuario
     payload_add(payload_a_enviar, &pid, sizeof(uint16_t));
     payload_add(payload_a_enviar, &operacion, sizeof(char));
     payload_add(payload_a_enviar, &direccion_memoria, sizeof(uint32_t));
-    payload_add(payload_a_enviar, &cant_caracteres, sizeof(uint32_t));
-    payload_add(payload_a_enviar, texto, cant_caracteres);
+    payload_add(payload_a_enviar, &tamanio_leer, sizeof(uint32_t));
+    payload_add(payload_a_enviar, texto, tamanio_leer);
 
     paquete_t *paquete_a_enviar = crear_paquete(MEMORY_USER_SPACE_ACCESS, payload_a_enviar);
 
     if (enviar_paquete(fd_memoria, paquete_a_enviar) != OK) {
         log_error(extra_logger, "No se pudo enviar el paquete a la memoria!");
-        return false;
+        exit(EXIT_FAILURE);
     }
 
     payload_destroy(payload_a_enviar);
@@ -504,14 +503,14 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion_memoria, in
 
     if(respuesta == NULL || respuesta->operacion != MEMORY_RESPONSE_OK) {
         log_error(extra_logger, "Error al recibir respuesta de la memoria\n");
-        return false;
+        exit(EXIT_FAILURE);
     }
 
     String rta_memoria = payload_read_string(respuesta->payload);
 
     log_info(extra_logger, "Memoria respondio: %s", rta_memoria);
 
-    log_info(logger, "PID: %i, Leer Archivo: %s Tamaño a Leer: %zu Puntero Archivo: %d", pid, nombre_archivo, bytes_a_leer, puntero_archivo);
+    log_info(logger, "PID: %i, Leer Archivo: %s Tamaño a Leer: %i Puntero Archivo: %d", pid, nombre_archivo, tamanio_leer, puntero_archivo);
 
     payload_destroy(respuesta->payload);    
     liberar_paquete(respuesta);
@@ -519,7 +518,8 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion_memoria, in
     config_destroy(metadata_archivo);
 
     free(pathArchivo);
-
+    
+    return;
 }
 
 // **** OPERACIONES AUXILIARES ****
@@ -645,6 +645,7 @@ int buscar_espacio_bitmap(int tamanio){
     
     do{
         nuevo_bloque = buscar_bloque_libre();
+        
         if(nuevo_bloque == -1){
             return -1;
         }
@@ -683,4 +684,23 @@ void mostra_archivo(int primer_bloque, int tamanio_archivo){
 
 void compactar() {
 
+}
+
+char* obtener_texto(int bloque_inicial, int puntero_archivo, int tam_archivo, int tamanio_leer) {
+    char* texto = (char*)malloc(tamanio_leer);
+
+    int inicio_bloque = obtener_inicio_bloque(bloque_inicial);
+    int inicio_copia = inicio_bloque + puntero_archivo;
+
+    if (inicio_copia < 0 || inicio_copia + tamanio_leer > tam_archivo) {
+        printf("Error: intento de copia fuera de los límites del archivo.\n");
+        free(texto);
+        return NULL;
+    }
+
+    memcpy(texto, &bufferBloques[inicio_copia], tamanio_leer);
+
+    //texto[tamanio_leer] = '\0';
+
+    return texto;
 }

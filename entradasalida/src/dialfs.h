@@ -26,6 +26,7 @@ int buscar_espacio_bitmap          (int tamanio);
 void mostra_archivo                (int primer_bloque, int tamanio_archivo);
 void escribir_texto_en_bloques     (int primer_bloque, int tamanio_archivo, int puntero_archivo, char *texto);
 void limpiar_bloques               (int primer_bloque, int tamanio_limpiar);
+char* obtener_texto                (int bloque_inicial, int puntero_archivo, int tam_archivo, int tamanio_leer);
 
 // operaciones
 void crear_archivo                 (uint16_t pid, String nombre);
