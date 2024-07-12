@@ -202,7 +202,7 @@ bool verificar_instruccion(t_dictionary *diccionario, char **tokens) {
     interfaz_t *interfaz = dictionary_get(diccionario, tokens[1]);
     int instruccion = obtener_tipo_instruccion(tokens[0]);
 
-    int casos_inst[] = {I_IO_FS_CREATE, I_IO_FS_DELETE, I_IO_FS_READ, I_IO_FS_TRUNCATE,I_IO_FS_WRITE};
+    int casos_inst[] = {I_IO_FS_CREATE, I_IO_FS_DELETE, I_IO_FS_READ, I_IO_FS_TRUNCATE, I_IO_FS_WRITE};
 
     switch(interfaz->tipo){
 
@@ -210,10 +210,10 @@ bool verificar_instruccion(t_dictionary *diccionario, char **tokens) {
             return instruccion == I_IO_GEN_SLEEP;
 
         case STDIN:
-            return instruccion == I_IO_FS_READ;
+            return instruccion == I_IO_STDIN_READ;
 
         case STDOUT:
-            return instruccion == I_IO_FS_WRITE;
+            return instruccion == I_IO_STDOUT_WRITE;
 
         case DIALFS:
 

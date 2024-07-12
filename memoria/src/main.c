@@ -133,7 +133,7 @@ void inicializar_memoria() {
         exit(EXIT_FAILURE);
     }
 
-    size_t bitarray_size = paginas_totales;
+    size_t bitarray_size = paginas_totales / 8;
 
     if (bitarray_size == 0)
         bitarray_size = 1; // Al menos necesito un bitarray de 1 byte

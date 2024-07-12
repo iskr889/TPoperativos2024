@@ -205,11 +205,13 @@ void instruccion_process_resize(payload_t* payload) {
         return;
     }
 
-    int cod_op = resize_proceso(proceso, new_size) ? MEMORY_RESPONSE_OK : OUT_OF_MEMORY;
+    uint32_t cant_pages = new_size / memoria_config->tam_pagina + 1;
+
+    int cod_op = resize_proceso(proceso, cant_pages) ? MEMORY_RESPONSE_OK : OUT_OF_MEMORY;
 
     enviar_operacion(cod_op, conexion_cpu);
 
-    log_debug(extra_logger, "Proceso [PID: %d] redimensionado a %d paginas", pid, new_size);
+    log_debug(extra_logger, "Proceso [PID: %d] redimensionado a %d paginas", pid, cant_pages);
 }
 
 void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
