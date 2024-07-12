@@ -230,12 +230,10 @@ void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_
     pthread_mutex_unlock(&scheduler->mutex_exit);
 }
 
-void pcb_a_exit(pcb_t* proceso) {
+void pcb_a_exit() {
     pthread_mutex_lock(&scheduler->mutex_exec);
-    if (scheduler->proceso_ejecutando != NULL) {
-        free(scheduler->proceso_ejecutando);
-        scheduler->proceso_ejecutando = NULL; // Evitar uso posterior
-    }
+    pcb_t* proceso = scheduler->proceso_ejecutando;
+    scheduler->proceso_ejecutando = NULL;
     pthread_mutex_unlock(&scheduler->mutex_exec);
 
     pthread_mutex_lock(&scheduler->mutex_exit);

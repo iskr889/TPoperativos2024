@@ -54,7 +54,7 @@ void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_
 
 void pcb_a_blocked(pcb_t* proceso, char* nombre_cola);
 
-void pcb_a_exit(pcb_t* proceso);
+void pcb_a_exit();
 
 void list_push(t_list* queue, void* element);
 

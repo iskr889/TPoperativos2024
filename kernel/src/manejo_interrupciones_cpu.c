@@ -71,7 +71,7 @@ void* manejo_interrupciones_cpu(){
                 // liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
                 finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                 log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS/OUT_OF_MEMOYY/INTERRUPTED_BY_USER", scheduler->proceso_ejecutando->pid);
-                pcb_a_exit(scheduler->proceso_ejecutando);
+                pcb_a_exit();
                 sem_post(&sem_dispatch);
                 aumentar_grado_multiprogramacion();
 
@@ -92,20 +92,21 @@ void* manejo_interrupciones_cpu(){
 
                 if (!FIFO_modo) pthread_cancel(thread_quantum);
 
-                if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, tiempo_VRR_restante);
+                if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, scheduler->proceso_ejecutando->quantum - tiempo_VRR_restante);
+                log_debug(extra_logger, "PID: %d - Tiempo restante Quantum: %ld", scheduler->proceso_ejecutando->pid, tiempo_VRR_restante);
 
                 if (!dictionary_has_key(interfaces, tokens[1])) { // Verifico que existe la interfaz
 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", scheduler->proceso_ejecutando->pid);
-                    pcb_a_exit(scheduler->proceso_ejecutando);//si No existe
+                    pcb_a_exit();//si No existe
                     aumentar_grado_multiprogramacion();
 
                 } else if (!verificar_instruccion(interfaces, tokens)) {//Si NO existe
 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", scheduler->proceso_ejecutando->pid);
-                    pcb_a_exit(scheduler->proceso_ejecutando);//si No existe
+                    pcb_a_exit();//si No existe
                     aumentar_grado_multiprogramacion();
 
                 } else {
@@ -132,7 +133,7 @@ void* manejo_interrupciones_cpu(){
                     
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
-                    pcb_a_exit(scheduler->proceso_ejecutando);
+                    pcb_a_exit();
                     aumentar_grado_multiprogramacion();
 
                 } else {
@@ -164,7 +165,7 @@ void* manejo_interrupciones_cpu(){
                 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
-                    pcb_a_exit(scheduler->proceso_ejecutando);
+                    pcb_a_exit();
                     aumentar_grado_multiprogramacion();
 
                 } else {
