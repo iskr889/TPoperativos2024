@@ -50,11 +50,11 @@ void cola_blocked_a_ready(char* nombre_cola);
 
 void cola_blocked_a_aux_blocked(char* nombre_cola);
 
-void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_cola_actual);
+void proceso_a_exit(pcb_t* proceso, t_list* cola_actual);
 
 void pcb_a_blocked(pcb_t* proceso, char* nombre_cola);
 
-void pcb_a_exit();
+void proceso_exec_a_exit();
 
 void list_push(t_list* queue, void* element);
 

@@ -4,10 +4,12 @@ t_dictionary *recursos = NULL;
 t_dictionary *recursos_asignados = NULL;
 extern t_kernel_config* kernel_config;
 extern scheduler_t *scheduler;
+pthread_mutex_t recursos_mutex;
 
 void init_recursos() {
     recursos = dictionary_create();
     recursos_asignados = dictionary_create();
+    pthread_mutex_init(&recursos_mutex, NULL);
 
     for (int i = 0; kernel_config->recursos[i]; i++) {
 

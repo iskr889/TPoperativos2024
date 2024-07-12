@@ -131,8 +131,8 @@ static bool remover_proceso_lista(void* elemento) {
     return proceso->pid == pid_a_finalizar;
 }
 
-static void remover_proceso_diccionario(char *key, void *proceso) {
-    list_remove_and_destroy_by_condition(proceso, remover_proceso_lista, free);
+static void remover_proceso_diccionario(char *key, void *cola_bloqueada) {
+    proceso_a_exit(list_remove_by_condition(cola_bloqueada, remover_proceso_lista), cola_bloqueada);
 
     if (dictionary_has_key(interfaces, key)) {
         char str_pid[8];
@@ -171,20 +171,16 @@ void finalizar_proceso(const String str_pid) {
     pthread_mutex_unlock(&scheduler->mutex_exec);
 
     pthread_mutex_lock(&scheduler->mutex_new);
-    list_remove_and_destroy_by_condition(scheduler->cola_new, remover_proceso_lista, free);
+    proceso_a_exit(list_remove_by_condition(scheduler->cola_new, remover_proceso_lista), scheduler->cola_new);
     pthread_mutex_unlock(&scheduler->mutex_new);
 
     pthread_mutex_lock(&scheduler->mutex_ready);
-    list_remove_and_destroy_by_condition(scheduler->cola_ready, remover_proceso_lista, free);
+    proceso_a_exit(list_remove_by_condition(scheduler->cola_ready, remover_proceso_lista), scheduler->cola_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
 
     pthread_mutex_lock(&scheduler->mutex_aux_blocked);
-    list_remove_and_destroy_by_condition(scheduler->cola_aux_blocked, remover_proceso_lista, free);
+    proceso_a_exit(list_remove_by_condition(scheduler->cola_aux_blocked, remover_proceso_lista), scheduler->cola_aux_blocked);
     pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
-
-    pthread_mutex_lock(&scheduler->mutex_exit);
-    list_remove_and_destroy_by_condition(scheduler->cola_exit, remover_proceso_lista, free);
-    pthread_mutex_unlock(&scheduler->mutex_exit);
 
     pthread_mutex_lock(&scheduler->mutex_blocked);
     dictionary_iterator(scheduler->colas_blocked, remover_proceso_diccionario);
@@ -194,7 +190,7 @@ void finalizar_proceso(const String str_pid) {
     liberar_recursos_de_proceso(pid_a_finalizar);
     
     log_debug(extra_logger, "PROCESO FINALIZADO [PID: %d]", pid_a_finalizar);
-    log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS", pid_a_finalizar);
+    log_info(logger, "Finalizo proceso %d - Motivo: INTERRUPTED_BY_USER", pid_a_finalizar);
 }
 
 void iniciar_planificacion(const String s) {

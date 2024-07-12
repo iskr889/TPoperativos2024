@@ -24,7 +24,7 @@ void init_scheduler() {
     pthread_mutex_init(&scheduler->mutex_exit, NULL);
     pthread_mutex_init(&scheduler->mutex_exec, NULL);
     pthread_mutex_init(&scheduler->mutex_blocked, NULL);
-    pthread_mutex_init(&scheduler->mutex_aux_blocked,NULL);
+    pthread_mutex_init(&scheduler->mutex_aux_blocked, NULL);
     pthread_cond_init(&scheduler->cond_new, NULL);
     pthread_cond_init(&scheduler->cond_ready, NULL);
     pthread_cond_init(&scheduler->cond_exec, NULL);
@@ -131,24 +131,6 @@ void proceso_exec_a_blocked(char* nombre_cola) {
     log_info(logger, "PID: %d - Estado Anterior: EXEC - Estado Actual: BLOCKED", proceso->pid);
 }
 
-void pcb_a_blocked(pcb_t* proceso, char* nombre_cola) {
-    pthread_mutex_lock(&scheduler->mutex_exec);
-    if (scheduler->proceso_ejecutando != NULL) {
-        free(scheduler->proceso_ejecutando);
-        scheduler->proceso_ejecutando = NULL; // Evitar uso posterior
-    }
-    pthread_mutex_unlock(&scheduler->mutex_exec);
-
-    pthread_mutex_lock(&scheduler->mutex_blocked);
-    t_list* cola_bloqueada = dictionary_get(scheduler->colas_blocked, nombre_cola);
-    if (cola_bloqueada == NULL) {
-        cola_bloqueada = list_create();
-        dictionary_put(scheduler->colas_blocked, nombre_cola, cola_bloqueada);
-    }
-    list_push(cola_bloqueada, proceso);
-    pthread_mutex_unlock(&scheduler->mutex_blocked);
-}
-
 void proceso_exec_a_ready() {
     pthread_mutex_lock(&scheduler->mutex_exec);
     pcb_t* proceso = scheduler->proceso_ejecutando;
@@ -162,23 +144,6 @@ void proceso_exec_a_ready() {
     pthread_mutex_unlock(&scheduler->mutex_ready);
 
     log_info(logger, "PID: %d - Estado Anterior: EXEC - Estado Actual: READY", proceso->pid);
-}
-//TODO: elminar pcb_a_ready
-void pcb_a_ready(pcb_t* proceso){
-    pthread_mutex_lock(&scheduler->mutex_exec);
-    if (scheduler->proceso_ejecutando != NULL) {
-        free(scheduler->proceso_ejecutando);
-        scheduler->proceso_ejecutando = NULL; // Evitar uso posterior
-    }
-    pthread_mutex_unlock(&scheduler->mutex_exec);
-
-
-    pthread_mutex_lock(&scheduler->mutex_ready);
-    proceso->estado = READY;
-    list_push(scheduler->cola_ready, proceso);
-    pthread_cond_signal(&scheduler->cond_ready);
-    pthread_mutex_unlock(&scheduler->mutex_ready);
-
 }
 
 void cola_blocked_a_ready(char* nombre_cola) {
@@ -219,10 +184,11 @@ void cola_blocked_a_aux_blocked(char* nombre_cola) {
     log_info(logger, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: AUX_BLOCKED", proceso->pid);
 }
 
-void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_cola_actual) {
-    pthread_mutex_lock(mutex_cola_actual);
+void proceso_a_exit(pcb_t* proceso, t_list* cola_actual) {
+    if (proceso == NULL)
+        return;
+
     list_pop(cola_actual);
-    pthread_mutex_unlock(mutex_cola_actual);
 
     pthread_mutex_lock(&scheduler->mutex_exit);
     proceso->estado = EXIT;
@@ -230,7 +196,7 @@ void proceso_a_exit(pcb_t* proceso, t_list* cola_actual, pthread_mutex_t* mutex_
     pthread_mutex_unlock(&scheduler->mutex_exit);
 }
 
-void pcb_a_exit() {
+void proceso_exec_a_exit() {
     pthread_mutex_lock(&scheduler->mutex_exec);
     pcb_t* proceso = scheduler->proceso_ejecutando;
     scheduler->proceso_ejecutando = NULL;
