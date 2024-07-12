@@ -115,6 +115,8 @@ void iniciar_proceso(const String path) {
 
     proceso_a_cola_new(pcb); // Paso el proceso a la cola new
 
+    inicializar_recursos_proceso(pcb->pid);
+
     log_info(logger, "Se crea el proceso %s en NEW", str_pid);
 }
 

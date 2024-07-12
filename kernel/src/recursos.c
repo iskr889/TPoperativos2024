@@ -25,6 +25,14 @@ void init_recursos() {
     }
 }
 
+void inicializar_recursos_proceso(int pid) {
+    char str_pid[8];
+    snprintf(str_pid, sizeof(str_pid), "%d", pid); 
+    t_dictionary *diccionario_recurso_proceso = dictionary_create();
+    inicializar_lista_recursos_asignados(diccionario_recurso_proceso);
+    dictionary_put(recursos_asignados, str_pid, diccionario_recurso_proceso);
+}
+
 void inicializar_lista_recursos_asignados(t_dictionary *diccionario) {
 
     for (int i = 0; kernel_config->recursos[i]; i++) {
@@ -94,9 +102,11 @@ void liberar_recursos_de_proceso(int pid) {
 
 void liberar_recurso_aux(char *key, void *instancia) {
     int *instancia_recurso = (int*)instancia;
+    pthread_mutex_lock(&recursos_mutex);
     sumar_recursos(recursos, key, *instancia_recurso);
-    if ((obtenerInstancia(recursos, key) >= 0)) { // TODO: Revisar esta condicion
+    if ((obtenerInstancia(recursos, key) >= 0)) {
         cola_blocked_a_ready(key);
     }
+    pthread_mutex_unlock(&recursos_mutex);
 }
 
