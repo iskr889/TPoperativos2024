@@ -25,17 +25,23 @@ char* decode(char* instruccion, pcb_t* pcb) {
             break;
         }
         case I_MOV_IN: {
-            uint32_t direccion_logica = *(uint32_t*)obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
+            void* direccion_logica_ptr = obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
+            uint32_t direccion_logica = getTipoRegistro(tokens[2]) <= DX ? *(uint8_t*)direccion_logica_ptr : *(uint32_t*)direccion_logica_ptr;
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
+
             size_t instruccion_len = snprintf(NULL, 0, "%s %s %u", tokens[0], tokens[1], direccion_fisica) + 1;
             instruccion_traducida = malloc(instruccion_len);
             snprintf(instruccion_traducida, instruccion_len, "%s %s %u", tokens[0], tokens[1], direccion_fisica);
             break;
         }
         case I_MOV_OUT: {
-            uint32_t reg_dato = *(uint32_t *)obtener_registro(&pcb->registros, getTipoRegistro(tokens[1]));
-            uint32_t direccion_logica = *(uint32_t *)obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
+            void* reg_ptr = obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
+            uint32_t reg_dato = getTipoRegistro(tokens[2]) <= DX ? *(uint8_t*)reg_ptr : *(uint32_t*)reg_ptr;
+
+            void* direccion_logica_ptr = obtener_registro(&pcb->registros, getTipoRegistro(tokens[1]));
+            uint32_t direccion_logica = getTipoRegistro(tokens[1]) <= DX ? *(uint8_t*)direccion_logica_ptr : *(uint32_t*)direccion_logica_ptr;
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
+
             size_t instruccion_len = snprintf(NULL, 0, "%s %u %u", tokens[0], reg_dato, direccion_fisica) + 1;
             instruccion_traducida = malloc(instruccion_len);
             snprintf(instruccion_traducida, instruccion_len, "%s %u %u", tokens[0], reg_dato, direccion_fisica);
