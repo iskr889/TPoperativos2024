@@ -286,101 +286,101 @@ void eliminar_archivo(uint16_t pid, String nombre_archivo)
     return;
 }
 
-void truncar_archivo(uint16_t pid, String nombre_archivo, size_t nuevo_tamanio) {
+// void truncar_archivo(uint16_t pid, String nombre_archivo, size_t nuevo_tamanio) {
     
-    // verifico que sea una ruta valida
-    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
+//     // verifico que sea una ruta valida
+//     char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
     
-    if(access(pathArchivo, F_OK) == -1 ){
-        log_info(logger, "No existe el archivo");
-        free(pathArchivo);
-        exit(EXIT_FAILURE);
-    }
+//     if(access(pathArchivo, F_OK) == -1 ){
+//         log_info(logger, "No existe el archivo");
+//         free(pathArchivo);
+//         exit(EXIT_FAILURE);
+//     }
     
-    // creo el configo y obtengo bloque inicial y tamanio
-    t_config *metadata_archivo = config_create(pathArchivo);
+//     // creo el configo y obtengo bloque inicial y tamanio
+//     t_config *metadata_archivo = config_create(pathArchivo);
 
-    if (metadata_archivo == NULL) {
-        log_error(extra_logger, "No se pudo abrir el archivo para truncar: %s", nombre_archivo);
-        free(pathArchivo);
-        exit(EXIT_FAILURE);
-    }
+//     if (metadata_archivo == NULL) {
+//         log_error(extra_logger, "No se pudo abrir el archivo para truncar: %s", nombre_archivo);
+//         free(pathArchivo);
+//         exit(EXIT_FAILURE);
+//     }
 
-    int bloque_inicial = config_get_int_value(metadata_archivo, "BLOQUE_INICIAL");
-    int tamanio_actual = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
+//     int bloque_inicial = config_get_int_value(metadata_archivo, "BLOQUE_INICIAL");
+//     int tamanio_actual = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
     
-    // calculo los bloques requeridos y los actuales
-    int bloques_requeridos = ceil(nuevo_tamanio / tamanio_bloques);
-    int bloques_actuales = ceil(tamanio_actual / tamanio_bloques);
+//     // calculo los bloques requeridos y los actuales
+//     int bloques_requeridos = ceil(nuevo_tamanio / tamanio_bloques);
+//     int bloques_actuales = ceil(tamanio_actual / tamanio_bloques);
 
-    // si el archivo lo tengo que hacer mas chico
-    if(bloques_actuales > bloques_requeridos){
+//     // si el archivo lo tengo que hacer mas chico
+//     if(bloques_actuales > bloques_requeridos){
 
-        int bloques_eliminar = bloques_actuales - bloques_requeridos;
-        int offset = bloque_inicial + bloques_eliminar -1;
+//         int bloques_eliminar = bloques_actuales - bloques_requeridos;
+//         int offset = bloque_inicial + bloques_eliminar -1;
 
-        liberar_espacio_bitmap(offset, bloques_eliminar);
-        limpiar_bloques(offset, bloques_eliminar * tamanio_bloques); // testeo
+//         liberar_espacio_bitmap(offset, bloques_eliminar);
+//         limpiar_bloques(offset, bloques_eliminar * tamanio_bloques); // testeo
 
-        //asigno el nuevo TAMANIO_ARCHIVO
-        int nuevo_tamanio_archivo = (bloques_actuales - bloques_eliminar) * tamanio_bloques;
-        config_set_value(metadata_archivo, "TAMANIO_ARCHIVO", string_itoa(nuevo_tamanio_archivo));
+//         //asigno el nuevo TAMANIO_ARCHIVO
+//         int nuevo_tamanio_archivo = (bloques_actuales - bloques_eliminar) * tamanio_bloques;
+//         config_set_value(metadata_archivo, "TAMANIO_ARCHIVO", string_itoa(nuevo_tamanio_archivo));
         
-        config_destroy(metadata_archivo);
-        free(pathArchivo);
+//         config_destroy(metadata_archivo);
+//         free(pathArchivo);
 
-        log_info(logger, "PID: %i, Truncar Archivo: %s Tamaño: %i", pid, nombre_archivo, nuevo_tamanio_archivo);
-        return;
-    }
-    else if(bloques_actuales < bloques_requeridos){
+//         log_info(logger, "PID: %i, Truncar Archivo: %s Tamaño: %i", pid, nombre_archivo, nuevo_tamanio_archivo);
+//         return;
+//     }
+//     else if(bloques_actuales < bloques_requeridos){
         
-        int tamanio_requerido = bloques_requeridos * tamanio_bloques;
-        int nuevo_bloque = buscar_espacio_bitmap(tamanio_requerido);
-        if(nuevo_bloque == -1){
-            log_info(logger,"No hay espacio suficiente para recolocar el archivo");
-            config_destroy(metadata_archivo);
-            free(pathArchivo);
-            return;
-        }
-        // si no hay espacio por la buenas, hay espacio por las malas COMPACTAR
+//         int tamanio_requerido = bloques_requeridos * tamanio_bloques;
+//         int nuevo_bloque = buscar_espacio_bitmap(tamanio_requerido);
+//         if(nuevo_bloque == -1){
+//             log_info(logger,"No hay espacio suficiente para recolocar el archivo");
+//             config_destroy(metadata_archivo);
+//             free(pathArchivo);
+//             return;
+//         }
+//         // si no hay espacio por la buenas, hay espacio por las malas COMPACTAR
 
 
-        // sino yo se que desde la pos que devuelve tengo esos bloques libres
+//         // sino yo se que desde la pos que devuelve tengo esos bloques libres
 
-        // marco como ocupados esos nuevos bloques y signo el nuevo tamanio al archivo
+//         // marco como ocupados esos nuevos bloques y signo el nuevo tamanio al archivo
 
 
-    }
+//     }
 
-    // if (nuevo_tamanio < tamanio_actual) {
-    //     // Liberar bloques adicionales
-    //     for (int i = bloques_requeridos; i < bloques_actuales; i++) {
-    //         bitarray_clean_bit(bufferBitmap, bloque_inicial + i);
-    //     }
-    // } else if (nuevo_tamanio > tamanio_actual) {
-    //     // Asignar bloques adicionales
-    //     for (int i = bloques_actuales; i < bloques_requeridos; i++) {
-    //         int nuevo_bloque = buscar_espacio_bitmap( bloques_requeridos * tamanio_bloques);
-    //         if (nuevo_bloque == -1) {
-    //             log_error(extra_logger, "No hay suficiente espacio para truncar el archivo: %s", nombre_archivo);
-    //             config_destroy(metadata_archivo);
-    //             free(pathArchivo);
-    //             return;
-    //         }
-    //         bitarray_set_bit(bufferBitmap, nuevo_bloque);
-    //     }
-    // }
+//     // if (nuevo_tamanio < tamanio_actual) {
+//     //     // Liberar bloques adicionales
+//     //     for (int i = bloques_requeridos; i < bloques_actuales; i++) {
+//     //         bitarray_clean_bit(bufferBitmap, bloque_inicial + i);
+//     //     }
+//     // } else if (nuevo_tamanio > tamanio_actual) {
+//     //     // Asignar bloques adicionales
+//     //     for (int i = bloques_actuales; i < bloques_requeridos; i++) {
+//     //         int nuevo_bloque = buscar_espacio_bitmap( bloques_requeridos * tamanio_bloques);
+//     //         if (nuevo_bloque == -1) {
+//     //             log_error(extra_logger, "No hay suficiente espacio para truncar el archivo: %s", nombre_archivo);
+//     //             config_destroy(metadata_archivo);
+//     //             free(pathArchivo);
+//     //             return;
+//     //         }
+//     //         bitarray_set_bit(bufferBitmap, nuevo_bloque);
+//     //     }
+//     // }
 
-    // char *nuevo_tamanio_str = string_itoa(nuevo_tamanio);
-    // dictionary_put(metadata_archivo->properties, "TAMANIO_ARCHIVO", nuevo_tamanio_str);
+//     // char *nuevo_tamanio_str = string_itoa(nuevo_tamanio);
+//     // dictionary_put(metadata_archivo->properties, "TAMANIO_ARCHIVO", nuevo_tamanio_str);
 
-    // config_save(metadata_archivo);
-    // config_destroy(metadata_archivo);
-    // free(pathArchivo);
-    // free(nuevo_tamanio_str);
+//     // config_save(metadata_archivo);
+//     // config_destroy(metadata_archivo);
+//     // free(pathArchivo);
+//     // free(nuevo_tamanio_str);
 
-    // log_info(logger, "PID: %i, Truncar Archivo: %s Tamaño: %zu", pid, nombre_archivo, nuevo_tamanio);
-}
+//     // log_info(logger, "PID: %i, Truncar Archivo: %s Tamaño: %zu", pid, nombre_archivo, nuevo_tamanio);
+// }
 
 void escribir_archivo(uint16_t pid, String nombre_archivo, int direccion_memoria, int cant_caracteres, int puntero_archivo){
     
