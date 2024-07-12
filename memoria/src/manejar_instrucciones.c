@@ -1,4 +1,5 @@
 #include "manejar_instrucciones.h"
+#include <math.h>
 
 extern t_log* logger;
 extern t_log* extra_logger;
@@ -205,7 +206,7 @@ void instruccion_process_resize(payload_t* payload) {
         return;
     }
 
-    uint32_t cant_pages = new_size / memoria_config->tam_pagina + 1;
+    uint32_t cant_pages = ceil((double)new_size / (double)memoria_config->tam_pagina); // Calcula la cantidad de paginas que necesito ampliar
 
     int cod_op = resize_proceso(proceso, cant_pages) ? MEMORY_RESPONSE_OK : OUT_OF_MEMORY;
 

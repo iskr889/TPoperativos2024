@@ -133,7 +133,7 @@ void inicializar_memoria() {
         exit(EXIT_FAILURE);
     }
 
-    size_t bitarray_size = paginas_totales / 8;
+    size_t bitarray_size = paginas_totales / CHAR_BIT; // Necesario dividir por 8 porque las funciones usan Bytes no Bits!
 
     if (bitarray_size == 0)
         bitarray_size = 1; // Al menos necesito un bitarray de 1 byte
@@ -227,7 +227,7 @@ bool resize_proceso(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
     uint32_t cant_paginas = list_size(proceso->paginas);
 
     if (nueva_cant_paginas > cant_paginas) { // Ampliación del proceso
-        log_info(logger, "PID: %d - Tamaño Actual: %d - Tamaño a Ampliar: %d", proceso->pid, cant_paginas, nueva_cant_paginas); // LOG OBLIGATORIO
+        log_info(logger, "PID: %d - Tamaño Actual: %d - Tamaño a Ampliar: %d", proceso->pid, cant_paginas * memoria_config->tam_pagina, nueva_cant_paginas * memoria_config->tam_pagina); // LOG OBLIGATORIO
         return asignar_paginas(proceso, nueva_cant_paginas - cant_paginas);
     }
 
@@ -236,7 +236,7 @@ bool resize_proceso(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
             PageTable_t *pagina = list_remove(proceso->paginas, i);
             liberar_pagina(pagina);
         }
-        log_info(logger, "PID: %d - Tamaño Actual: %d - Tamaño a Reducir: %d", proceso->pid, cant_paginas, nueva_cant_paginas); // LOG OBLIGATORIO
+        log_info(logger, "PID: %d - Tamaño Actual: %d - Tamaño a Reducir: %d", proceso->pid, cant_paginas * memoria_config->tam_pagina, nueva_cant_paginas * memoria_config->tam_pagina); // LOG OBLIGATORIO
     }
 
     return true;
