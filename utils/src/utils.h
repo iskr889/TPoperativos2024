@@ -114,6 +114,7 @@ typedef enum {
     DESALOJO_QUANTUM,
     WAIT,
     SIGNAL,
+    INTERRUPTED_BY_USER,
 } interrupciones_t;
 
 /**

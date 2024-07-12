@@ -71,11 +71,35 @@ void* manejo_interrupciones_cpu(){
                 // liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
                 finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                 liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
-                log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS/OUT_OF_MEMOYY/INTERRUPTED_BY_USER", scheduler->proceso_ejecutando->pid);
+                log_info(logger, "Finalizo proceso %d - Motivo: SUCCESS", scheduler->proceso_ejecutando->pid);
                 proceso_exec_a_exit();
                 sem_post(&sem_dispatch);
                 aumentar_grado_multiprogramacion();
 
+            break;
+
+            case OUT_OF_MEMORY:
+                // imprimir_pcb(scheduler->proceso_ejecutando);
+                if (!FIFO_modo) pthread_cancel(thread_quantum);
+                // liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
+                finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
+                log_info(logger, "Finalizo proceso %d - Motivo: OUT_OF_MEMORY", scheduler->proceso_ejecutando->pid);
+                proceso_exec_a_exit();
+                sem_post(&sem_dispatch);
+                aumentar_grado_multiprogramacion();
+            break;
+
+            case INTERRUPTED_BY_USER:
+                // imprimir_pcb(scheduler->proceso_ejecutando);
+                if (!FIFO_modo) pthread_cancel(thread_quantum);
+                // liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
+                finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
+                log_info(logger, "Finalizo proceso %d - Motivo: INTERRUPTED_BY_USER", scheduler->proceso_ejecutando->pid);
+                proceso_exec_a_exit();
+                sem_post(&sem_dispatch);
+                aumentar_grado_multiprogramacion();
             break;
 
             case DESALOJO_QUANTUM:

@@ -394,11 +394,11 @@ bool escribir_memoria(uint16_t pid, uint32_t direccion_fisica, void* buffer, uin
 void resize(pcb_t *pcb, uint32_t nuevo_tamano) {
     int resultado = solicitar_resize_memoria(pcb->pid, nuevo_tamano);
     if (resultado == OUT_OF_MEMORY) {
-        size_t instruccion_len = snprintf(NULL, 0, "RESIZE OUT_OF_MEMORY") + 1;
+        size_t instruccion_len = snprintf(NULL, 0, "OUT_OF_MEMORY") + 1;
         char *instruccion = malloc(instruccion_len);
         pcb->estado = EXIT; // Agrego cambio importante, chequea que tiene que estar finalizado
-        snprintf(instruccion, instruccion_len, "RESIZE OUT_OF_MEMORY");
-        enviar_contexto(conexion_dispatch, pcb, instruccion, FINALIZADO); //TODO: implementar Out Of Memory 
+        snprintf(instruccion, instruccion_len, "OUT_OF_MEMORY");
+        enviar_contexto(conexion_dispatch, pcb, instruccion, OUT_OF_MEMORY); //TODO: implementar Out Of Memory 
         free(instruccion);
     }
 }

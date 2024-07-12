@@ -47,9 +47,9 @@ void ciclo_instruccion(pcb_t* pcb) {
         if (pcb->estado == BLOCKED)
             break;
 
-        if (interrupcion == FINALIZADO) {
+        if (interrupcion == INTERRUPTED_BY_USER) {
             pcb->estado = EXIT;
-            responder_interrupcion(pcb, FINALIZADO);
+            responder_interrupcion(pcb, INTERRUPTED_BY_USER);
             log_debug(extra_logger, "INTERRUPCIÓN RECIBIDA: FINALIZADO");
             break;
         }

@@ -166,7 +166,7 @@ void finalizar_proceso(const String str_pid) {
 
     pthread_mutex_lock(&scheduler->mutex_exec);
     if (scheduler->proceso_ejecutando != NULL && scheduler->proceso_ejecutando->pid == pid_a_finalizar) {
-        enviar_operacion(FINALIZADO, conexion_interrupt);
+        enviar_operacion(INTERRUPTED_BY_USER, conexion_interrupt);
         pthread_mutex_unlock(&scheduler->mutex_exec);
         return;
     }    
