@@ -331,7 +331,7 @@ char *recibir_instruccion(int socket) {
 
 
 bool leer_memoria(uint16_t pid, uint32_t direccion_fisica, void* buffer, uint32_t size) {
-    payload_t *payload = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t));
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t));
     char operacion = 'R';
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &operacion, sizeof(char));
@@ -362,7 +362,7 @@ bool leer_memoria(uint16_t pid, uint32_t direccion_fisica, void* buffer, uint32_
 }
 
 bool escribir_memoria(uint16_t pid, uint32_t direccion_fisica, void* buffer, uint32_t size) {
-    payload_t *payload = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + size);
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + size);
     char operacion = 'W';
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &operacion, sizeof(char));

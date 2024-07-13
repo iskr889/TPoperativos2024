@@ -48,7 +48,7 @@ bool stdin_procesar_instrucciones(int fd_kernel, int fd_memoria) {
 
     String texto = leer_texto(cant_caracteres);
 
-    payload_t *payload_a_enviar = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + cant_caracteres);
+    payload_t *payload_a_enviar = payload_create(sizeof(char) + sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint32_t) + cant_caracteres);
 
     char operacion = 'W'; // Necesario para escribir memoria en espacio de usuario
     payload_add(payload_a_enviar, &pid, sizeof(uint16_t));

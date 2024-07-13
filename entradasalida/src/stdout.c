@@ -37,7 +37,7 @@ bool stdout_procesar_instrucciones(int fd_kernel, int fd_memoria) {
     payload_read(paquete->payload, &direccion, sizeof(uint32_t));
     payload_read(paquete->payload, &cant_caracteres, sizeof(uint32_t));
 
-    payload_t *payload_a_enviar = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t));
+    payload_t *payload_a_enviar = payload_create(sizeof(char) + sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint32_t));
 
     char operacion = 'R'; // Necesario para leer memoria en espacio de usuario
     payload_add(payload_a_enviar, &pid, sizeof(uint16_t));

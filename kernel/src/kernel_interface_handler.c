@@ -7,7 +7,7 @@ t_dictionary *interfaces;
 t_dictionary *instrucciones;
 extern bool VRR_modo;
 extern bool estado_planificacion_activa;
-extern t_log* extra_logger;
+extern t_log *extra_logger, *logger;
 extern sem_t sem_hay_encolado_VRR;
 pthread_mutex_t diccionario_instrucciones_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -217,7 +217,7 @@ String recibir_nombre_interfaz(int socket) {
 
 void send_io_gen_sleep(int socket, uint16_t pid, uint32_t tiempo) {
 
-    payload_t *payload = payload_create(sizeof(uint32_t));
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t));
 
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &tiempo, sizeof(uint32_t));
@@ -232,8 +232,8 @@ void send_io_gen_sleep(int socket, uint16_t pid, uint32_t tiempo) {
 }
 
 void send_io_stdin_read(int socket, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres) {
-
-    payload_t *payload = payload_create(sizeof(uint32_t) + sizeof(uint32_t));
+    log_info(logger, "Se esta enviando pid %d, direccion: %d, cant_caracteres %d", pid, direccion, cant_caracteres);
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint32_t));
 
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &direccion, sizeof(uint32_t));
@@ -252,7 +252,8 @@ void send_io_stdin_read(int socket, uint16_t pid, uint32_t direccion, uint32_t c
 
 void send_io_stdout_write(int fd_io, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres) {
 
-    payload_t *payload = payload_create(sizeof(uint32_t) + sizeof(uint32_t));
+    log_info(logger, "Se esta enviando pid %d, direccion: %d, cant_caracteres %d", pid, direccion, cant_caracteres);
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint32_t));
 
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add(payload, &direccion, sizeof(uint32_t));
