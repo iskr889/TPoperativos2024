@@ -238,4 +238,5 @@ void actualizar_contexto_de_ejecucion(pcb_t *old_pcb, pcb_t *new_pcb) {
     old_pcb->registros.edx = new_pcb->registros.edx;
     old_pcb->registros.pc = new_pcb->registros.pc;
     old_pcb->registros.si = new_pcb->registros.si;
+    old_pcb->registros.di = new_pcb->registros.di;
 }
