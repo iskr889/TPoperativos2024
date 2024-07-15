@@ -4,6 +4,7 @@ extern int conexion_memoria;
 extern int tam_pagina;
 extern int conexion_dispatch;
 extern t_log* logger;
+int size_temp;
 
 char* fetch(pcb_t* pcb) {
     solicitar_intruccion(conexion_memoria, pcb->pid, pcb->registros.pc);
@@ -37,7 +38,7 @@ char* decode(char* instruccion, pcb_t* pcb) {
         case I_MOV_OUT: {
             void* reg_ptr = obtener_registro(&pcb->registros, getTipoRegistro(tokens[2]));
             uint32_t reg_dato = getTipoRegistro(tokens[2]) <= DX ? *(uint8_t*)reg_ptr : *(uint32_t*)reg_ptr;
-
+            size_temp = getTipoRegistro(tokens[2]) <= DX ? 1 : 4;
             void* direccion_logica_ptr = obtener_registro(&pcb->registros, getTipoRegistro(tokens[1]));
             uint32_t direccion_logica = getTipoRegistro(tokens[1]) <= DX ? *(uint8_t*)direccion_logica_ptr : *(uint32_t*)direccion_logica_ptr;
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
@@ -145,7 +146,7 @@ void execute(char* instruccion, pcb_t* pcb) {
             uint32_t dato = atoi(tokens[1]);
             uint32_t direccion_fisica = atoi(tokens[2]);
             log_info(logger, "PID: %d - Acción: ESCRIBIR - Dirección Física: %d - Valor: %d", pcb->pid, direccion_fisica, dato);
-            if (!escribir_memoria(pcb->pid, direccion_fisica, &dato, sizeof(uint32_t)))
+            if (!escribir_memoria(pcb->pid, direccion_fisica, &dato, size_temp))
                 fprintf(stderr, "[ERROR] Error al escribir en memoria en la dirección física: %d\n", direccion_fisica);
             break;
         }
