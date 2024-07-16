@@ -252,7 +252,7 @@ void send_io_dialfs_create(int fd_io, uint16_t pid, String nombre_archivo) {
 
     log_info(extra_logger, "Enviando paquete a dialfs");
 
-    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) + strlen(nombre_archivo));
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t) + strlen(nombre_archivo) + 1);
 
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add_string(payload, nombre_archivo);
@@ -270,7 +270,7 @@ void send_io_dialfs_create(int fd_io, uint16_t pid, String nombre_archivo) {
 
 void send_io_dialfs_delete(int fd_io, uint16_t pid, String nombre_archivo) {
 
-    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) + strlen(nombre_archivo));
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t) + strlen(nombre_archivo) + 1);
 
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add_string(payload, nombre_archivo);
@@ -288,7 +288,7 @@ void send_io_dialfs_delete(int fd_io, uint16_t pid, String nombre_archivo) {
 
 void send_io_dialfs_truncate(int fd_io, uint16_t pid, String nombre_archivo, int tamanio) {
 
-    payload_t *payload = payload_create(sizeof(uint16_t) + (sizeof(int) * 2) + strlen(nombre_archivo) );
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t) + strlen(nombre_archivo) + 1 + sizeof(int));
 
     payload_add(payload, &pid, sizeof(uint16_t));
     payload_add_string(payload, nombre_archivo);
@@ -305,7 +305,7 @@ void send_io_dialfs_truncate(int fd_io, uint16_t pid, String nombre_archivo, int
     liberar_paquete(paquete);
 }
 
-void send_io_dialfs_write(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
+void send_io_dialfs_write(int fd_io, uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
 
     payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) * 3);
 
@@ -325,7 +325,7 @@ void send_io_dialfs_write(uint16_t pid, String nombre_archivo, int direccion, in
     liberar_paquete(paquete);
 }
 
-void send_io_dialfs_read(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
+void send_io_dialfs_read(int fd_io, uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
 
     payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) * 3);
 
