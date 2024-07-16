@@ -260,7 +260,6 @@ void proceso_estado(const String s) {
         puts("El comando no deberia contener argumentos adicionales!");
         return;
     }
-    puts("Listando procesos...\n");
 
     t_list* lista_de_procesos = dictionary_elements(scheduler->procesos);
 
