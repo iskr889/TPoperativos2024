@@ -32,6 +32,8 @@ char* obtener_texto2(int bloque_inicial, int tamanio_archivo, int puntero_archiv
 int buscar_espacio_bitmap(int tamanio);
 int obtener_inicio_bloque(int numero_bloque);
 int verificar_y_crear_directorio(String ruta);
+int compactar(String archivo_truncar, int tamanio);
+
 
 // operaciones
 void crear_archivo                 (uint16_t pid, String nombre);

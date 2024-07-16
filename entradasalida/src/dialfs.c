@@ -449,8 +449,14 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
             printf("No hay espacio suficiente para recolocar el archivo\n");
 
             //tengo que compactar y probar de vuelta
-            exit(EXIT_FAILURE);
-
+            int compactar_resultado = compactar(nombre_archivo, tamanio);
+            
+            if(compactar_resultado == -1){
+                printf("NO hay espacio");
+                exit(EXIT_FAILURE);
+            }
+            
+            truncar_archivo(pid, nombre_archivo, tamanio);
         }
 
         if(nuevo_bloque != bloque_inicial){
@@ -488,6 +494,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
         return;
     }
     else{
+        //prueba
         printf("No se que paso, bloques_arctuales: %i, bloques_requeridos: %i\n", bloques_actuales, bloques_requeridos);
         exit(EXIT_FAILURE);
     }
@@ -759,4 +766,145 @@ int obtener_inicio_bloque(int numero_bloque)
     }
 
     return numero_bloque * tamanio_bloques;
+}
+
+int compactar(String archivo_truncar, int tamanio){
+    
+    DIR* dir;
+    
+    struct dirent *entry;
+
+    t_list* lista_archivos = list_create();
+    
+    //obtener todos los archivos de la ruta
+    char* nombre_archivo;
+
+    dir = opendir(ruta_metadata);
+    if (dir == NULL) {
+        perror("Error al abrir el directorio");
+        return EXIT_FAILURE;
+    }
+
+    //agrego todos los archivos que tengo
+    while ((entry = readdir(dir)) != NULL) {
+        
+        // Ignorar "." y ".."
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+        
+        list_add(lista_archivos, entry->d_name);
+    
+    } 
+
+    //ordeno la lista segun el orden con BLOQUE_INICIAL
+    list_sort(lista_archivos, comparador_elementos);
+
+    // //busco la pos donde esta mi archivo
+    int tamanio_lista = list_size(lista_archivos);
+
+    //ordeno los archivos, libero el bitmap y voy recolocando el contenido el los bloques
+
+    //limpio el bitmap
+    int tamanio_bitarray = bitarray_get_max_bit(bufferBitmap);
+
+    for(int i = 0; i < tamanio_bitarray; i++){
+        bitarray_clean_bit(bufferBitmap, i);
+    }
+
+    // ordeno los archivos en el bitmap y en los bloques
+    t_config* config_archivo;
+    int nuevo_bloque;
+    
+    //creo nuevos bloques
+    char* nuevos_bloques = malloc((tamanio_bloques * cantidad_bloques));
+    char *path_archivo;
+    char* buffer;
+    int tamanio_archivo;
+    int bloque_inicial;
+
+    for(int i = 0; i < tamanio_lista; i++){
+        
+        nuevo_bloque = buscar_bloque_libre(); //devuelve la primera pos libre
+
+        nombre_archivo = (char*)list_get(lista_archivos, i);
+        
+        // salteo el archivo a truncar
+        if(strcmp(nombre_archivo, archivo_truncar) == 0){
+            continue;
+        }
+
+        //obtengo el tam_archivo, bloq_inicial y copio su contenido a nuevos_bloques
+        path_archivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
+        
+        config_archivo = config_create(path_archivo);
+        
+        tamanio_archivo = config_get_int_value(config_archivo, "TAMANIO_ARCHIVO");
+        bloque_inicial = config_get_int_value(config_archivo, "BLOQUE_INICIAL");
+
+        buffer = obtener_texto2(bloque_inicial, tamanio_archivo, 0, tamanio_archivo);
+
+        //escribo en nuevos_bloques y se ocupa el bitmap
+        escribir_texto_en_bloques2(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer); // tengo que escribirlo en nuevos_bloques
+
+        //modifico la metadata
+        config_set_value(config_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio_archivo));
+        config_set_value(config_archivo, "BLOQUE_INICIAL", string_itoa(nuevo_bloque));
+
+        //guardo
+        config_save(config_archivo);
+
+        //libero y paso al siguiente
+        config_destroy(config_archivo);
+        free(path_archivo);
+        free(buffer);
+    }
+
+    // copio el contenido de mi archivo_truncar
+    nuevo_bloque = buscar_bloque_libre();
+    
+    path_archivo = string_from_format("%s/%s.txt", ruta_metadata, archivo_truncar);
+
+    config_archivo = config_create(path_archivo);
+
+    tamanio_archivo = config_get_int_value(config_archivo, "TAMANIO_ARCHIVO");
+    bloque_inicial = config_get_int_value(config_archivo, "BLOQUE_INICIAL");
+
+    buffer = obtener_texto2(bloque_inicial, tamanio_archivo, 0, tamanio_archivo);
+
+    //escribo al final en nuevos_bloques
+    escribir_texto_en_bloques2(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer);// tengo que escribirlo en nuevos_bloques
+
+    //tengo que reemplazar el contendido de bufferBloques por nuevos_bloques
+    memcpy(bufferBloques, nuevos_bloques, tamanio_bloques * cantidad_bloques);
+
+    //sincronizo los datos de bufferBloques
+    msync(bufferBloques, tamanio_bitarray * cantidad_bloques, MS_SYNC);
+
+    free(path_archivo);
+    free(buffer);
+    config_destroy(config_archivo);
+
+    int resultado = buscar_espacio_bitmap(tamanio);
+
+    return resultado;
+}
+
+bool comparador_elementos(void* nombre_a, void* nombre_b){
+
+    char *path_a = string_from_format("%s/%s", ruta_metadata, (char*)nombre_a);
+    char *path_b = string_from_format("%s/%s", ruta_metadata, (char*)nombre_b);
+
+    t_config* config_a = config_create(path_a);
+    t_config* config_b = config_create(path_b);
+
+    int bloque_a = config_get_int_value(config_a, "BLOQUE_INICIAL");
+    int bloque_b = config_get_int_value(config_b, "BLOQUE_INICIAL");
+    
+    free(path_a);
+    free(path_b);
+    config_destroy(config_a);
+    config_destroy(config_b);
+
+    return bloque_a < bloque_b;
 }
