@@ -32,17 +32,21 @@ void init_scheduler() {
     return;
 }
 
+static void free_cola_blocked(void *cola_blocked) {
+    list_destroy((t_list *)cola_blocked);
+}
+
 // Función para destruir el planificador
 void destroy_scheduler(scheduler_t *scheduler) {
     if (scheduler == NULL)
         return;
-    dictionary_destroy_and_destroy_elements(scheduler->procesos, free);
-    list_destroy_and_destroy_elements(scheduler->cola_new, free);
-    list_destroy_and_destroy_elements(scheduler->cola_ready, free);
+    dictionary_destroy_and_destroy_elements(scheduler->procesos, free); // Libero todos los procesos del kernel
+    list_destroy(scheduler->cola_new);
+    list_destroy(scheduler->cola_ready);
     scheduler->proceso_ejecutando = NULL;
-    dictionary_destroy_and_destroy_elements(scheduler->colas_blocked, free);
-    list_destroy_and_destroy_elements(scheduler->cola_exit, free);
-    list_destroy_and_destroy_elements(scheduler->cola_aux_blocked, free);
+    dictionary_destroy_and_destroy_elements(scheduler->colas_blocked, free_cola_blocked);
+    list_destroy(scheduler->cola_exit);
+    list_destroy(scheduler->cola_aux_blocked);
     pthread_mutex_destroy(&scheduler->mutex_procesos);
     pthread_mutex_destroy(&scheduler->mutex_new);
     pthread_mutex_destroy(&scheduler->mutex_ready);

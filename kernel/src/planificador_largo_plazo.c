@@ -62,6 +62,6 @@ void cambiar_grado_multiprogramacion(int nuevo_grado_multi) {
 }
 
 void esperar_confirmacion_memoria() {
-    if(recibir_operacion(conexion_memoria) != MEMORY_PROCESS_CREATE)
+    if(recibir_operacion(conexion_memoria) == MEMORY_INVALID_PATH)
         exit(EXIT_FAILURE);
 }

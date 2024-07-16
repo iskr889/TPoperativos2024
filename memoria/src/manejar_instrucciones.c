@@ -125,6 +125,7 @@ void instruccion_process_create(payload_t* payload) {
 
     if(instrucciones == NULL) {
         puts("Path invalido!");
+        enviar_operacion(MEMORY_INVALID_PATH, conexion_kernel);
         return;
     }
 
