@@ -1,6 +1,8 @@
 #include "kernel_interface_handler.h"
 #include "manejo_interrupciones_cpu.h"
 #include "scheduler.h"
+#include "recursos.h"
+#include "consola.h"
 
 extern scheduler_t *scheduler;
 t_dictionary *interfaces;
@@ -107,7 +109,7 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
     int conexion = *(int*)fd_interfaz;
     free(fd_interfaz);
     if(handshake_con_interfaz(conexion) < 0) {
-        perror("Error en el handshake con la Interfaz!");
+        log_error(logger, "Interfaz desconectada!");
         close(conexion);
     }
     pthread_exit(NULL);
@@ -119,6 +121,25 @@ static void free_tokens(void *element) {
         return;
     free(tokens[0]);
     free(tokens);
+}
+
+static void liberar_proceso_bloqueado(void *proceso) {
+    pcb_t *pcb = (pcb_t*)proceso;
+    char str_pid[8];
+    snprintf(str_pid, sizeof(str_pid), "%d", pcb->pid);
+    pthread_mutex_lock(&diccionario_instrucciones_mutex);
+    dictionary_remove_and_destroy(instrucciones, str_pid, free_tokens);
+    pthread_mutex_unlock(&diccionario_instrucciones_mutex);
+
+    liberar_recursos_de_proceso(pcb->pid);
+    finalizar_proceso_en_memoria(pcb->pid);
+
+    pthread_mutex_lock(&scheduler->mutex_exit);
+    pcb->estado = EXIT;
+    list_push(scheduler->cola_exit, proceso);
+    pthread_mutex_unlock(&scheduler->mutex_exit);
+    log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", pcb->pid);
+    log_info(logger, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: EXIT", pcb->pid);
 }
 
 int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
@@ -175,66 +196,38 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         char **instruccion = dictionary_get(instrucciones, str_pid);
         pthread_mutex_unlock(&diccionario_instrucciones_mutex);
 
-        int respuesta = ejecutar_IO(socket_interfaz, pcb->pid, instruccion);
-        
-        switch(respuesta) {
-            
-            case OK:
-                if (!estado_planificacion_activa) {
-                sem_wait(&interfaz->sem_interfaz_comando);
-                }
-        
-                log_info(extra_logger, "Ejecuto la IO");
-                if (VRR_modo) {
-                    cola_blocked_a_aux_blocked(nombre);
-                    sem_post(&sem_hay_encolado_VRR); //Si es VRR
-                    log_info(extra_logger, "Paso la cosa a aux blocked");
-                } else {
-                    cola_blocked_a_ready(nombre);
-                }
-
-                pthread_mutex_lock(&diccionario_instrucciones_mutex);
-                dictionary_remove_and_destroy(instrucciones, str_pid, free_tokens);
-                pthread_mutex_unlock(&diccionario_instrucciones_mutex);
-
-            break;
-
-            case ERROR:
-                
-                dictionary_remove_and_destroy(interfaces, nombre, free);
-                pthread_mutex_lock(&diccionario_instrucciones_mutex);
-                t_list *cola_bloqueada = dictionary_remove(scheduler->colas_blocked, nombre);
-                pthread_mutex_unlock(&diccionario_instrucciones_mutex);
-
-                list_iterate(cola_bloqueada, liberar_proceso_bloqueado);
-                pthread_exit(NULL);
-              
-            break;
+        if (ejecutar_IO(socket_interfaz, pcb->pid, instruccion) == ERROR) {
+            dictionary_remove_and_destroy(interfaces, nombre, free);
+            pthread_mutex_lock(&diccionario_instrucciones_mutex);
+            t_list *cola_bloqueada = dictionary_remove(scheduler->colas_blocked, nombre);
+            pthread_mutex_unlock(&diccionario_instrucciones_mutex);
+            list_iterate(cola_bloqueada, liberar_proceso_bloqueado);
+            free(nombre);
+            return ERROR;
         }
+
+        if (!estado_planificacion_activa) {
+            sem_wait(&interfaz->sem_interfaz_comando);
+        }
+
+        log_info(extra_logger, "Ejecuto la IO");
+        if (VRR_modo) {
+            cola_blocked_a_aux_blocked(nombre);
+            sem_post(&sem_hay_encolado_VRR); //Si es VRR
+            log_info(extra_logger, "Paso la cosa a aux blocked");
+        } else {
+            cola_blocked_a_ready(nombre);
+        }
+
+        pthread_mutex_lock(&diccionario_instrucciones_mutex);
+        dictionary_remove_and_destroy(instrucciones, str_pid, free_tokens);
+        pthread_mutex_unlock(&diccionario_instrucciones_mutex);
+
     }
 
     free(nombre);
     return OK;
 }
-
-void liberar_proceso_bloqueado(void *proceso) {
-        pcb_t *pcb = (pcb_t*)proceso;
-        char str_pid[8];
-        snprintf(str_pid, sizeof(str_pid), "%d", pcb->pid);
-        pthread_mutex_lock(&diccionario_instrucciones_mutex);
-        dictionary_remove_and_destroy(instrucciones, str_pid, free_tokens);
-        pthread_mutex_unlock(&diccionario_instrucciones_mutex);
-
-        //liberar_recursos_proceso
-
-        pthread_mutex_lock(&scheduler->mutex_exit);
-        pcb->estado = EXIT;
-        list_push(scheduler->cola_exit, proceso);
-        pthread_mutex_unlock(&scheduler->mutex_exit);
-        log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", pcb->pid);
-        log_info(logger, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: EXIT", pcb->pid);
-    }
-
 
 String recibir_nombre_interfaz(int socket) {
 
