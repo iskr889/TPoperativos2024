@@ -135,6 +135,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         case DIALFS_CON_KERNEL:
             interfaz->tipo = DIALFS;
             printf("Interfaz DIALFS conectada con el KERNEL [%s]\n> ", nombre);
+            send_io_dialfs_create(socket_interfaz, 12345, "archivoPrueba"); // Prueba 
             break;
         default:
             fprintf(stderr, "Error al tratar de identificar el handshake de la IO conectada!\n> ");
@@ -236,6 +237,104 @@ void send_io_stdout_write(int fd_io, uint16_t pid, uint32_t direccion, uint32_t 
     payload_add(payload, &cant_caracteres, sizeof(uint32_t));
 
     paquete_t *paquete = crear_paquete(IO_STDOUT_WRITE, payload);
+
+    if(enviar_paquete(fd_io, paquete) != OK){
+        printf("fallo al enviar el paquete a stdin");
+        exit(EXIT_FAILURE);
+    }
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+// dialFS
+void send_io_dialfs_create(int fd_io, uint16_t pid, String nombre_archivo) {
+
+    log_info(extra_logger, "Enviando paquete a dialfs");
+
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) + strlen(nombre_archivo));
+
+    payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add_string(payload, nombre_archivo);
+
+    paquete_t *paquete = crear_paquete(IO_FS_CREATE, payload);
+
+    if(enviar_paquete(fd_io, paquete) != OK){
+        printf("fallo al enviar el paquete a dialFS");
+        exit(EXIT_FAILURE);
+    }
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+void send_io_dialfs_delete(int fd_io, uint16_t pid, String nombre_archivo) {
+
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) + strlen(nombre_archivo));
+
+    payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add_string(payload, nombre_archivo);
+
+    paquete_t *paquete = crear_paquete(IO_FS_DELETE, payload);
+
+    if(enviar_paquete(fd_io, paquete) != OK){
+        printf("fallo al enviar el paquete a dialFS");
+        exit(EXIT_FAILURE);
+    }
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+void send_io_dialfs_truncate(int fd_io, uint16_t pid, String nombre_archivo, int tamanio) {
+
+    payload_t *payload = payload_create(sizeof(uint16_t) + (sizeof(int) * 2) + strlen(nombre_archivo) );
+
+    payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add_string(payload, nombre_archivo);
+    payload_add(payload, &tamanio, sizeof(int));
+
+    paquete_t *paquete = crear_paquete(IO_FS_TRUNCATE, payload);
+
+    if(enviar_paquete(fd_io, paquete) != OK){
+        printf("fallo al enviar el paquete a dialFS");
+        exit(EXIT_FAILURE);
+    }
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+void send_io_dialfs_write(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
+
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) * 3);
+
+    payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add(payload, &direccion, sizeof(int));
+    payload_add(payload, &tamanio, sizeof(int));
+    payload_add(payload, &puntero_archivo, sizeof(int));
+
+    paquete_t *paquete = crear_paquete(IO_FS_WRITE, payload);
+
+    if(enviar_paquete(fd_io, paquete) != OK){
+        printf("fallo al enviar el paquete a stdin");
+        exit(EXIT_FAILURE);
+    }
+
+    payload_destroy(payload);
+    liberar_paquete(paquete);
+}
+
+void send_io_dialfs_read(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
+
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) * 3);
+
+    payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add(payload, &direccion, sizeof(int));
+    payload_add(payload, &tamanio, sizeof(int));
+    payload_add(payload, &puntero_archivo, sizeof(int));
+
+    paquete_t *paquete = crear_paquete(IO_FS_READ, payload);
 
     if(enviar_paquete(fd_io, paquete) != OK){
         printf("fallo al enviar el paquete a stdin");
