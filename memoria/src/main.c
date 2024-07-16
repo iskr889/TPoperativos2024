@@ -222,9 +222,9 @@ int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina) {
     return pagina->marco;
 }
 
-bool resize_proceso(Proceso_t* proceso, uint32_t nueva_cant_paginas) {
+bool resize_proceso(Proceso_t* proceso, int nueva_cant_paginas) {
 
-    uint32_t cant_paginas = list_size(proceso->paginas);
+    int cant_paginas = list_size(proceso->paginas);
 
     if (nueva_cant_paginas > cant_paginas) { // Ampliación del proceso
         log_info(logger, "PID: %d - Tamaño Actual: %d - Tamaño a Ampliar: %d", proceso->pid, cant_paginas * memoria_config->tam_pagina, nueva_cant_paginas * memoria_config->tam_pagina); // LOG OBLIGATORIO

@@ -83,7 +83,7 @@ int acceder_marco(Proceso_t* proceso, uint32_t numero_de_pagina);
 * @fn    Permite ajustar la cantidad de paginas de un proceso
 * @brief Ajusta la cantidad de paginas de un proceso, liberando paginas al reducir y asignando paginas al expandir
 */
-bool resize_proceso(Proceso_t* proceso, uint32_t new_cant_paginas);
+bool resize_proceso(Proceso_t* proceso, int new_cant_paginas);
 
 /**
 * @fn    Lee una dirección fisica de la memoria de Usuario
