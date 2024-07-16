@@ -120,14 +120,8 @@ void* manejo_interrupciones_cpu(){
                 if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, scheduler->proceso_ejecutando->quantum - tiempo_VRR_restante);
                 log_debug(extra_logger, "PID: %d - Tiempo restante Quantum: %ld", scheduler->proceso_ejecutando->pid, tiempo_VRR_restante);
 
-                if (!dictionary_has_key(interfaces, tokens[1])) { // Verifico que existe la interfaz
-
-                    finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
-                    log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", scheduler->proceso_ejecutando->pid);
-                    proceso_exec_a_exit();//si No existe
-                    aumentar_grado_multiprogramacion();
-
-                } else if (!verificar_instruccion(interfaces, tokens)) {//Si NO existe
+                // Verifico que existe la interfaz y la instrucción coincida con la IO que corresponde
+                if (!dictionary_has_key(interfaces, tokens[1]) || !verificar_instruccion(interfaces, tokens)) {
 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", scheduler->proceso_ejecutando->pid);
