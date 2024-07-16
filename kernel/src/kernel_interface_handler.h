@@ -80,4 +80,6 @@ void send_io_stdin_read(int fd_io, uint16_t pid, uint32_t direccion, uint32_t ca
 */
 void send_io_stdout_write(int fd_io, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres);
 
+void liberar_proceso_bloqueado(void *proceso);
+
 #endif
