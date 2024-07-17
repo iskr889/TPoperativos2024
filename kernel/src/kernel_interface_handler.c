@@ -360,9 +360,10 @@ void send_io_dialfs_truncate(int fd_io, uint16_t pid, String nombre_archivo, int
 
 void send_io_dialfs_write(int fd_io, uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
 
-    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) * 3);
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) * 3 + sizeof(uint32_t) + strlen(nombre_archivo) + 1);
 
     payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add_string(payload, nombre_archivo);
     payload_add(payload, &direccion, sizeof(int));
     payload_add(payload, &tamanio, sizeof(int));
     payload_add(payload, &puntero_archivo, sizeof(int));
@@ -380,9 +381,10 @@ void send_io_dialfs_write(int fd_io, uint16_t pid, String nombre_archivo, int di
 
 void send_io_dialfs_read(int fd_io, uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
 
-    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) * 3);
+    payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(int) * 3 + sizeof(uint32_t) + strlen(nombre_archivo) + 1);
 
     payload_add(payload, &pid, sizeof(uint16_t));
+    payload_add_string(payload, nombre_archivo);
     payload_add(payload, &direccion, sizeof(int));
     payload_add(payload, &tamanio, sizeof(int));
     payload_add(payload, &puntero_archivo, sizeof(int));

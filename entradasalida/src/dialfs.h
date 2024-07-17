@@ -16,8 +16,8 @@ void inicializar_bitmap(String ruta_bitmap);
 void inicializar_bloques(String ruta_bloques);
 
 // funciones auxiliares
-char* pedir_a_memoria(int pid, int tamanio, int direccion);
-bool enviar_a_memoria(int pid, int direccion, String texto);
+char* pedir_a_memoria(uint16_t pid, uint32_t tamanio, uint32_t direccion);
+bool enviar_a_memoria(uint16_t pid, uint32_t direccion, String texto);
 
 // modificar
 int buscar_bloque_libre();

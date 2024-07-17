@@ -518,10 +518,10 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
 
 
 // **** OPERACIONES AUXILIARES ****
-char* pedir_a_memoria(int pid, int tamanio, int direccion)
+char* pedir_a_memoria(uint16_t pid, uint32_t tamanio, uint32_t direccion)
 {
 
-    payload_t *payload_a_enviar = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t));
+    payload_t *payload_a_enviar = payload_create(sizeof(uint16_t) + sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t));
 
     char operacion = 'R'; // Necesario para leer memoria en espacio de usuario
     payload_add(payload_a_enviar, &pid, sizeof(uint16_t));
@@ -537,7 +537,6 @@ char* pedir_a_memoria(int pid, int tamanio, int direccion)
     }
 
     payload_destroy(payload_a_enviar);
-    payload_destroy(paquete_a_enviar->payload);
     liberar_paquete(paquete_a_enviar);
 
     //RESPUESTA
@@ -561,11 +560,11 @@ char* pedir_a_memoria(int pid, int tamanio, int direccion)
 
 }
 
-bool enviar_a_memoria(int pid, int direccion, String texto){
+bool enviar_a_memoria(uint16_t pid, uint32_t direccion, String texto){
     
     int cant_caracteres = strlen(texto);
 
-    payload_t *payload_a_enviar = payload_create(sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + cant_caracteres);
+    payload_t *payload_a_enviar = payload_create(sizeof(uint16_t) + sizeof(char) + sizeof(uint32_t) + sizeof(uint32_t) + cant_caracteres);
 
     char operacion = 'W'; // Necesario para escribir memoria en espacio de usuario
     payload_add(payload_a_enviar, &pid, sizeof(uint16_t));
@@ -703,7 +702,7 @@ char* obtener_texto2(int bloque_inicial, int tam_archivo, int puntero_archivo, i
     
     int inicio_bloque = obtener_inicio_bloque(bloque_inicial);
 
-    char* texto = malloc(tamanio_leer);
+    char* texto = malloc(tamanio_leer + 1);
 
     memcpy(texto, &bufferBloques[inicio_bloque + puntero_archivo], tam_archivo);
 
