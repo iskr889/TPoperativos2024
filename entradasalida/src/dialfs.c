@@ -412,8 +412,8 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
     int tamanio_actual = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
     
     // calculo los bloques requeridos y los actuales
-    int bloques_requeridos = ceil(tamanio / tamanio_bloques);
-    int bloques_actuales = ceil(tamanio_actual / tamanio_bloques);
+    int bloques_requeridos = ceil((double)tamanio / (double)tamanio_bloques);
+    int bloques_actuales = ceil((double)tamanio_actual / (double)tamanio_bloques);
 
     // si el archivo lo tengo que hacer mas chico
     if(bloques_actuales > bloques_requeridos){
@@ -449,7 +449,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
             printf("No hay espacio suficiente para recolocar el archivo\n");
 
             //tengo que compactar y probar de vuelta
-            int compactar_resultado = compactar(nombre_archivo, tamanio);
+            int compactar_resultado = 0; //compactar(nombre_archivo, tamanio);
             
             if(compactar_resultado == -1){
                 printf("NO hay espacio");
@@ -612,19 +612,16 @@ void liberar_espacio_bitmap(int bloque_inicial, int tamanio_eliminar)
 
     tamanio_eliminar = tamanio_eliminar * tamanio_bloques;
 
-    int cant_bloques = ceil(tamanio_eliminar / tamanio_bloques) + bloque_inicial;
+    int cant_bloques = ceil((double)tamanio_eliminar / (double)tamanio_bloques) + bloque_inicial;
 
     if (cant_bloques == bloque_inicial)
     {
-
         bitarray_clean_bit(bufferBitmap, bloque_inicial);
     }
     else
     {
-
         for (int i = bloque_inicial; i < cant_bloques; i++)
         {
-
             bitarray_clean_bit(bufferBitmap, i);
         }
     }
@@ -642,8 +639,8 @@ void limpiar_bloques2(int primer_bloque, int tamanio_limpiar)
 void escribir_texto_en_bloques2(int primer_bloque, int tamanio_archivo, int puntero_archivo, char *texto)
 {
     size_t longitud_texto = strlen(texto);
-    int bloques_disponibles = ceil(tamanio_archivo / tamanio_bloques);
-    int bloques_necesarios = ceil(longitud_texto / tamanio_bloques);
+    int bloques_disponibles = ceil((double)tamanio_archivo / (double)tamanio_bloques);
+    int bloques_necesarios = ceil((double)longitud_texto / (double)tamanio_bloques);
 
     if (bloques_necesarios > bloques_disponibles)
     {
@@ -654,7 +651,7 @@ void escribir_texto_en_bloques2(int primer_bloque, int tamanio_archivo, int punt
 
     int offset = bloque_inicial + puntero_archivo;
 
-    int bloques = ceil(tamanio_archivo / tamanio_bloques);
+    int bloques = ceil((double)tamanio_archivo / (double)tamanio_bloques);
     int total = primer_bloque + bloques;
 
     // marco el bitmap
@@ -768,7 +765,26 @@ int obtener_inicio_bloque(int numero_bloque)
     return numero_bloque * tamanio_bloques;
 }
 
-int compactar(String archivo_truncar, int tamanio){
+static bool comparador_elementos(void* nombre_a, void* nombre_b) {
+
+    char *path_a = string_from_format("%s/%s", ruta_metadata, (char*)nombre_a);
+    char *path_b = string_from_format("%s/%s", ruta_metadata, (char*)nombre_b);
+
+    t_config* config_a = config_create(path_a);
+    t_config* config_b = config_create(path_b);
+
+    int bloque_a = config_get_int_value(config_a, "BLOQUE_INICIAL");
+    int bloque_b = config_get_int_value(config_b, "BLOQUE_INICIAL");
+    
+    free(path_a);
+    free(path_b);
+    config_destroy(config_a);
+    config_destroy(config_b);
+
+    return bloque_a < bloque_b;
+}
+
+int compactar(String archivo_truncar, int tamanio) {
     
     DIR* dir;
     
@@ -845,7 +861,7 @@ int compactar(String archivo_truncar, int tamanio){
         buffer = obtener_texto2(bloque_inicial, tamanio_archivo, 0, tamanio_archivo);
 
         //escribo en nuevos_bloques y se ocupa el bitmap
-        escribir_texto_en_bloques2(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer); // tengo que escribirlo en nuevos_bloques
+        // escribir_texto_en_bloques2(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer); // tengo que escribirlo en nuevos_bloques
 
         //modifico la metadata
         config_set_value(config_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio_archivo));
@@ -873,7 +889,7 @@ int compactar(String archivo_truncar, int tamanio){
     buffer = obtener_texto2(bloque_inicial, tamanio_archivo, 0, tamanio_archivo);
 
     //escribo al final en nuevos_bloques
-    escribir_texto_en_bloques2(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer);// tengo que escribirlo en nuevos_bloques
+    // escribir_texto_en_bloques2(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer);// tengo que escribirlo en nuevos_bloques
 
     //tengo que reemplazar el contendido de bufferBloques por nuevos_bloques
     memcpy(bufferBloques, nuevos_bloques, tamanio_bloques * cantidad_bloques);
@@ -888,23 +904,4 @@ int compactar(String archivo_truncar, int tamanio){
     int resultado = buscar_espacio_bitmap(tamanio);
 
     return resultado;
-}
-
-bool comparador_elementos(void* nombre_a, void* nombre_b){
-
-    char *path_a = string_from_format("%s/%s", ruta_metadata, (char*)nombre_a);
-    char *path_b = string_from_format("%s/%s", ruta_metadata, (char*)nombre_b);
-
-    t_config* config_a = config_create(path_a);
-    t_config* config_b = config_create(path_b);
-
-    int bloque_a = config_get_int_value(config_a, "BLOQUE_INICIAL");
-    int bloque_b = config_get_int_value(config_b, "BLOQUE_INICIAL");
-    
-    free(path_a);
-    free(path_b);
-    config_destroy(config_a);
-    config_destroy(config_b);
-
-    return bloque_a < bloque_b;
 }

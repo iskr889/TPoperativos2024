@@ -9,12 +9,11 @@
 #include <dirent.h>
 #include <math.h>
 
+void interfaz_dialFS(String nombre);
+void dialfd_procesar_instrucciones();
 
-void interfaz_dialFS               (String nombre);
-void dialfd_procesar_instrucciones ();
-
-void inicializar_bitmap            (String ruta_bitmap);
-void inicializar_bloques           (String ruta_bloques);
+void inicializar_bitmap(String ruta_bitmap);
+void inicializar_bloques(String ruta_bloques);
 
 // funciones auxiliares
 char* pedir_a_memoria(int pid, int tamanio, int direccion);
@@ -34,14 +33,13 @@ int obtener_inicio_bloque(int numero_bloque);
 int verificar_y_crear_directorio(String ruta);
 int compactar(String archivo_truncar, int tamanio);
 
-
 // operaciones
-void crear_archivo                 (uint16_t pid, String nombre);
-void eliminar_archivo              (uint16_t pid, String nombre);
-void truncar_archivo               (uint16_t pid,String nombre, int tamanio);
-void leer_archivo                   (uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
-void escribir_archivo              (uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
- 
-void compactar                     ();
+void crear_archivo(uint16_t pid, String nombre);
+void eliminar_archivo(uint16_t pid, String nombre);
+void truncar_archivo(uint16_t pid,String nombre, int tamanio);
+void leer_archivo(uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
+void escribir_archivo(uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
+
+int compactar(String archivo_truncar, int tamanio);
 
 #endif
