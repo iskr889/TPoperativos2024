@@ -80,4 +80,10 @@ void send_io_stdin_read(int fd_io, uint16_t pid, uint32_t direccion, uint32_t ca
 */
 void send_io_stdout_write(int fd_io, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres);
 
+void send_io_dialfs_create(int fd_io, uint16_t pid, String nombre_archivo);
+void send_io_dialfs_delete(int fd_io, uint16_t pid, String nombre_archivo);
+void send_io_dialfs_truncate(int fd_io, uint16_t pid, String nombre_archivo, int tamanio);
+void send_io_dialfs_write(int fd_io, uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
+void send_io_dialfs_read(int fd_io, uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
+
 #endif
