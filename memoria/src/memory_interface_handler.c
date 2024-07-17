@@ -181,4 +181,28 @@ void manejar_instrucciones_stdout(int socket_stdout) {
 
 void manejar_instrucciones_dialfs(int socket_dialfs) {
 
+    while (1) {
+
+        paquete_t *paquete = recibir_paquete(socket_dialfs);
+
+        if (paquete == NULL) {
+            fprintf(stderr, "Error al recibir paquete de DIALFS");
+            exit(EXIT_FAILURE);
+        }
+
+        ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
+
+        if (paquete->operacion != MEMORY_USER_SPACE_ACCESS) {
+            log_error(extra_logger, "Operacion recibida de DIALFS invalida");
+            payload_destroy(paquete->payload);
+            liberar_paquete(paquete);
+            exit(EXIT_FAILURE);
+        }
+
+        instruccion_userspace_access(paquete->payload, socket_dialfs);
+
+        payload_destroy(paquete->payload);
+        liberar_paquete(paquete);
+    }
+
 }

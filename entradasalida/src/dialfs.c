@@ -30,7 +30,7 @@ void interfaz_dialFS(String nombre)
 
     lista_archivos = list_create();
     if(lista_archivos == NULL){
-        log_info(extra_logger, "No se pudo craar la lista de archivos");
+        log_info(extra_logger, "No se pudo crear la lista de archivos");
         free(ruta_metadata);
         exit(EXIT_FAILURE);
     }
@@ -41,6 +41,7 @@ void interfaz_dialFS(String nombre)
     inicializar_bitmap("bitmap.dat");
 
     fd_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, DIALFS_CON_KERNEL, extra_logger);
+    enviar_nombre_interfaz(nombre, fd_kernel);
     fd_memoria = conectarse_a_modulo("MEMORIA", interfaz_config->ip_memoria, interfaz_config->puerto_memoria, DIALFS_CON_MEMORIA, extra_logger);
 
     while(1){
@@ -54,7 +55,6 @@ void interfaz_dialFS(String nombre)
 
 void dialfd_procesar_instrucciones()
 {
-    int operacion = 0;
     uint16_t pid = 0;
     int direccion = 0;
     int tamanio = 0;
@@ -68,10 +68,9 @@ void dialfd_procesar_instrucciones()
         paquete = recibir_paquete(fd_kernel);
         
         payload_read(paquete->payload, &pid, sizeof(uint16_t));
-        payload_read(paquete->payload, &operacion, sizeof(int));
         nombre_archivo = payload_read_string(paquete->payload);
 
-        switch (operacion)
+        switch (paquete->operacion)
         {
         case IO_FS_CREATE:
             crear_archivo(pid, nombre_archivo);
@@ -106,6 +105,7 @@ void dialfd_procesar_instrucciones()
             break;
         }
 
+        enviar_operacion(OK, fd_kernel);
         free(nombre_archivo);
         payload_destroy(paquete->payload);
         liberar_paquete(paquete);
@@ -216,7 +216,7 @@ int verificar_y_crear_directorio(char *ruta) {
 // **** OPERACIONES ****
 void crear_archivo(uint16_t pid, String nombre_archivo)
 {
-    char *path = string_from_format("%s/%s.txt", ruta_metadata, nombre_archivo);
+    char *path = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
     
     if(access(path, F_OK) == 0){
         printf("El archivo ya existe\n");
@@ -245,21 +245,37 @@ void crear_archivo(uint16_t pid, String nombre_archivo)
     config_destroy(nuevoArchivo);
     free(path);
 
-    list_add(lista_archivos, nombre_archivo); // agrego el archivo a una lista
+    char *nombre_archivo_a_guardar = strdup(nombre_archivo);
+    list_add(lista_archivos, nombre_archivo_a_guardar); // agrego el archivo a una lista
 
     log_info(logger, "PID: %i, Crear Archivo: %s", pid, nombre_archivo);
     return;
 }
 
-void eliminar_archivo(uint16_t pid, String nombre_archivo)
-{   
+static bool eliminar_por_nombre_archivo (t_list *lista_archivos, String nombre_archivo) {
+    t_list_iterator *lista_archivos_iterator = list_iterator_create(lista_archivos);
 
-    if(list_remove_element(lista_archivos, nombre_archivo) == false){ // elimino el archivo de la lista
+    while (list_iterator_has_next(lista_archivos_iterator)) {
+        char* elemento = list_iterator_next(lista_archivos_iterator);
+        if (strcmp(elemento, nombre_archivo) == 0) {
+            list_iterator_remove(lista_archivos_iterator);
+            list_iterator_destroy(lista_archivos_iterator);
+            return true;
+        }
+    }
+    list_iterator_destroy(lista_archivos_iterator);
+    return false;
+}
+
+void eliminar_archivo(uint16_t pid, String nombre_archivo)
+{      
+
+    if (eliminar_por_nombre_archivo(lista_archivos, nombre_archivo) == false){ // elimino el archivo de la lista
         printf("No se encontro el elemento en la lista archivos\n");
         exit(EXIT_FAILURE);
     }
 
-    char *pathArchivo = string_from_format("%s/%s.txt", ruta_metadata, nombre_archivo);
+    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
 
     if (access(pathArchivo, F_OK) == -1)
     {
@@ -294,7 +310,7 @@ void eliminar_archivo(uint16_t pid, String nombre_archivo)
 void escribir_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo)
 {
 
-    char *pathArchivo = string_from_format("%s/%s.txt", ruta_metadata, nombre_archivo);
+    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
 
     if (access(pathArchivo, F_OK) == -1)
     {
@@ -342,7 +358,7 @@ void escribir_archivo(uint16_t pid, String nombre_archivo, int direccion, int ta
 
 void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
 
-    char *pathArchivo = string_from_format("%s/%s.txt", ruta_metadata, nombre_archivo);
+    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
 
     if(access(pathArchivo, F_OK) == -1 ){
        printf("No existe la ruta especificada\n");
@@ -391,7 +407,7 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamani
 void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
     
     // verifico que sea una ruta valida
-    char *pathArchivo = string_from_format("%s/%s.txt", ruta_metadata, nombre_archivo);
+    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
     
     if(access(pathArchivo, F_OK) == -1 ){
         printf("No existe el archivo\n");
@@ -879,7 +895,7 @@ int compactar(String archivo_truncar, int tamanio) {
     // copio el contenido de mi archivo_truncar
     nuevo_bloque = buscar_bloque_libre();
     
-    path_archivo = string_from_format("%s/%s.txt", ruta_metadata, archivo_truncar);
+    path_archivo = string_from_format("%s/%s", ruta_metadata, archivo_truncar);
 
     config_archivo = config_create(path_archivo);
 

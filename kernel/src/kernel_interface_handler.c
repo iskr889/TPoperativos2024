@@ -170,7 +170,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
         case DIALFS_CON_KERNEL:
             interfaz->tipo = DIALFS;
             printf("Interfaz DIALFS conectada con el KERNEL [%s]\n> ", nombre);
-            send_io_dialfs_create(socket_interfaz, 12345, "archivoPrueba"); // Prueba 
+            //send_io_dialfs_create(socket_interfaz, 12345, "archivoPrueba"); // Prueba 
             break;
         default:
             fprintf(stderr, "Error al tratar de identificar el handshake de la IO conectada!\n> ");

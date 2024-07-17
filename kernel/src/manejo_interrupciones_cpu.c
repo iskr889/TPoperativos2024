@@ -263,6 +263,26 @@ int ejecutar_IO(int socket_interfaz, uint16_t pid, char **instruccion_tokens) {
             send_io_stdout_write(socket_interfaz, pid, atoi(instruccion_tokens[2]), atoi(instruccion_tokens[3]));
         break;
 
+        case I_IO_FS_CREATE:
+            send_io_dialfs_create(socket_interfaz, pid, instruccion_tokens[2]);
+        break;
+
+        case I_IO_FS_DELETE:
+            send_io_dialfs_delete(socket_interfaz, pid, instruccion_tokens[2]) ;
+        break;
+
+        case I_IO_FS_TRUNCATE:
+            send_io_dialfs_truncate(socket_interfaz, pid, instruccion_tokens[2], atoi(instruccion_tokens[3]));
+        break;
+
+        case I_IO_FS_WRITE:
+            send_io_dialfs_write(socket_interfaz, pid, instruccion_tokens[2], atoi(instruccion_tokens[3]), atoi(instruccion_tokens[4]), atoi(instruccion_tokens[5]));
+        break;
+
+        case I_IO_FS_READ:
+            send_io_dialfs_read(socket_interfaz, pid, instruccion_tokens[2], atoi(instruccion_tokens[3]), atoi(instruccion_tokens[4]), atoi(instruccion_tokens[5]));
+        break;
+        
         default:
             printf("Fallo lectura instruccion");
         break;
