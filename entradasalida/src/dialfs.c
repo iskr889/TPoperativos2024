@@ -28,8 +28,13 @@ void interfaz_dialFS(String nombre)
     
     log_info(extra_logger, "cantidad de bloques: %d, tamanio de bloques: %d", cantidad_bloques, tamanio_bloques);
 
-    inicializar_bloques("bloques.dat");
-    inicializar_bitmap("bitmap.dat");
+    bufferBloques = inicializar_bloques("bloques.dat");
+    bufferBitmap = inicializar_bitmap("bitmap.dat");
+
+    if(bufferBitmap == NULL || bufferBloques == NULL ){
+        log_info(logger, "No se pudo montar en memoria el fileSystem");
+        exit(EXIT_FAILURE);
+    }
 
     fd_kernel = conectarse_a_modulo("KERNEL", interfaz_config->ip_kernel, interfaz_config->puerto_kernel, DIALFS_CON_KERNEL, extra_logger);
     enviar_nombre_interfaz(nombre, fd_kernel);
@@ -103,7 +108,7 @@ void dialfd_procesar_instrucciones()
     }
 }
 
-void inicializar_bloques(String ruta_bloques)
+char* inicializar_bloques(String ruta_bloques)
 {
 
     int fd_bloques = open(ruta_bloques, O_RDWR | O_CREAT, 0644);
@@ -118,10 +123,10 @@ void inicializar_bloques(String ruta_bloques)
         ftruncate(fd_bloques, tamanioArchivo);
     }
 
-    bufferBloques = mmap(NULL, tamanioArchivo, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bloques, 0);
+    char* buffer_bloques = mmap(NULL, tamanioArchivo, PROT_WRITE | PROT_READ, MAP_SHARED, fd_bloques, 0);
     // mmap(NULL, tamanioArchivo, permisos ,MAP_SHARED,archivo , puntero(posicion))
 
-    if (bufferBloques == MAP_FAILED)
+    if (buffer_bloques == MAP_FAILED)
     {
 
         log_info(extra_logger, "Error al mapear el archivo bloques.dat");
@@ -129,15 +134,17 @@ void inicializar_bloques(String ruta_bloques)
         close(fd_bloques);
         free(bufferBloques);
 
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     log_info(extra_logger, "Se monto en memoria el archivo bloques.dat");
 
     close(fd_bloques);
+
+    return buffer_bloques;
 }
 
-void inicializar_bitmap(String ruta_bitmap)
+t_bitarray* inicializar_bitmap(String ruta_bitmap)
 {
     int tamanioBitmap = (cantidad_bloques + 7) / 8; // ceil(cantidad_bloques / 8);
 
@@ -146,7 +153,7 @@ void inicializar_bitmap(String ruta_bitmap)
     {
         printf("Error al abrir archivo de bitmap\n");
 
-        return;
+        return NULL;
     }
     ftruncate(file_descriptor, tamanioBitmap);
 
@@ -157,16 +164,16 @@ void inicializar_bitmap(String ruta_bitmap)
     {
         printf("Error al asignar memoria para el bitmap\n");
         close(file_descriptor);
-        return;
+        return NULL;
     }
 
-    bufferBitmap = bitarray_create_with_mode(string_bitmap, tamanioBitmap, LSB_FIRST);
-    if (bufferBitmap == NULL)
+    t_bitarray* buffer_bitmap = bitarray_create_with_mode(string_bitmap, tamanioBitmap, LSB_FIRST);
+    if (buffer_bitmap == NULL)
     {
         printf("Error al crear el bitarray\n");
         munmap(string_bitmap, tamanioBitmap);
         close(file_descriptor);
-        return;
+        return NULL;
     }
 
     // for (int i = 0; i < tamanioBitmap; i++)
@@ -179,6 +186,8 @@ void inicializar_bitmap(String ruta_bitmap)
     close(file_descriptor);
 
     log_info(extra_logger, "Se monto en memoria el archivo bitmap.dat");
+
+    return buffer_bitmap;
 }
 
 int verificar_y_crear_directorio(char *ruta) {
@@ -424,21 +433,23 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
     }
     // si el archivo lo tengo que hacer mas grande
     else if(bloques_actuales < bloques_requeridos){
+
+        bitarray_clean_bit(bufferBitmap, bloque_inicial);
         
         int nuevo_bloque = buscar_espacio_bitmap(tamanio);
 
         if(nuevo_bloque == -1){
 
-            printf("No hay espacio suficiente para recolocar el archivo\n");
+            printf("No hay espacio suficiente para recolocar el archivo, realizando compactacion\n");
 
-            int compactar_resultado = compactar(nombre_archivo, tamanio);
+            int compactar_resultado = compactar(pid, nombre_archivo, tamanio);
 
             if(compactar_resultado == -1){
                 printf("NO hay espacio");
                 exit(EXIT_FAILURE);
             }
 
-            truncar_archivo(pid, nombre_archivo, tamanio);
+            return;
         }
 
         if(nuevo_bloque != bloque_inicial){
@@ -583,17 +594,24 @@ int buscar_primer_bloque_libre()
 
 int buscar_siguiente_bloque_libre() {
     static int ultima_posicion = 0;
+    int vuelta = 0;
+
     int tam = bitarray_get_max_bit(bufferBitmap);
 
-    for (int i = ultima_posicion; i < tam; i++) {
-        bool pos = bitarray_test_bit(bufferBitmap, i);
-        if (pos == false) {
-            ultima_posicion = i + 1;
-            return i;
+    while(vuelta < 2){
+
+        for (int i = ultima_posicion; i < tam; i++) {
+            bool pos = bitarray_test_bit(bufferBitmap, i);
+            if (pos == false) {
+                ultima_posicion = i + 1;
+                return i;
+            }
         }
+
+        ultima_posicion = 0;
+        vuelta++;
     }
 
-    ultima_posicion = 0;
     return -1;
 }
 
@@ -692,39 +710,36 @@ int buscar_espacio_bitmap(int tamanio){
 
     int tam_bitmap = bitarray_get_max_bit(bufferBitmap);
 
-    int bloques_requeridos = tamanio / tamanio_bloques;
+    int bloques_requeridos = ceil((double)tamanio / (double)tamanio_bloques);
 
-    int nuevo_bloque; 
+    int nuevo_bloque;
     
-    do{
+    int vuelta = 0;
+    
+    do {
         nuevo_bloque = buscar_siguiente_bloque_libre();
-        
-        if(nuevo_bloque == -1){
+
+        if (nuevo_bloque == -1) {
             return -1;
         }
-        
+
         contador_bloques = 0;
 
-        for(int i = nuevo_bloque; i < bloques_requeridos + nuevo_bloque && i <= tam_bitmap; i++){
-            
-            if(bitarray_test_bit(bufferBitmap, i) == false){
+        for (int i = nuevo_bloque; i < nuevo_bloque + bloques_requeridos && i < tam_bitmap; i++) {
+            if (!bitarray_test_bit(bufferBitmap, i)) {
                 contador_bloques++;
             }
         }
 
-        if(contador_bloques == bloques_requeridos){
+        if (contador_bloques == bloques_requeridos) {
             return nuevo_bloque;
         }
 
-        if(nuevo_bloque == tam_bitmap - bloques_requeridos){
-            return -1;
-        }
+        vuelta++;
+        
+    } while (vuelta < 2);
 
-        // if(contador_bloques < bloques_requeridos){
-        //     return -1;
-        // }
-
-    }while(1);
+    return -1;
 }
 
 int obtener_inicio_bloque(int numero_bloque)
@@ -758,12 +773,25 @@ static bool comparador_elementos(void* nombre_a, void* nombre_b) {
     return bloque_a < bloque_b;
 }
 
-int compactar(String archivo_truncar, int tamanio) {
+int compactar(uint16_t pid, String archivo_truncar, int tamanio) {
+
+    log_info(logger, "PID: %i, Inicio Compactación.", pid);
 
     DIR* dir;
 
     struct dirent *entry;
 
+    //obtengo los datos del archivo a truncar
+    char* path_archivo_truncar = string_from_format("%s/%s", ruta_metadata, archivo_truncar);
+    
+    t_config* config_archivo_truncar = config_create(path_archivo_truncar);
+    
+    int tamanio_truncar = config_get_int_value(config_archivo_truncar, "TAMANIO_ARCHIVO");
+    int bloque_inicial_truncar = config_get_int_value(config_archivo_truncar, "BLOQUE_INICIAL");
+    
+    char* buffer_truncar = obtener_texto(bloque_inicial_truncar, tamanio_truncar, 0);
+
+    //creo la lista
     t_list* lista_archivos = list_create();
 
     //obtener todos los archivos de la ruta
@@ -807,7 +835,8 @@ int compactar(String archivo_truncar, int tamanio) {
     int nuevo_bloque;
     
     //creo nuevos bloques
-    char* nuevos_bloques = malloc((tamanio_bloques * cantidad_bloques));
+    char* nuevos_bloques = inicializar_bloques("bloques_auxiliares.dat");
+
     char *path_archivo;
     char* buffer;
     int tamanio_archivo;
@@ -852,35 +881,50 @@ int compactar(String archivo_truncar, int tamanio) {
         free(path_archivo);
         free(buffer);
     }
-
-    // copio el contenido de mi archivo_truncar
-    nuevo_bloque = buscar_primer_bloque_libre();
     
-    path_archivo = string_from_format("%s/%s", ruta_metadata, archivo_truncar);
+    int resultado = buscar_espacio_bitmap(tamanio);
+    
+    if(resultado == -1){
+        printf("No hay espacio suficiente luego de la compactacion\n");
+        return resultado;
+    }
 
-    config_archivo = config_create(path_archivo);
+    nuevo_bloque = buscar_primer_bloque_libre();
 
-    tamanio_archivo = config_get_int_value(config_archivo, "TAMANIO_ARCHIVO");
-    bloque_inicial = config_get_int_value(config_archivo, "BLOQUE_INICIAL");
+    //escribo el contenido del archivo a truncar
+    escribir_texto_en_bloques(nuevos_bloques, nuevo_bloque, tamanio, 0, buffer_truncar); // con en tamanio solicitado
 
-    buffer = obtener_texto(bloque_inicial, tamanio_archivo, 0);
+    //seteo sus nuevos valores
+    config_set_value(config_archivo_truncar, "TAMANIO_ARCHIVO", string_itoa(tamanio));
+    config_set_value(config_archivo_truncar, "BLOQUE_INICIAL", string_itoa(nuevo_bloque));
 
-    //escribo al final en nuevos_bloques
-    escribir_texto_en_bloques(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer);// tengo que escribirlo en nuevos_bloques
+    config_save(config_archivo_truncar);
+
+    //mostrar_bitmap(bufferBitmap); // TESTEO
 
     //tengo que reemplazar el contendido de bufferBloques por nuevos_bloques
     memcpy(bufferBloques, nuevos_bloques, tamanio_bloques * cantidad_bloques);
 
     //sincronizo los datos de bufferBloques
-    msync(bufferBloques, tamanio_bitarray * cantidad_bloques, MS_SYNC);
+    msync(bufferBloques, tamanio_bloques * cantidad_bloques, MS_SYNC);
 
-    free(path_archivo);
-    free(buffer);
-    config_destroy(config_archivo);
 
-    int resultado = buscar_espacio_bitmap(tamanio);
+    if(remove("bloques_auxiliares.dat") != 0){
+        printf("No se pudo eliminar el archivo auxiliar de bloques\n");
+    }
+
+    //config_destroy(config_archivo);
+    config_destroy(config_archivo_truncar);
 
     list_destroy(lista_archivos);
+
+    free(path_archivo_truncar);
+    free(buffer_truncar);
+
+    // Luego de compactar el FS, se deberá esperar un tiempo determinado
+    ESPERAR_X_MILISEGUNDOS(interfaz_config->retraso_compactacion);
+    
+    log_info(logger, "PID: %i,Fin Compactación.",pid);
 
     return resultado;
 }
