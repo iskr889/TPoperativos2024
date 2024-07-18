@@ -19,13 +19,12 @@ void inicializar_bloques(String ruta_bloques);
 char* pedir_a_memoria(uint16_t pid, uint32_t tamanio, uint32_t direccion);
 bool enviar_a_memoria(uint16_t pid, uint32_t direccion, String texto);
 
-// modificar
-int buscar_bloque_libre();
-int buscar_bloque_libre2();
+int buscar_primer_bloque_libre();
+int buscar_siguiente_bloque_libre();
 
 void liberar_espacio_bitmap(int boque_inicial, int tamanio);
 void limpiar_bloques(int boque_inicial, int tamanio);
-void escribir_texto_en_bloques(int primer_bloque, int tamanio_archivo, int puntero_archivo, char* texto);
+void escribir_texto_en_bloques(char *puntero_a_bloques, int primer_bloque, int tamanio_archivo, int puntero_archivo, char* texto);
 void mostra_archivo(int primer_bloque, int tamanio_archivo);
 char* obtener_texto(int bloque_inicial, int tamanio, int puntero_archivo);
 int buscar_espacio_bitmap(int tamanio);

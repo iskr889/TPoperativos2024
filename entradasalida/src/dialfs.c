@@ -215,7 +215,7 @@ void crear_archivo(uint16_t pid, String nombre_archivo)
         return;
     }
     
-    int bloque_inicial = buscar_bloque_libre();
+    int bloque_inicial = buscar_primer_bloque_libre();
     if (bloque_inicial == -1)
     {
         printf("No se pudo crear el archivo, no hay bloques vacios\n");
@@ -314,7 +314,7 @@ void escribir_archivo(uint16_t pid, String nombre_archivo, int direccion, int ta
     }
 
     //   ***ARCHIVO***
-    escribir_texto_en_bloques(primer_bloque, tamanio_archivo, puntero_archivo, texto_a_escribir);
+    escribir_texto_en_bloques(bufferBloques, primer_bloque, tamanio_archivo, puntero_archivo, texto_a_escribir);
 
     free(texto_a_escribir);
     free(pathArchivo);
@@ -449,7 +449,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
             liberar_espacio_bitmap(bloque_inicial, tamanio_actual);
             limpiar_bloques(bloque_inicial, tamanio_actual);
 
-            escribir_texto_en_bloques(nuevo_bloque, tamanio, 0, texto);
+            escribir_texto_en_bloques(bufferBloques, nuevo_bloque, tamanio, 0, texto);
 
         }else{
 
@@ -565,7 +565,7 @@ bool enviar_a_memoria(uint16_t pid, uint32_t direccion, String texto){
     return escritura_exitosa;
 }
 
-int buscar_bloque_libre()
+int buscar_primer_bloque_libre()
 {
 
     int tam = bitarray_get_max_bit(bufferBitmap);
@@ -581,7 +581,7 @@ int buscar_bloque_libre()
     return -1;
 }
 
-int buscar_bloque_libre2() {
+int buscar_siguiente_bloque_libre() {
     static int ultima_posicion = 0;
     int tam = bitarray_get_max_bit(bufferBitmap);
 
@@ -626,7 +626,7 @@ void limpiar_bloques(int primer_bloque, int tamanio_limpiar)
     }
 }
 
-void escribir_texto_en_bloques(int primer_bloque, int tamanio_archivo, int puntero_archivo, char *texto)
+void escribir_texto_en_bloques(char *puntero_a_bloques, int primer_bloque, int tamanio_archivo, int puntero_archivo, char *texto)
 {
     size_t longitud_texto = strlen(texto);
     int bloques_disponibles = ceil((double)tamanio_archivo / (double)tamanio_bloques);
@@ -651,9 +651,9 @@ void escribir_texto_en_bloques(int primer_bloque, int tamanio_archivo, int punte
         // printf("Bloque[%d]: marcado como ocupado\n", i);
     }
 
-    memcpy(&bufferBloques[offset], texto, longitud_texto);
+    memcpy(&puntero_a_bloques[offset], texto, longitud_texto);
 
-    msync(bufferBloques, tamanio_bloques * cantidad_bloques, MS_SYNC);
+    msync(puntero_a_bloques, tamanio_bloques * cantidad_bloques, MS_SYNC);
 
     printf("Texto guardado en bloques correctamente.\n");
 }
@@ -697,7 +697,7 @@ int buscar_espacio_bitmap(int tamanio){
     int nuevo_bloque; 
     
     do{
-        nuevo_bloque = buscar_bloque_libre2();
+        nuevo_bloque = buscar_siguiente_bloque_libre();
         
         if(nuevo_bloque == -1){
             return -1;
@@ -815,7 +815,10 @@ int compactar(String archivo_truncar, int tamanio) {
 
     for(int i = 0; i < tamanio_lista; i++){
         
-        nuevo_bloque = buscar_bloque_libre(); //devuelve la primera pos libre
+        nuevo_bloque = buscar_primer_bloque_libre(); //devuelve la primera pos libre
+
+        if(nuevo_bloque < 0)
+            return ERROR;
 
         nombre_archivo = list_get(lista_archivos, i);
 
@@ -835,7 +838,7 @@ int compactar(String archivo_truncar, int tamanio) {
         buffer = obtener_texto(bloque_inicial, tamanio_archivo, 0);
 
         //escribo en nuevos_bloques y se ocupa el bitmap
-        // escribir_texto_en_bloques(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer); // tengo que escribirlo en nuevos_bloques
+        escribir_texto_en_bloques(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer); // tengo que escribirlo en nuevos_bloques
 
         //modifico la metadata
         config_set_value(config_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio_archivo));
@@ -851,7 +854,7 @@ int compactar(String archivo_truncar, int tamanio) {
     }
 
     // copio el contenido de mi archivo_truncar
-    nuevo_bloque = buscar_bloque_libre();
+    nuevo_bloque = buscar_primer_bloque_libre();
     
     path_archivo = string_from_format("%s/%s", ruta_metadata, archivo_truncar);
 
@@ -863,7 +866,7 @@ int compactar(String archivo_truncar, int tamanio) {
     buffer = obtener_texto(bloque_inicial, tamanio_archivo, 0);
 
     //escribo al final en nuevos_bloques
-    // escribir_texto_en_bloques(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer);// tengo que escribirlo en nuevos_bloques
+    escribir_texto_en_bloques(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer);// tengo que escribirlo en nuevos_bloques
 
     //tengo que reemplazar el contendido de bufferBloques por nuevos_bloques
     memcpy(bufferBloques, nuevos_bloques, tamanio_bloques * cantidad_bloques);
