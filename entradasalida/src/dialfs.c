@@ -371,7 +371,7 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamani
     }
 
     printf("Texto: %s\n", texto_a_escribir);
-    printf("PID: %d, Leer Archivo: %s Tamaño a Leer: %d Puntero Archivo: %d\n", pid, nombre_archivo, tamanio, puntero_archivo);
+    log_info(logger, "PID: %d, Leer Archivo: %s Tamaño a Leer: %d Puntero Archivo: %d\n", pid, nombre_archivo, tamanio, puntero_archivo);
 
     config_destroy(metadata_archivo);
     free(texto_a_escribir);
@@ -428,7 +428,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
         config_destroy(metadata_archivo);
         free(pathArchivo);
 
-        printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio);
+        log_info(logger, "PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio);
         return;
     }
     // si el archivo lo tengo que hacer mas grande
@@ -477,7 +477,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
         config_destroy(metadata_archivo);
         free(pathArchivo);
 
-        printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio);
+        log_info(logger, "PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio);
 
         return;
     }
