@@ -27,7 +27,7 @@ void liberar_espacio_bitmap(int boque_inicial, int tamanio);
 void limpiar_bloques2(int boque_inicial, int tamanio);
 void escribir_texto_en_bloques2(int primer_bloque, int tamanio_archivo, int puntero_archivo, char* texto);
 void mostra_archivo(int primer_bloque, int tamanio_archivo);
-char* obtener_texto2(int bloque_inicial, int tamanio_archivo, int puntero_archivo, int tamanio_leer);
+char* obtener_texto2(int bloque_inicial, int tamanio, int puntero_archivo);
 int buscar_espacio_bitmap(int tamanio);
 int obtener_inicio_bloque(int numero_bloque);
 int verificar_y_crear_directorio(String ruta);

@@ -35,7 +35,7 @@ void interfaz_dialFS(String nombre)
         exit(EXIT_FAILURE);
     }
     
-    log_info(extra_logger, "cantidad de bloques: %i, tamanio de bloques: %i", cantidad_bloques, tamanio_bloques);
+    log_info(extra_logger, "cantidad de bloques: %d, tamanio de bloques: %d", cantidad_bloques, tamanio_bloques);
 
     inicializar_bloques("bloques.dat");
     inicializar_bitmap("bitmap.dat");
@@ -248,7 +248,7 @@ void crear_archivo(uint16_t pid, String nombre_archivo)
     char *nombre_archivo_a_guardar = strdup(nombre_archivo);
     list_add(lista_archivos, nombre_archivo_a_guardar); // agrego el archivo a una lista
 
-    log_info(logger, "PID: %i, Crear Archivo: %s", pid, nombre_archivo);
+    log_info(logger, "PID: %d, Crear Archivo: %s", pid, nombre_archivo);
     return;
 }
 
@@ -303,7 +303,7 @@ void eliminar_archivo(uint16_t pid, String nombre_archivo)
     config_destroy(valores);
     free(pathArchivo);
 
-    log_info(logger, "PID: %i, Eliminar Archivo: %s", pid, nombre_archivo);
+    log_info(logger, "PID: %d, Eliminar Archivo: %s", pid, nombre_archivo);
     return;
 }
 
@@ -353,7 +353,7 @@ void escribir_archivo(uint16_t pid, String nombre_archivo, int direccion, int ta
 
     mostra_archivo(primer_bloque, tamanio_archivo); // prueba
 
-    log_info(logger, "PID: %i, Escribir Archivo: %s, Tamaño a Escribir: %i, Puntero Archivo: %i", pid, nombre_archivo, tamanio, puntero_archivo);
+    log_info(logger, "PID: %d, Escribir Archivo: %s, Tamaño a Escribir: %d, Puntero Archivo: %d", pid, nombre_archivo, tamanio, puntero_archivo);
 }
 
 void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
@@ -376,8 +376,6 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamani
     int bloque_inicial = config_get_int_value(metadata_archivo, "BLOQUE_INICIAL");
     int tamanio_archivo = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
 
-    config_destroy(metadata_archivo);
-
     if (puntero_archivo >= tamanio_archivo) {
         printf("El puntero de archivo está fuera del tamaño del archivo: %s\n", nombre_archivo);
         config_destroy(metadata_archivo);
@@ -386,7 +384,7 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamani
     }
 
     // obtener el texto de los bloques
-    char* texto_a_escribir = obtener_texto2(bloque_inicial, tamanio_archivo, puntero_archivo, tamanio);
+    char* texto_a_escribir = obtener_texto2(bloque_inicial, tamanio, puntero_archivo);
 
     // envio el texto a memoria
     if(enviar_a_memoria(pid, direccion, texto_a_escribir) == false){
@@ -396,8 +394,9 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamani
     }
 
     printf("Texto: %s\n", texto_a_escribir);
-    printf("PID: %i, Leer Archivo: %s Tamaño a Leer: %i Puntero Archivo: %d\n", pid, nombre_archivo, tamanio, puntero_archivo);
+    printf("PID: %d, Leer Archivo: %s Tamaño a Leer: %d Puntero Archivo: %d\n", pid, nombre_archivo, tamanio, puntero_archivo);
 
+    config_destroy(metadata_archivo);
     free(texto_a_escribir);
     free(pathArchivo);
 
@@ -452,7 +451,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
         config_destroy(metadata_archivo);
         free(pathArchivo);
 
-        printf("PID: %i, Truncar Archivo: %s Tamaño: %i\n", pid, nombre_archivo, tamanio);
+        printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio);
         return;
     }
     // si el archivo lo tengo que hacer mas grande
@@ -478,7 +477,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
         if(nuevo_bloque != bloque_inicial){
             
             // si tengo que recolocar el archivo tambien su contenido, y liberar el espacio anterior
-            char* texto = obtener_texto2(bloque_inicial, tamanio_actual, 0, tamanio_actual);
+            char* texto = obtener_texto2(bloque_inicial, tamanio_actual, 0);
 
             liberar_espacio_bitmap(bloque_inicial, tamanio_actual);
             limpiar_bloques2(bloque_inicial, tamanio_actual);
@@ -500,7 +499,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
         config_destroy(metadata_archivo);
         free(pathArchivo);
 
-        printf("PID: %i, Truncar Archivo: %s Tamaño: %i\n", pid, nombre_archivo, tamanio);
+        printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio);
 
         return;
     }
@@ -511,7 +510,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
     }
     else{
         //prueba
-        printf("No se que paso, bloques_arctuales: %i, bloques_requeridos: %i\n", bloques_actuales, bloques_requeridos);
+        printf("No se que paso, bloques_arctuales: %d, bloques_requeridos: %d\n", bloques_actuales, bloques_requeridos);
         exit(EXIT_FAILURE);
     }
 }
@@ -673,7 +672,7 @@ void escribir_texto_en_bloques2(int primer_bloque, int tamanio_archivo, int punt
     for (int i = primer_bloque; i < total; i++)
     {
         bitarray_set_bit(bufferBitmap, i);
-        // printf("Bloque[%i]: marcado como ocupado\n", i);
+        // printf("Bloque[%d]: marcado como ocupado\n", i);
     }
 
     memcpy(&bufferBloques[offset], texto, longitud_texto);
@@ -698,15 +697,15 @@ void mostra_archivo(int primer_bloque, int tamanio_archivo)
     printf("\n");
 }
 
-char* obtener_texto2(int bloque_inicial, int tam_archivo, int puntero_archivo, int tamanio_leer) {
+char* obtener_texto2(int bloque_inicial, int tamanio, int puntero_archivo) {
     
     int inicio_bloque = obtener_inicio_bloque(bloque_inicial);
 
-    char* texto = malloc(tamanio_leer + 1);
+    char* texto = malloc(tamanio + 1);
 
-    memcpy(texto, &bufferBloques[inicio_bloque + puntero_archivo], tam_archivo);
+    memcpy(texto, &bufferBloques[inicio_bloque + puntero_archivo], tamanio);
 
-    texto[tamanio_leer] = '\0';
+    texto[tamanio] = '\0';
 
     return texto;
 }
@@ -873,7 +872,7 @@ int compactar(String archivo_truncar, int tamanio) {
         tamanio_archivo = config_get_int_value(config_archivo, "TAMANIO_ARCHIVO");
         bloque_inicial = config_get_int_value(config_archivo, "BLOQUE_INICIAL");
 
-        buffer = obtener_texto2(bloque_inicial, tamanio_archivo, 0, tamanio_archivo);
+        buffer = obtener_texto2(bloque_inicial, tamanio_archivo, 0);
 
         //escribo en nuevos_bloques y se ocupa el bitmap
         // escribir_texto_en_bloques2(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer); // tengo que escribirlo en nuevos_bloques
@@ -901,7 +900,7 @@ int compactar(String archivo_truncar, int tamanio) {
     tamanio_archivo = config_get_int_value(config_archivo, "TAMANIO_ARCHIVO");
     bloque_inicial = config_get_int_value(config_archivo, "BLOQUE_INICIAL");
 
-    buffer = obtener_texto2(bloque_inicial, tamanio_archivo, 0, tamanio_archivo);
+    buffer = obtener_texto2(bloque_inicial, tamanio_archivo, 0);
 
     //escribo al final en nuevos_bloques
     // escribir_texto_en_bloques2(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer);// tengo que escribirlo en nuevos_bloques
