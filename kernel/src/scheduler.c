@@ -1,9 +1,29 @@
 #include "scheduler.h"
+#include <commons/string.h>
 
 scheduler_t *scheduler = NULL;
 
 extern t_log* extra_logger, *logger;
 
+static char *generar_lista_pids(t_list *cola) {
+    char* cadena = string_new();
+    t_list_iterator *cola_iterator = list_iterator_create(cola);
+
+    pcb_t *elemento = list_iterator_next(cola_iterator);
+    char *pid_str = string_itoa(elemento->pid);
+    string_append(&cadena, pid_str);
+    free(pid_str);
+
+    while (list_iterator_has_next(cola_iterator)) {
+        elemento = list_iterator_next(cola_iterator);
+        pid_str = string_itoa(elemento->pid);
+        string_append_with_format(&cadena, ", %s", pid_str);
+        free(pid_str);
+    }
+
+    list_iterator_destroy(cola_iterator);
+    return cadena;
+}
 // Función para inicializar el planificador
 void init_scheduler() {
     scheduler = malloc(sizeof(scheduler_t));
@@ -75,10 +95,14 @@ void cola_new_a_ready() {
     pthread_mutex_lock(&scheduler->mutex_ready);
     proceso->estado = READY;
     list_push(scheduler->cola_ready, proceso);
+    char *lista_pids = generar_lista_pids(scheduler->cola_ready);
     pthread_cond_signal(&scheduler->cond_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
 
     log_info(logger, "PID: %d - Estado Anterior: NEW - Estado Actual: READY", proceso->pid);
+    log_info(logger, "Cola Ready: [%s]", lista_pids);
+
+    free(lista_pids);
 }
 
 void cola_ready_a_exec() {
@@ -144,10 +168,12 @@ void proceso_exec_a_ready() {
     pthread_mutex_lock(&scheduler->mutex_ready);
     proceso->estado = READY;
     list_push(scheduler->cola_ready, proceso);
+    char *lista_pids = generar_lista_pids(scheduler->cola_ready);
     pthread_cond_signal(&scheduler->cond_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
 
     log_info(logger, "PID: %d - Estado Anterior: EXEC - Estado Actual: READY", proceso->pid);
+    log_info(logger, "Cola Ready: [%s]", lista_pids);
 }
 
 void cola_blocked_a_ready(char* nombre_cola) {
@@ -163,9 +189,11 @@ void cola_blocked_a_ready(char* nombre_cola) {
     pthread_mutex_lock(&scheduler->mutex_ready);
     proceso->estado = READY;
     list_push(scheduler->cola_ready, proceso);
+    char *lista_pids = generar_lista_pids(scheduler->cola_ready);
     pthread_cond_signal(&scheduler->cond_ready);
     pthread_mutex_unlock(&scheduler->mutex_ready);
 
+    log_info(logger, "Cola Ready: [%s]", lista_pids);
     log_info(logger, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: READY", proceso->pid);
 }
 
@@ -182,10 +210,12 @@ void cola_blocked_a_aux_blocked(char* nombre_cola) {
     pthread_mutex_lock(&scheduler->mutex_aux_blocked);
     proceso->estado = READY;
     list_push(scheduler->cola_aux_blocked, proceso);
+    char *lista_pids = generar_lista_pids(scheduler->cola_aux_blocked);
     pthread_cond_signal(&scheduler->cond_aux_blocked);
     pthread_mutex_unlock(&scheduler->mutex_aux_blocked);
 
     log_info(logger, "PID: %d - Estado Anterior: BLOCKED - Estado Actual: AUX_BLOCKED", proceso->pid);
+    log_info(logger, "Cola Ready Prioridad: [%s]", lista_pids);
 }
 
 void proceso_a_exit(pcb_t* proceso, t_list* cola_actual) {
