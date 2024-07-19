@@ -398,7 +398,7 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
     int bloques_requeridos = ceil((double)tamanio / (double)tamanio_bloques);
     int bloques_actuales = ceil((double)tamanio_actual / (double)tamanio_bloques);
 
-    if(tamanio_actual <= tamanio_bloques) { // En caso de que el tamaño actual es suficiente actualizo solo la metadata
+    if(tamanio_actual <= tamanio_bloques && tamanio <= tamanio_bloques) { // En caso de que el tamaño actual es suficiente actualizo solo la metadata
         config_set_value(metadata_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio));
         config_save(metadata_archivo);
         config_destroy(metadata_archivo);
