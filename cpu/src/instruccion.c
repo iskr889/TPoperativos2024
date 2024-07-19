@@ -77,8 +77,8 @@ char* decode(char* instruccion, pcb_t* pcb) {
             uint32_t direccion_logica = getTipoRegistro(tokens[3]) <= DX ? *(uint8_t*)direccion_logica_ptr : *(uint32_t*)direccion_logica_ptr;
             void* tam_ptr = obtener_registro(&pcb->registros, getTipoRegistro(tokens[4]));
             uint32_t tam = getTipoRegistro(tokens[4]) <= DX ? *(uint8_t*)tam_ptr : *(uint32_t*)tam_ptr;
-            void* puntero_file_ptr = obtener_registro(&pcb->registros, getTipoRegistro(tokens[3]));
-            uint32_t puntero_file = getTipoRegistro(tokens[3]) <= DX ? *(uint8_t*)puntero_file_ptr : *(uint32_t*)puntero_file_ptr;
+            void* puntero_file_ptr = obtener_registro(&pcb->registros, getTipoRegistro(tokens[5]));
+            uint32_t puntero_file = getTipoRegistro(tokens[5]) <= DX ? *(uint8_t*)puntero_file_ptr : *(uint32_t*)puntero_file_ptr;
             uint32_t direccion_fisica = traducir_direccion_logica(direccion_logica, pcb->pid, conexion_memoria, tam_pagina);
             size_t instruccion_len = snprintf(NULL, 0, "%s %s %s %u %u %u", tokens[0], tokens[1], tokens[2], direccion_fisica, tam, puntero_file) + 1;
             instruccion_traducida = malloc(instruccion_len);
