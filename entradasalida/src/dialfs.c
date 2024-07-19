@@ -139,7 +139,7 @@ void inicializar_bloques(String ruta_bloques)
 
 void inicializar_bitmap(String ruta_bitmap)
 {
-    int tamanioBitmap = (cantidad_bloques + 7) / 8; // ceil(cantidad_bloques / 8);
+    int tamanioBitmap = ceil((double)cantidad_bloques / 8);
 
     int file_descriptor = open(ruta_bitmap, O_CREAT | O_RDWR, 0664);
     if (file_descriptor == -1)
@@ -398,6 +398,14 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
     int bloques_requeridos = ceil((double)tamanio / (double)tamanio_bloques);
     int bloques_actuales = ceil((double)tamanio_actual / (double)tamanio_bloques);
 
+    if(tamanio_actual <= tamanio_bloques) { // En caso de que el tamaño actual es suficiente actualizo solo la metadata
+        config_set_value(metadata_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio));
+        config_save(metadata_archivo);
+        config_destroy(metadata_archivo);
+        free(pathArchivo);
+        return;
+    }
+
     // si el archivo lo tengo que hacer mas chico
     if(bloques_actuales > bloques_requeridos){
 
@@ -472,6 +480,8 @@ void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
     }
     else{
         printf("El archivo ya tiene ese tamaño.\n");
+        config_destroy(metadata_archivo);
+        free(pathArchivo);
         return;
     }
 }
