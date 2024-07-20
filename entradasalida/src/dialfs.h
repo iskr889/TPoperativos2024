@@ -30,6 +30,9 @@ char* obtener_texto(int bloque_inicial, int tamanio, int puntero_archivo);
 int buscar_espacio_bitmap(int tamanio);
 int obtener_inicio_bloque(int numero_bloque);
 int verificar_y_crear_directorio(String ruta);
+int compactar(uint16_t pid, String archivo_truncar, int tamanio);
+
+void mostrar_bitmap(t_bitarray *bitmap);
 
 // operaciones
 void crear_archivo(uint16_t pid, String nombre);
@@ -37,7 +40,5 @@ void eliminar_archivo(uint16_t pid, String nombre);
 void truncar_archivo(uint16_t pid,String nombre, int tamanio);
 void leer_archivo(uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
 void escribir_archivo(uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
-
-int compactar(uint16_t pid, String archivo_truncar, int tamanio);
 
 #endif
