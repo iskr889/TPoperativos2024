@@ -245,7 +245,7 @@ String recibir_nombre_interfaz(int socket) {
     return nombre;
 }
 
-void send_io_gen_sleep(int socket, uint16_t pid, uint32_t tiempo) {
+void send_io_gen_sleep(int fd_io, uint16_t pid, uint32_t tiempo) {
 
     payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t));
 
@@ -254,15 +254,16 @@ void send_io_gen_sleep(int socket, uint16_t pid, uint32_t tiempo) {
 
     paquete_t *paquete = crear_paquete(IO_GEN_SLEEP, payload);
 
-    if(enviar_paquete(socket, paquete) != OK)
-        exit(EXIT_FAILURE);
+    enviar_paquete(fd_io, paquete);
 
     payload_destroy(payload);
     liberar_paquete(paquete);
 }
 
-void send_io_stdin_read(int socket, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres) {
-    log_info(logger, "Se esta enviando pid %d, direccion: %d, cant_caracteres %d", pid, direccion, cant_caracteres);
+void send_io_stdin_read(int fd_io, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres) {
+
+    log_debug(extra_logger, "Se esta enviando pid %d, direccion: %d, cant_caracteres %d", pid, direccion, cant_caracteres);
+
     payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint32_t));
 
     payload_add(payload, &pid, sizeof(uint16_t));
@@ -271,10 +272,7 @@ void send_io_stdin_read(int socket, uint16_t pid, uint32_t direccion, uint32_t c
 
     paquete_t *paquete = crear_paquete(IO_STDIN_READ, payload);
 
-    if(enviar_paquete(socket, paquete) != OK){
-        printf("fallo al enviar el paquete a stdin");
-        exit(EXIT_FAILURE);
-    }
+    enviar_paquete(fd_io, paquete);
 
     payload_destroy(payload);
     liberar_paquete(paquete);
@@ -282,7 +280,8 @@ void send_io_stdin_read(int socket, uint16_t pid, uint32_t direccion, uint32_t c
 
 void send_io_stdout_write(int fd_io, uint16_t pid, uint32_t direccion, uint32_t cant_caracteres) {
 
-    log_info(logger, "Se esta enviando pid %d, direccion: %d, cant_caracteres %d", pid, direccion, cant_caracteres);
+    log_debug(extra_logger, "Se esta enviando pid %d, direccion: %d, cant_caracteres %d", pid, direccion, cant_caracteres);
+
     payload_t *payload = payload_create(sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint32_t));
 
     payload_add(payload, &pid, sizeof(uint16_t));
@@ -291,16 +290,12 @@ void send_io_stdout_write(int fd_io, uint16_t pid, uint32_t direccion, uint32_t 
 
     paquete_t *paquete = crear_paquete(IO_STDOUT_WRITE, payload);
 
-    if(enviar_paquete(fd_io, paquete) != OK){
-        printf("fallo al enviar el paquete a stdin");
-        exit(EXIT_FAILURE);
-    }
+    enviar_paquete(fd_io, paquete);
 
     payload_destroy(payload);
     liberar_paquete(paquete);
 }
 
-// dialFS
 void send_io_dialfs_create(int fd_io, uint16_t pid, String nombre_archivo) {
 
     log_info(extra_logger, "Enviando paquete a dialfs");
@@ -312,10 +307,7 @@ void send_io_dialfs_create(int fd_io, uint16_t pid, String nombre_archivo) {
 
     paquete_t *paquete = crear_paquete(IO_FS_CREATE, payload);
 
-    if(enviar_paquete(fd_io, paquete) != OK){
-        printf("fallo al enviar el paquete a dialFS");
-        exit(EXIT_FAILURE);
-    }
+    enviar_paquete(fd_io, paquete);
 
     payload_destroy(payload);
     liberar_paquete(paquete);
@@ -330,10 +322,7 @@ void send_io_dialfs_delete(int fd_io, uint16_t pid, String nombre_archivo) {
 
     paquete_t *paquete = crear_paquete(IO_FS_DELETE, payload);
 
-    if(enviar_paquete(fd_io, paquete) != OK){
-        printf("fallo al enviar el paquete a dialFS");
-        exit(EXIT_FAILURE);
-    }
+    enviar_paquete(fd_io, paquete);
 
     payload_destroy(payload);
     liberar_paquete(paquete);
@@ -349,10 +338,7 @@ void send_io_dialfs_truncate(int fd_io, uint16_t pid, String nombre_archivo, int
 
     paquete_t *paquete = crear_paquete(IO_FS_TRUNCATE, payload);
 
-    if(enviar_paquete(fd_io, paquete) != OK){
-        printf("fallo al enviar el paquete a dialFS");
-        exit(EXIT_FAILURE);
-    }
+    enviar_paquete(fd_io, paquete);
 
     payload_destroy(payload);
     liberar_paquete(paquete);
@@ -370,10 +356,7 @@ void send_io_dialfs_write(int fd_io, uint16_t pid, String nombre_archivo, int di
 
     paquete_t *paquete = crear_paquete(IO_FS_WRITE, payload);
 
-    if(enviar_paquete(fd_io, paquete) != OK){
-        printf("fallo al enviar el paquete a stdin");
-        exit(EXIT_FAILURE);
-    }
+    enviar_paquete(fd_io, paquete);
 
     payload_destroy(payload);
     liberar_paquete(paquete);
@@ -391,10 +374,7 @@ void send_io_dialfs_read(int fd_io, uint16_t pid, String nombre_archivo, int dir
 
     paquete_t *paquete = crear_paquete(IO_FS_READ, payload);
 
-    if(enviar_paquete(fd_io, paquete) != OK){
-        printf("fallo al enviar el paquete a stdin");
-        exit(EXIT_FAILURE);
-    }
+    enviar_paquete(fd_io, paquete);
 
     payload_destroy(payload);
     liberar_paquete(paquete);

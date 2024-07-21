@@ -159,7 +159,7 @@ void crear_proceso(uint16_t pid, t_list *instrucciones) {
     char str_pid[8];
     snprintf(str_pid, sizeof(str_pid), "%d", pid); // Convierto el pid a string para poder usarlo como key en el diccionario
     dictionary_put(procesos, str_pid, proceso);
-    log_info(logger, "PID: %d - Tamaño: %d", pid, list_size(proceso->paginas)); // LOG OBLIGATORIO
+    log_info(logger, "CREADO PID: %d - Tamaño: %d", pid, list_size(proceso->paginas)); // LOG OBLIGATORIO
 }
 
 void liberar_proceso(uint16_t pid) {
@@ -169,7 +169,7 @@ void liberar_proceso(uint16_t pid) {
     Proceso_t* proceso = dictionary_get(procesos, str_pid);
     if (proceso == NULL)
         return;
-    log_info(logger, "PID: %d - Tamaño: %d", pid, list_size(proceso->paginas)); // LOG OBLIGATORIO
+    log_info(logger, "LIBERADO PID: %d - Tamaño: %d", pid, list_size(proceso->paginas)); // LOG OBLIGATORIO
     list_destroy_and_destroy_elements(proceso->paginas, liberar_pagina);
     list_destroy_and_destroy_elements(proceso->instrucciones, free);
     dictionary_remove_and_destroy(procesos, str_pid, free);
