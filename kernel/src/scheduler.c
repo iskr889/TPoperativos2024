@@ -1,5 +1,4 @@
 #include "scheduler.h"
-#include <commons/string.h>
 
 scheduler_t *scheduler = NULL;
 

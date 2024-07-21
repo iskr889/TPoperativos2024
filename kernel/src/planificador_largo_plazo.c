@@ -1,9 +1,5 @@
-//#include "../../utils/src/pcb.h"
 #include "planificador_largo_plazo.h"
 #include "scheduler.h"
-// #include "planificador_corto_plazo.h"
-//#include "semaforos.h"
-//#include "recursos.h"
 
 extern t_log* extra_logger;
 extern t_kernel_config* kernel_config;

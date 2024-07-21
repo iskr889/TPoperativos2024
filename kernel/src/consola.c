@@ -4,7 +4,6 @@
 #include "kernel_interface_handler.h"
 #include "planificador_largo_plazo.h"
 #include "recursos.h"
-//#include "semaforos.h"
 
 extern t_kernel_config* kernel_config;
 extern t_log* logger;
@@ -195,6 +194,11 @@ void finalizar_proceso(const String str_pid) {
     log_info(logger, "Finalizo proceso %d - Motivo: INTERRUPTED_BY_USER", pid_a_finalizar);
 }
 
+static void sem_post_interfaces(char *key, void *element){
+    interfaz_t *interfaz = (interfaz_t*)element;
+    sem_post(&interfaz->sem_interfaz_comando);
+}
+
 void iniciar_planificacion(const String s) {
     if (s != NULL) {
         puts("El comando no deberia contener argumentos!");
@@ -214,11 +218,6 @@ void iniciar_planificacion(const String s) {
     dictionary_iterator(interfaces, sem_post_interfaces);
 
     puts("Reanudando planificador");
-}
-
-void sem_post_interfaces(char *key, void *element){
-    interfaz_t *interfaz = (interfaz_t*)element;
-    sem_post(&interfaz->sem_interfaz_comando);
 }
 
 void detener_planificacion(const String s) {
@@ -255,24 +254,7 @@ void multiprogramacion(const String valor) {
 
 }
 
-void proceso_estado(const String s) {
-    if (s != NULL) {
-        puts("El comando no deberia contener argumentos adicionales!");
-        return;
-    }
-
-    t_list* lista_de_procesos = dictionary_elements(scheduler->procesos);
-
-    list_iterate(lista_de_procesos, imprimir_proceso);
-
-    list_clean(lista_de_procesos);
-
-    list_destroy(lista_de_procesos);
-
-    return;
-}
-
-void imprimir_proceso(void* proceso) {
+static void imprimir_proceso(void* proceso) {
     pcb_t* pcb = (pcb_t*)proceso;
     char estado[8];
     switch (pcb->estado) {
@@ -296,6 +278,23 @@ void imprimir_proceso(void* proceso) {
             break;
     }
     printf("[PID: %d | ESTADO: %s]\n", pcb->pid, estado);
+}
+
+void proceso_estado(const String s) {
+    if (s != NULL) {
+        puts("El comando no deberia contener argumentos adicionales!");
+        return;
+    }
+
+    t_list* lista_de_procesos = dictionary_elements(scheduler->procesos);
+
+    list_iterate(lista_de_procesos, imprimir_proceso);
+
+    list_clean(lista_de_procesos);
+
+    list_destroy(lista_de_procesos);
+
+    return;
 }
 
 void manejar_comando(const String comando) {

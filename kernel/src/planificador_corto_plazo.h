@@ -4,8 +4,9 @@
 #include "main.h"
 
 void dispatch_handler();
-void* dispatcher();
-void* thread_hilo_quantum(void *arg);
 
+void* dispatcher();
+
+void* thread_hilo_quantum(void *arg);
 
 #endif

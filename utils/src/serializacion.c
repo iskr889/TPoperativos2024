@@ -12,7 +12,7 @@ int recibir_operacion(int socket) {
 
 void enviar_operacion(int operacion, int socket) {
 	if (send(socket, &operacion, sizeof(operacion), MSG_NOSIGNAL) < 0) {
-		perror("Error al tratar de enviar el codigo de operacion");
+		// perror("Error al tratar de enviar el codigo de operacion");
         close(socket);
         exit(EXIT_FAILURE);
 	}
@@ -80,7 +80,7 @@ int enviar_paquete(int socket, paquete_t *paquete) {
     memcpy(data + offset, paquete->payload->stream, paquete->payload->size);
 
     if(send(socket, data, size, MSG_NOSIGNAL) <= 0) {
-		perror("Error al enviar paquete");
+		// perror("Error al enviar paquete");
 		free(data);
 		return ERROR;
 	}
@@ -94,19 +94,19 @@ paquete_t *recibir_paquete(int socket) {
     // Recibir el código de operación
     int codigo_operacion;
     if(recv(socket, &codigo_operacion, sizeof(codigo_operacion), MSG_WAITALL) <= 0) {
-		perror("Error al recibir codigo de operacion");
+		// perror("Error al recibir codigo de operacion");
 		return NULL;
 	}
 
     uint32_t payload_size;
     if(recv(socket, &payload_size, sizeof(payload_size), MSG_WAITALL) <= 0) {
-		perror("Error al recibir payload size");
+		// perror("Error al recibir payload size");
 		return NULL;
 	}
 
     payload_t *payload = payload_create(payload_size);
     if(recv(socket, payload->stream, payload_size, MSG_WAITALL) <= 0) {
-		perror("Error al recibir el payload");
+		// perror("Error al recibir el payload");
 		return NULL;
 	}
 

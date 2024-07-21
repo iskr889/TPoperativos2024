@@ -97,7 +97,7 @@ void* thread_handshake_con_interfaz(void* fd_interfaz) {
     int conexion = *(int*)fd_interfaz;
     free(fd_interfaz);
     if(handshake_con_interfaz(conexion) < 0) {
-        perror("Error en el handshake con la Interfaz!");
+        log_error(logger, "Interfaz desconectada!");
         close(conexion);
     }
     pthread_exit(NULL);
@@ -122,7 +122,7 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
             puts("Error al tratar de identificar el handshake!\n");
             return ERROR;
     }
-    return OK;
+    return ERROR; // Si llega aca es porque una interfaz se desconecto
 }
 
 void manejar_instrucciones_stdin(int socket_stdin) {
@@ -132,8 +132,8 @@ void manejar_instrucciones_stdin(int socket_stdin) {
         paquete_t *paquete = recibir_paquete(socket_stdin);
 
         if (paquete == NULL) {
-            fprintf(stderr, "Error al recibir paquete de STDIN");
-            exit(EXIT_FAILURE);
+            log_error(extra_logger, "Error al recibir paquete de STDIN");
+            return;
         }
 
         ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
@@ -142,7 +142,7 @@ void manejar_instrucciones_stdin(int socket_stdin) {
             log_error(extra_logger, "Operacion recibida de STDIN invalida");
             payload_destroy(paquete->payload);
             liberar_paquete(paquete);
-            exit(EXIT_FAILURE);
+            return;
         }
 
         instruccion_userspace_access(paquete->payload, socket_stdin);
@@ -159,8 +159,8 @@ void manejar_instrucciones_stdout(int socket_stdout) {
         paquete_t *paquete = recibir_paquete(socket_stdout);
 
         if (paquete == NULL) {
-            fprintf(stderr, "Error al recibir paquete de STDOUT");
-            exit(EXIT_FAILURE);
+            log_error(extra_logger, "Error al recibir paquete de STDOUT");
+            return;
         }
 
         ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
@@ -169,7 +169,7 @@ void manejar_instrucciones_stdout(int socket_stdout) {
             log_error(extra_logger, "Operacion recibida de STDOUT invalida");
             payload_destroy(paquete->payload);
             liberar_paquete(paquete);
-            exit(EXIT_FAILURE);
+            return;
         }
 
         instruccion_userspace_access(paquete->payload, socket_stdout);
@@ -186,8 +186,8 @@ void manejar_instrucciones_dialfs(int socket_dialfs) {
         paquete_t *paquete = recibir_paquete(socket_dialfs);
 
         if (paquete == NULL) {
-            fprintf(stderr, "Error al recibir paquete de DIALFS");
-            exit(EXIT_FAILURE);
+            log_error(extra_logger, "Error al recibir paquete de DialFS");
+            return;
         }
 
         ESPERAR_X_MILISEGUNDOS(memoria_config->retardo_respuesta);
@@ -196,7 +196,7 @@ void manejar_instrucciones_dialfs(int socket_dialfs) {
             log_error(extra_logger, "Operacion recibida de DIALFS invalida");
             payload_destroy(paquete->payload);
             liberar_paquete(paquete);
-            exit(EXIT_FAILURE);
+            return;
         }
 
         instruccion_userspace_access(paquete->payload, socket_dialfs);
