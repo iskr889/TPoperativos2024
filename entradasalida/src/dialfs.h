@@ -12,8 +12,8 @@
 void interfaz_dialFS(String nombre);
 void dialfd_procesar_instrucciones();
 
-void inicializar_bitmap(String ruta_bitmap);
-void inicializar_bloques(String ruta_bloques);
+t_bitarray* inicializar_bitmap(String ruta_bitmap);
+char* inicializar_bloques(String ruta_bloques);
 
 // funciones auxiliares
 char* pedir_a_memoria(uint16_t pid, uint32_t tamanio, uint32_t direccion);
@@ -30,7 +30,9 @@ char* obtener_texto(int bloque_inicial, int tamanio, int puntero_archivo);
 int buscar_espacio_bitmap(int tamanio);
 int obtener_inicio_bloque(int numero_bloque);
 int verificar_y_crear_directorio(String ruta);
-int compactar(String archivo_truncar, int tamanio);
+int compactar(uint16_t pid, String archivo_truncar, int tamanio);
+
+void mostrar_bitmap(t_bitarray *bitmap);
 
 // operaciones
 void crear_archivo(uint16_t pid, String nombre);
@@ -38,7 +40,5 @@ void eliminar_archivo(uint16_t pid, String nombre);
 void truncar_archivo(uint16_t pid,String nombre, int tamanio);
 void leer_archivo(uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
 void escribir_archivo(uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
-
-int compactar(String archivo_truncar, int tamanio);
 
 #endif
