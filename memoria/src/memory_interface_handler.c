@@ -107,19 +107,19 @@ int manejar_interfaz(conexion_t handshake, int socket_interfaz) {
 
     switch (handshake) {
         case STDIN_CON_MEMORIA:
-            puts("Interfaz STDIN conectada con la MEMORIA\n");
+            log_debug(extra_logger, "Interfaz STDIN conectada con la MEMORIA\n");
             manejar_instrucciones_stdin(socket_interfaz);
             break;
         case STDOUT_CON_MEMORIA:
-            puts("Interfaz STDOUT conectada con la MEMORIA\n");
+            log_debug(extra_logger, "Interfaz STDOUT conectada con la MEMORIA\n");
             manejar_instrucciones_stdout(socket_interfaz);
             break;
         case DIALFS_CON_MEMORIA:
-            puts("Interfaz DIALFS conectada con la MEMORIA\n");
+            log_debug(extra_logger, "Interfaz DIALFS conectada con la MEMORIA\n");
             manejar_instrucciones_dialfs(socket_interfaz);
             break;
         default:
-            puts("Error al tratar de identificar el handshake!\n");
+            log_debug(extra_logger, "Error al tratar de identificar el handshake!\n");
             return ERROR;
     }
     return ERROR; // Si llega aca es porque una interfaz se desconecto

@@ -20,24 +20,24 @@ int main(int argc, char *argv[]) {
 
     logger = iniciar_logger("entradasalida.log", argv[1], 1, LOG_LEVEL_INFO);
 
-    extra_logger = iniciar_logger("entradasalida_debug.log", argv[1], 1, LOG_LEVEL_DEBUG);
+    extra_logger = iniciar_logger("entradasalida_debug.log", argv[1], 0, LOG_LEVEL_DEBUG);
 
     String interfaz = interfaz_config->tipo_interfaz;
 
     if (interfaz == NULL) {
-        log_error(extra_logger, "Error al leer la interfaz del archivo config!");
+        log_error(logger, "Error al leer la interfaz del archivo config!");
         liberar_interfaz();
         return ERROR;
-    } else if (strcmp(interfaz, "GENERIC") == 0) {
+    } else if (strcmp(interfaz, "GENERICA") == 0) {
         interfaz_generica(argv[1]);
     } else if (strcmp(interfaz, "STDIN") == 0) {
         interfaz_stdin(argv[1]);
     } else if (strcmp(interfaz, "STDOUT") == 0) {
         interfaz_stdout(argv[1]);
-    } else if (strcmp(interfaz, "DialFS") == 0) {
+    } else if (strcmp(interfaz, "DIALFS") == 0) {
         interfaz_dialFS(argv[1]);
     } else {
-        log_error(extra_logger, "Nombre de interfaz invalido!");
+        log_error(logger, "Nombre de interfaz invalido!");
         liberar_interfaz();
         return ERROR;
     }

@@ -59,7 +59,10 @@ void dialfd_procesar_instrucciones()
         //mostrar_bitmap(bufferBitmap); // testeo
 
         paquete = recibir_paquete(fd_kernel);
-        
+
+        if(paquete == NULL)
+            exit(EXIT_FAILURE);
+
         payload_read(paquete->payload, &pid, sizeof(uint16_t));
         nombre_archivo = payload_read_string(paquete->payload);
 
