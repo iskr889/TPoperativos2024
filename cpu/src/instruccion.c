@@ -5,7 +5,7 @@ extern int tam_pagina;
 extern int conexion_dispatch;
 extern t_log* logger;
 int size_temp;
-extern uint16_t pid_solicita_recurso;
+uint16_t pid_solicita_recurso = 0;
 
 char* fetch(pcb_t* pcb) {
     solicitar_intruccion(conexion_memoria, pcb->pid, pcb->registros.pc);

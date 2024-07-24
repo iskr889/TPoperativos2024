@@ -13,7 +13,8 @@ t_kernel_config* kernel_config;
 t_log* logger;
 t_log* extra_logger;
 int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_server;
-extern t_dictionary* recursos, recursos_asignados;
+extern t_dictionary* recursos;
+extern paquete_t *paquete;
 
 int main(int argc, char* argv[]) {
 
@@ -73,6 +74,8 @@ void liberar_kernel() {
     kernel_config_destroy();
     destruir_diccionario_recursos_asignados();
     dictionary_destroy_and_destroy_elements(recursos, free);
+    if(paquete != NULL)
+        liberar_paquete(paquete);
 }
 
 t_kernel_config* load_kernel_config(String path) {

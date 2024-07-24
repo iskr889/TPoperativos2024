@@ -21,6 +21,7 @@ extern bool estado_planificacion_activa;
 extern pthread_mutex_t mutex_tiempoVRR;
 extern pthread_mutex_t cantidad_procesos_ejecuntandose_mutex;
 extern int cantidad_procesos_ejecuntandose;
+paquete_t *paquete = NULL;
 
 void interrupt_handler() {
     pthread_t thread_manejo_interrupciones;
@@ -41,7 +42,7 @@ void* manejo_interrupciones_cpu(){
 
 
         sem_wait(&sem_interrupcion);
-        paquete_t *paquete = recibir_contexto(conexion_dispatch);
+        paquete = recibir_contexto(conexion_dispatch);
 
         //VRR
         if(VRR_modo) {
@@ -220,6 +221,7 @@ void* manejo_interrupciones_cpu(){
         }
 
         liberar_paquete(paquete);
+        paquete = NULL;
     }
 
     return NULL;
