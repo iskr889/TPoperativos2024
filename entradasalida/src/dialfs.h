@@ -37,8 +37,13 @@ void mostrar_bitmap(t_bitarray *bitmap);
 // operaciones
 void crear_archivo(uint16_t pid, String nombre);
 void eliminar_archivo(uint16_t pid, String nombre);
-void truncar_archivo(uint16_t pid,String nombre, int tamanio);
+int truncar_archivo(uint16_t pid,String nombre, int tamanio);
 void leer_archivo(uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
 void escribir_archivo(uint16_t pid,String nombre_archivo, int direccion, int tamanio, int puntero_archivo);
+
+int guardar_metadata(String nombre_archivo, int bloque_inicial, int tamanio_archivo);
+int obtener_metadata(String nombre_archivo, int* bloque_inicial, int* tamanio_archivo);
+int comprobar_espacio_libre(int bloques_requeridos);
+
 
 #endif

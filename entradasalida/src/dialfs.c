@@ -94,7 +94,10 @@ void dialfd_procesar_instrucciones()
 
             payload_read(paquete->payload, &tamanio, sizeof(int));
 
-            truncar_archivo(pid, nombre_archivo, tamanio);
+            if(truncar_archivo(pid, nombre_archivo, tamanio) == false){
+                log_info(logger, "PID: %i, Fallo al querer truncar el archivo: %s, Tamaño: %i", pid, nombre_archivo, tamanio);
+            }
+            
             break;
         default:
             log_error(logger, "No se reconoce la operacion");
@@ -220,10 +223,11 @@ void crear_archivo(uint16_t pid, String nombre_archivo)
     }
     
     int bloque_inicial = buscar_primer_bloque_libre();
+    
     if (bloque_inicial == -1)
     {
         printf("No se pudo crear el archivo, no hay bloques vacios\n");
-        exit(EXIT_FAILURE);
+        return;
     }
 
     bitarray_set_bit(bufferBitmap, bloque_inicial);
@@ -232,51 +236,47 @@ void crear_archivo(uint16_t pid, String nombre_archivo)
     FILE *nuevofcb = fopen(path, "w");
     fclose(nuevofcb);
 
-    // lo abre como config para cargarle los datos principales
-    t_config *nuevoArchivo = iniciar_config(path);
-    config_set_value(nuevoArchivo, "BLOQUE_INICIAL", string_itoa(bloque_inicial));
-    config_set_value(nuevoArchivo, "TAMANIO_ARCHIVO", string_itoa(0));
-    config_save(nuevoArchivo);
-    config_destroy(nuevoArchivo);
+    //guardo los datos
+    if(guardar_metadata(nombre_archivo, bloque_inicial, 0) == false){
+        
+        return;
+    }
+    
     free(path);
 
     log_info(logger, "PID: %d, Crear Archivo: %s", pid, nombre_archivo);
-    return;
 }
 
 void eliminar_archivo(uint16_t pid, String nombre_archivo)
 {
 
-    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
+    int bloque_inicial, tamanio_archivo;
 
-    if (access(pathArchivo, F_OK) == -1)
-    {
-        printf("No se puedo eliminar, no existe el archivo\n");
-        exit(EXIT_FAILURE);
+    if(obtener_metadata(nombre_archivo, &bloque_inicial, &tamanio_archivo) == false){
+        
+        return;
     }
 
-    t_config *valores = config_create(pathArchivo);
+    int bloques_actuales = ceil((double)tamanio_archivo / (double)tamanio_bloques);
 
-    int bloque_inicial = config_get_int_value(valores, "BLOQUE_INICIAL");
-    int tamanio_archivo = config_get_int_value(valores, "TAMANIO_ARCHIVO");
-
-    liberar_espacio_bitmap(bloque_inicial, tamanio_archivo);
+    liberar_espacio_bitmap(bloque_inicial, bloques_actuales );
+    
     limpiar_bloques(bloque_inicial, tamanio_archivo);
+    
+    char *path_archivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
 
-    if (remove(pathArchivo) != 0)
-    {
+    if (remove(path_archivo) != 0){
+
         printf("No se puedo eliminar el archivo %s\n", nombre_archivo);
 
-        config_destroy(valores);
-        free(pathArchivo);
-        exit(EXIT_FAILURE);
+        free(path_archivo);
+
+        return;
     }
 
-    config_destroy(valores);
-    free(pathArchivo);
-
     log_info(logger, "PID: %d, Eliminar Archivo: %s", pid, nombre_archivo);
-    return;
+    
+    free(path_archivo);
 }
 
 void escribir_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo)
@@ -330,28 +330,15 @@ void escribir_archivo(uint16_t pid, String nombre_archivo, int direccion, int ta
 
 void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamanio, int puntero_archivo) {
 
-    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
+    int bloque_inicial, tamanio_archivo;
 
-    if(access(pathArchivo, F_OK) == -1 ){
-       printf("No existe la ruta especificada\n");
-        exit(EXIT_FAILURE);
-    }
-
-    t_config *metadata_archivo = config_create(pathArchivo);
-
-    if (metadata_archivo == NULL) {
-        printf("No se puedo obtener la informacion del archivo: %s\n", nombre_archivo);
-        free(pathArchivo);
+    if(obtener_metadata(nombre_archivo, &bloque_inicial, &tamanio_archivo) == false){
         return;
     }
 
-    int bloque_inicial = config_get_int_value(metadata_archivo, "BLOQUE_INICIAL");
-    int tamanio_archivo = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
-
     if (puntero_archivo >= tamanio_archivo) {
-        printf("El puntero de archivo está fuera del tamaño del archivo: %s\n", nombre_archivo);
-        config_destroy(metadata_archivo);
-        free(pathArchivo);
+        printf("El puntero está fuera del tamaño del archivo: %s\n", nombre_archivo);
+
         return;
     }
 
@@ -361,136 +348,171 @@ void leer_archivo(uint16_t pid, String nombre_archivo, int direccion, int tamani
     // envio el texto a memoria
     if(enviar_a_memoria(pid, direccion, texto_a_escribir) == false){
         printf("No se pudo escribir en memoria el texto");
-        free(pathArchivo);
-        exit(EXIT_FAILURE);
+        return;
     }
-
-    //printf("Texto: %s\n", texto_a_escribir);
     
     log_info(logger, "PID: %d, Leer Archivo: %s Tamaño a Leer: %d Puntero Archivo: %d\n", pid, nombre_archivo, tamanio, puntero_archivo);
 
-    config_destroy(metadata_archivo);
     free(texto_a_escribir);
-    free(pathArchivo);
-
-    return;
 }
 
-void truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio) {
-    
-    // verifico que sea una ruta valida
-    char *pathArchivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
-    
-    if(access(pathArchivo, F_OK) == -1 ){
-        printf("No existe el archivo\n");
-        free(pathArchivo);
-        exit(EXIT_FAILURE);
-    }
-    
-    // obtengo los datos del archivo a truncar
-    t_config *metadata_archivo = config_create(pathArchivo);
+int truncar_archivo(uint16_t pid, String nombre_archivo, int tamanio_nuevo) {
 
-    if (metadata_archivo == NULL) {
-        printf("No se pudo abrir el archivo para truncar: %s\n", nombre_archivo);
-        free(pathArchivo);
-        exit(EXIT_FAILURE);
+    int bloque_inicial, tamanio_actual;
+
+
+    if(obtener_metadata(nombre_archivo, &bloque_inicial, &tamanio_actual) == false){
+        
+        return false;
     }
 
-    int bloque_inicial = config_get_int_value(metadata_archivo, "BLOQUE_INICIAL");
-    int tamanio_actual = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
-    
-    // calculo los bloques requeridos y los actuales
-    int bloques_requeridos = ceil((double)tamanio / (double)tamanio_bloques);
+    int bloques_requeridos = ceil((double)tamanio_nuevo / (double)tamanio_bloques);
     int bloques_actuales = ceil((double)tamanio_actual / (double)tamanio_bloques);
 
-    if(tamanio_actual <= tamanio_bloques && tamanio <= tamanio_bloques) { // En caso de que el tamaño actual es suficiente actualizo solo la metadata
-        config_set_value(metadata_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio));
-        config_save(metadata_archivo);
-        config_destroy(metadata_archivo);
-        free(pathArchivo);
-        return;
+    //libero para posiblemente reubicar el archivo
+    liberar_espacio_bitmap(bloque_inicial, bloques_actuales);
+
+    // si el archivo ya tiene el tamanio requerido
+    if(tamanio_actual == tamanio_nuevo){
+        
+        printf("El archivo ya posee el tamaño.\n");
+
+        printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio_nuevo);
+        
+        return true;
     }
 
-    // si el archivo lo tengo que hacer mas chico
-    if(bloques_actuales > bloques_requeridos){
+    // En caso de que el tamaño actual es suficiente actualizo solo la metadata
+    if(tamanio_actual <= tamanio_bloques && tamanio_nuevo <= tamanio_bloques) {
 
-        int bloques_eliminar = bloques_actuales - bloques_requeridos;
-        int offset = bloque_inicial + bloques_requeridos;
-
-        liberar_espacio_bitmap(offset, bloques_eliminar);
-        limpiar_bloques(offset, bloques_eliminar * tamanio_bloques);
-
-        // marco como como ocupado en el bitmap
         for(int i = bloque_inicial; i < bloque_inicial + bloques_requeridos; i++){
             bitarray_set_bit(bufferBitmap, i);
         }
 
-        //asigno el nuevo TAMANIO_ARCHIVO
-        config_set_value(metadata_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio));
+        if(guardar_metadata(nombre_archivo, bloque_inicial, tamanio_nuevo) == false){
+            
+            return false;
+        }
 
-        config_save(metadata_archivo);
-        config_destroy(metadata_archivo);
-        free(pathArchivo);
+        printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio_nuevo);
 
-        log_info(logger, "PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio);
-        return;
+        return true;
     }
-    // si el archivo lo tengo que hacer mas grande
-    else if(bloques_actuales < bloques_requeridos){
 
-        bitarray_clean_bit(bufferBitmap, bloque_inicial);
+    // si el archivo lo tengo que hacer mas chico
+    if(bloques_actuales >= bloques_requeridos){
+
+        int bloques_eliminar = bloques_actuales - bloques_requeridos;
         
-        int nuevo_bloque = buscar_espacio_bitmap(tamanio);
+        int offset = bloque_inicial + bloques_requeridos;
+
+        for(int i = bloque_inicial; i < bloque_inicial + bloques_requeridos; i++){
+            bitarray_set_bit(bufferBitmap, i);
+        }
+        
+        limpiar_bloques(offset, bloques_eliminar * tamanio_bloques);
+
+        //asigno el nuevo TAMANIO_ARCHIVO
+        if(guardar_metadata(nombre_archivo, bloque_inicial, tamanio_nuevo) == false){
+            return false;
+        }
+
+        printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio_nuevo);
+
+        return true;
+    }
+    
+    // si el archivo lo tengo que hacer mas grande
+    if(bloques_actuales < bloques_requeridos){
+        
+        //libero para posiblemente reubicar el archivo
+        //liberar_espacio_bitmap(bloque_inicial, bloques_actuales);
+
+        //verifico que el espacio libre sea suficiente para el archivo a truncar
+        if(comprobar_espacio_libre(bloques_requeridos) == false){
+            
+            //marco el espacio del archivo previamente liberado en el bitmap como ocupado
+            for(int i = bloque_inicial; i < bloque_inicial + bloques_actuales; i++){
+                bitarray_set_bit(bufferBitmap, i);
+            }
+
+            printf("No hay espacio suficiente para truncar el archivo: %s\n", nombre_archivo);
+            return false;
+        }
+
+        int nuevo_bloque = buscar_espacio_bitmap(tamanio_nuevo);
 
         if(nuevo_bloque == -1){
 
-            log_info(logger, "No se pudo truncar el archivo debido a la falta de espacio libre contiguo");
+            printf("No se pudo truncar el archivo debido a la falta de espacio libre contiguo\n");
 
-            int compactar_resultado = compactar(pid, nombre_archivo, tamanio);
+            int compactar_resultado = compactar(pid, nombre_archivo, tamanio_nuevo);
 
             if(compactar_resultado == -1){
-                printf("NO hay espacio");
-                exit(EXIT_FAILURE);
-            }
+                
+                //marco el espacio inicial dentro del bitmap
+                for(int i = bloque_inicial; bloque_inicial + bloques_actuales; i++){
+                    bitarray_set_bit(bufferBitmap, i);
+                }
 
-            return;
+                return false;
+            }
+            
+            printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio_nuevo);
+
+            return true;
+
         }
 
-        if(nuevo_bloque != bloque_inicial){
+        // si se reposiciono el archivo dentro del bitmap
+        if(bloque_inicial != nuevo_bloque){
             
-            // si tengo que recolocar el archivo tambien su contenido, y liberar el espacio anterior
-            char* texto = obtener_texto(bloque_inicial, tamanio_actual, 0);
+            //mostrar_bitmap(bufferBitmap);
 
-            liberar_espacio_bitmap(bloque_inicial, tamanio_actual);
+            //guado su contenido actual
+            char* contenido_archivo = obtener_texto(bloque_inicial, tamanio_actual, 0);
+
+            //tengo que borrar los datos
             limpiar_bloques(bloque_inicial, tamanio_actual);
 
-            escribir_texto_en_bloques(bufferBloques, nuevo_bloque, tamanio, 0, texto);
+            escribir_texto_en_bloques(bufferBloques, nuevo_bloque, tamanio_nuevo, 0, contenido_archivo);
 
-        }else{
-
-            // lo unico que tendria que hacer es marcar los nuevo bloques ocupados
+            //tengo que reservar el espacio dentro del bitmap
             for(int i = nuevo_bloque; i < nuevo_bloque + bloques_requeridos; i++){
                 bitarray_set_bit(bufferBitmap, i);
             }
+
+            if(guardar_metadata(nombre_archivo, nuevo_bloque, tamanio_nuevo) == false){
+                
+                return false;
+            }
+
+            printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio_nuevo);
+
+            return true;
+
+        }else{//si tiene el mismo bloque inicial
+
+            // lo unico que tendria que hacer es marcar los nuevo bloques ocupados
+            for(int i = bloque_inicial; i < bloque_inicial + bloques_requeridos; i++){
+                bitarray_set_bit(bufferBitmap, i);
+            }
+
+            if(guardar_metadata(nombre_archivo, bloque_inicial, tamanio_nuevo) == false){
+
+                return false;
+            }
+
+            printf("PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio_nuevo);
+
+            return true;
         }
 
-
-        config_set_value(metadata_archivo, "BLOQUE_INICIAL", string_itoa(nuevo_bloque));
-        config_set_value(metadata_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio));
-        config_save(metadata_archivo);
-        config_destroy(metadata_archivo);
-        free(pathArchivo);
-
-        log_info(logger, "PID: %d, Truncar Archivo: %s Tamaño: %d\n", pid, nombre_archivo, tamanio);
-
-        return;
     }
-    else{
-        printf("El archivo ya tiene ese tamaño.\n");
-        config_destroy(metadata_archivo);
-        free(pathArchivo);
-        return;
-    }
+
+    printf("Caso no reconocido en operacion truncar, bloques_actuales: %i, bloques_requeridos: %i\n", bloques_actuales, bloques_requeridos);
+    
+    return false;
 }
 
 // **** OPERACIONES AUXILIARES ****
@@ -614,19 +636,22 @@ int buscar_siguiente_bloque_libre() {
                 return i;
             }
         }
-
+        
         ultima_posicion = 0;
+
         vuelta++;
     }
 
     return -1;
 }
 
-void liberar_espacio_bitmap(int bloque_inicial, int tamanio_eliminar)
+void liberar_espacio_bitmap(int bloque_inicial, int cant_bloques)
 {
-    int cant_bloques = ceil((double)tamanio_eliminar / tamanio_bloques) + bloque_inicial;
+    if(cant_bloques == 0){
+        bitarray_clean_bit(bufferBitmap, bloque_inicial);
+    }
 
-    for (int i = bloque_inicial; i < cant_bloques; i++)
+    for (int i = bloque_inicial; i < cant_bloques + bloque_inicial; i++)
     {
         bitarray_clean_bit(bufferBitmap, i);
     }
@@ -657,21 +682,21 @@ void escribir_texto_en_bloques(char *puntero_a_bloques, int primer_bloque, int t
 
     int offset = bloque_inicial + puntero_archivo;
 
-    int bloques = ceil((double)tamanio_archivo / (double)tamanio_bloques);
-    int total = primer_bloque + bloques;
+    // int bloques = ceil((double)tamanio_archivo / (double)tamanio_bloques);
+    // int total = primer_bloque + bloques;
 
-    // marco el bitmap
-    for (int i = primer_bloque; i < total; i++)
-    {
-        bitarray_set_bit(bufferBitmap, i);
-        // printf("Bloque[%d]: marcado como ocupado\n", i);
-    }
+    // // marco el bitmap
+    // for (int i = primer_bloque; i < total; i++)
+    // {
+    //     bitarray_set_bit(bufferBitmap, i);
+    //     // printf("Bloque[%d]: marcado como ocupado\n", i);
+    // }
 
     memcpy(&puntero_a_bloques[offset], texto, longitud_texto);
 
     msync(puntero_a_bloques, tamanio_bloques * cantidad_bloques, MS_SYNC);
 
-    printf("Texto guardado en bloques correctamente.\n");
+    //printf("Texto guardado en bloques correctamente.\n");
 }
 
 void mostra_archivo(int primer_bloque, int tamanio_archivo)
@@ -780,22 +805,18 @@ int compactar(uint16_t pid, String archivo_truncar, int tamanio) {
 
     struct dirent *entry;
 
-    //obtengo los datos del archivo a truncar
-    char* path_archivo_truncar = string_from_format("%s/%s", ruta_metadata, archivo_truncar);
+    int tamanio_truncar, bloque_inicial_truncar;
     
-    t_config* config_archivo_truncar = config_create(path_archivo_truncar);
-    
-    int tamanio_truncar = config_get_int_value(config_archivo_truncar, "TAMANIO_ARCHIVO");
-    int bloque_inicial_truncar = config_get_int_value(config_archivo_truncar, "BLOQUE_INICIAL");
+    if(obtener_metadata(archivo_truncar, &bloque_inicial_truncar, &tamanio_truncar) == false){
+        return false;
+    }
     
     char* buffer_truncar = obtener_texto(bloque_inicial_truncar, tamanio_truncar, 0);
-
 
     //CREO LA LISTA
     t_list* lista_archivos = list_create();
 
     //obtener todos los archivos de la ruta
-    char* nombre_archivo;
 
     dir = opendir(ruta_metadata);
     if (dir == NULL) {
@@ -828,20 +849,16 @@ int compactar(uint16_t pid, String archivo_truncar, int tamanio) {
     for(int i = 0; i < tamanio_bitarray; i++){
         bitarray_clean_bit(bufferBitmap, i);
     }
-
-    //mostrar_bitmap(bufferBitmap);//testeo
-
-    // ordeno los archivos en el bitmap y en los bloques
-    t_config* config_archivo;
-    int nuevo_bloque;
     
     //creo nuevos bloques
-    char* nuevos_bloques = inicializar_bloques("bloques_auxiliares.dat");
+    char* bloques_auxiliares = inicializar_bloques("bloques_auxiliares.dat");
     
-    char *path_archivo;
+    char* nombre_archivo;
     char* buffer;
-    int tamanio_archivo;
-    int bloque_inicial;
+
+    int tamanio_archivo, bloque_inicial, nuevo_bloque;
+
+    int bloques_usados;
 
     for(int i = 0; i < tamanio_lista; i++){
         
@@ -857,54 +874,55 @@ int compactar(uint16_t pid, String archivo_truncar, int tamanio) {
             continue;
         }
 
-        //obtengo el tam_archivo, bloq_inicial y copio su contenido a nuevos_bloques
-        path_archivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
-
-        config_archivo = config_create(path_archivo);
-
-        tamanio_archivo = config_get_int_value(config_archivo, "TAMANIO_ARCHIVO");
-        bloque_inicial = config_get_int_value(config_archivo, "BLOQUE_INICIAL");
+        //obtengo el tam_archivo, bloq_inicial y copio su contenido a bloques_auxiliares
+        if(obtener_metadata(nombre_archivo, &bloque_inicial, &tamanio_archivo) == false){
+            return false;
+        }
 
         buffer = obtener_texto(bloque_inicial, tamanio_archivo, 0);
 
-        //escribo en nuevos_bloques
-        escribir_texto_en_bloques(nuevos_bloques, nuevo_bloque, tamanio_archivo, 0, buffer); // tengo que escribirlo en nuevos_bloques
+        //escribo en bloques_auxiliares
+        escribir_texto_en_bloques(bloques_auxiliares, nuevo_bloque, tamanio_archivo, 0, buffer); // tengo que escribirlo en bloques_auxiliares
+
+        bloques_usados = ceil((double)tamanio_archivo / (double)tamanio_bloques);
+
+        for(int i = nuevo_bloque; i < nuevo_bloque + bloques_usados; i++){
+            bitarray_set_bit(bufferBitmap, i);
+        }
 
         //modifico la metadata
-        config_set_value(config_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio_archivo));
-        config_set_value(config_archivo, "BLOQUE_INICIAL", string_itoa(nuevo_bloque));
-
-        //guardo
-        config_save(config_archivo);
-
-        //libero y paso al siguiente
-        config_destroy(config_archivo);
-        free(path_archivo);
+        if(guardar_metadata(nombre_archivo, nuevo_bloque, tamanio_archivo) == false){
+            return false;
+        }
+        
         free(buffer);
     }
 
-    //mostrar_bitmap(bufferBitmap);//testeo
-
-    int resultado = buscar_espacio_bitmap(tamanio);
+    // int resultado = buscar_espacio_bitmap(tamanio);
     
-    if(resultado == -1){
-        printf("No hay espacio suficiente luego de la compactacion\n");
-        return resultado;
-    }
+    // if(resultado == -1){
+    //     printf("No hay espacio suficiente luego de la compactacion\n");
+    //     return resultado;
+    // }
 
     nuevo_bloque = buscar_primer_bloque_libre();
 
     //escribo el contenido del archivo a truncar
-    escribir_texto_en_bloques(nuevos_bloques, nuevo_bloque, tamanio, 0, buffer_truncar); // con en tamanio solicitado
+    escribir_texto_en_bloques(bloques_auxiliares, nuevo_bloque, tamanio, 0, buffer_truncar); // con en tamanio solicitado
+
+    bloques_usados = ceil((double) tamanio / (double) tamanio_bloques);
+
+    for(int i = nuevo_bloque; i < nuevo_bloque + bloques_usados; i++){
+            bitarray_set_bit(bufferBitmap, i);
+    }
 
     //seteo sus nuevos valores
-    config_set_value(config_archivo_truncar, "TAMANIO_ARCHIVO", string_itoa(tamanio));
-    config_set_value(config_archivo_truncar, "BLOQUE_INICIAL", string_itoa(nuevo_bloque));
+    if(guardar_metadata(archivo_truncar, nuevo_bloque, tamanio) == false){
+        return false;
+    }
 
-    config_save(config_archivo_truncar);
-
-    //tengo que reemplazar el contendido de bufferBloques por nuevos_bloques
-    memcpy(bufferBloques, nuevos_bloques, tamanio_bloques * cantidad_bloques);
+    //tengo que reemplazar el contendido de bufferBloques por bloques_auxiliares
+    memcpy(bufferBloques, bloques_auxiliares, tamanio_bloques * cantidad_bloques);
 
     //sincronizo los datos de bufferBloques
     msync(bufferBloques, tamanio_bloques * cantidad_bloques, MS_SYNC);
@@ -914,19 +932,15 @@ int compactar(uint16_t pid, String archivo_truncar, int tamanio) {
         printf("No se pudo eliminar el archivo auxiliar de bloques\n");
     }
 
-    //config_destroy(config_archivo);
-    config_destroy(config_archivo_truncar);
-
     list_destroy(lista_archivos);
 
-    free(path_archivo_truncar);
     free(buffer_truncar);
     
     ESPERAR_X_MILISEGUNDOS(interfaz_config->retraso_compactacion);
 
     log_info(logger, "PID: %i, Fin Compactacion.", pid);
 
-    return resultado;
+    return true;
 }
 
 ///
@@ -940,4 +954,94 @@ void mostrar_bitmap(t_bitarray *bitmap)
         bool valor_bit = bitarray_test_bit(bufferBitmap, i);
         printf("Valor del bit[%i]: %d\n", i, valor_bit);
     }
+}
+
+int obtener_metadata(String nombre_archivo, int* bloque_inicial, int* tamanio_archivo){
+    
+    String path_archivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
+
+    if(access(path_archivo, F_OK) == -1 ){
+        
+        printf("No existe el archivo %s\n", nombre_archivo);
+        
+        free(path_archivo);
+        
+        return false;
+    }
+
+    t_config* metadata_archivo = config_create(path_archivo);
+
+
+    if (metadata_archivo == NULL) {
+        
+        printf("No se pudo abrir la metadata del archivo: %s\n", nombre_archivo);
+        
+        free(path_archivo);
+        
+        return false;
+    }
+    
+    *bloque_inicial = config_get_int_value(metadata_archivo, "BLOQUE_INICIAL");
+    *tamanio_archivo = config_get_int_value(metadata_archivo, "TAMANIO_ARCHIVO");
+
+    
+    config_destroy(metadata_archivo);
+    
+    free(path_archivo);
+
+    return true;
+
+}
+
+int guardar_metadata(String nombre_archivo, int bloque_inicial, int tamanio_archivo){
+
+    String path_archivo = string_from_format("%s/%s", ruta_metadata, nombre_archivo);
+
+    if(access(path_archivo, F_OK) == -1 ){
+        
+        printf("No existe el archivo %s\n", nombre_archivo);
+        
+        free(path_archivo);
+        
+        return false;
+    }
+
+    t_config* metadata_archivo = config_create(path_archivo);
+
+    if (metadata_archivo == NULL) {
+        printf("No se pudo abrir la metadata del archivo: %s\n", nombre_archivo);
+        
+        free(path_archivo);
+        
+        return false;
+    }
+
+    config_set_value(metadata_archivo, "BLOQUE_INICIAL", string_itoa(bloque_inicial));
+    config_set_value(metadata_archivo, "TAMANIO_ARCHIVO", string_itoa(tamanio_archivo));
+
+    config_save(metadata_archivo);
+    free(path_archivo);
+    config_destroy(metadata_archivo);
+
+    return true;
+}
+
+
+int comprobar_espacio_libre(int bloques_requeridos){
+
+    int tamanio_bitmap = bitarray_get_max_bit(bufferBitmap);
+    int contador_bloques = 0;
+
+    for(int i = 0; i < tamanio_bitmap; i++){
+        if(bitarray_test_bit(bufferBitmap, i) == false){
+            contador_bloques++;
+        }
+    
+        if(contador_bloques == bloques_requeridos){
+            return true;
+        }
+    }
+
+
+    return false;
 }
