@@ -13,7 +13,7 @@ t_kernel_config* kernel_config;
 t_log* logger;
 t_log* extra_logger;
 int conexion_memoria, conexion_dispatch, conexion_interrupt, kernel_server;
-extern t_dictionary* recursos;
+extern t_dictionary* recursos, recursos_asignados;
 
 int main(int argc, char* argv[]) {
 

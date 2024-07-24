@@ -108,7 +108,7 @@ void liberar_recurso_de_proceso(int pid, char *recurso) {
 void liberar_recursos_de_proceso(int pid) {
     char str_pid[8];
     snprintf(str_pid, sizeof(str_pid), "%d", pid); 
-    t_dictionary *lista_recusos_asignados = dictionary_get(recursos_asignados, str_pid); //Obtengo diccionario de recursos asignados al proceso
+    t_dictionary *lista_recusos_asignados = dictionary_remove(recursos_asignados, str_pid); //Obtengo diccionario de recursos asignados al proceso
     dictionary_iterator(lista_recusos_asignados, liberar_recurso_aux);
     dictionary_destroy_and_destroy_elements(lista_recusos_asignados, free);
 }
