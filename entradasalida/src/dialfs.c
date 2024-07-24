@@ -637,7 +637,9 @@ int buscar_siguiente_bloque_libre() {
             }
         }
         
-        ultima_posicion = 0;
+        if(ultima_posicion >= tam -1){
+            ultima_posicion = 0;
+        }
 
         vuelta++;
     }
@@ -761,7 +763,7 @@ int buscar_espacio_bitmap(int tamanio){
 
         vuelta++;
 
-    }while(vuelta < 3);
+    }while(vuelta < 2);
 
     return -1;
 }

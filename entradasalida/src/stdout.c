@@ -75,7 +75,7 @@ bool stdout_procesar_instrucciones(int fd_kernel, int fd_memoria) {
 
     buffer_stdout[cant_caracteres] = '\0'; // Por las dudas
 
-    log_info(extra_logger, "STDOUT: %s", buffer_stdout);
+    log_info(logger, "STDOUT: %s", buffer_stdout);
 
     payload_destroy(respuesta->payload);
     liberar_paquete(respuesta);
