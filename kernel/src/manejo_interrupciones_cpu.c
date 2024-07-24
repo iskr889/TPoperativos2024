@@ -75,7 +75,8 @@ void* manejo_interrupciones_cpu(){
                 proceso_exec_a_exit();
                 sem_post(&sem_dispatch);
                 aumentar_grado_multiprogramacion();
-
+                free(tokens[0]);
+                free(tokens);
             break;
 
             case OUT_OF_MEMORY:
@@ -88,6 +89,8 @@ void* manejo_interrupciones_cpu(){
                 proceso_exec_a_exit();
                 sem_post(&sem_dispatch);
                 aumentar_grado_multiprogramacion();
+                free(tokens[0]);
+                free(tokens);
             break;
 
             case INTERRUPTED_BY_USER:
@@ -100,6 +103,8 @@ void* manejo_interrupciones_cpu(){
                 proceso_exec_a_exit();
                 sem_post(&sem_dispatch);
                 aumentar_grado_multiprogramacion();
+                free(tokens[0]);
+                free(tokens);
             break;
 
             case DESALOJO_QUANTUM:
@@ -127,6 +132,8 @@ void* manejo_interrupciones_cpu(){
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", scheduler->proceso_ejecutando->pid);
                     proceso_exec_a_exit();//si No existe
                     aumentar_grado_multiprogramacion();
+                    free(tokens[0]);
+                    free(tokens);
 
                 } else {
 
@@ -154,6 +161,8 @@ void* manejo_interrupciones_cpu(){
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
                     proceso_exec_a_exit();
                     aumentar_grado_multiprogramacion();
+                    free(tokens[0]);
+                    free(tokens);
 
                 } else {
                     asignar_recurso_a_proceso(scheduler->proceso_ejecutando->pid, tokens[1]);
@@ -186,6 +195,8 @@ void* manejo_interrupciones_cpu(){
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
                     proceso_exec_a_exit();
                     aumentar_grado_multiprogramacion();
+                    free(tokens[0]);
+                    free(tokens);
 
                 } else {
 

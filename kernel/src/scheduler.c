@@ -23,7 +23,7 @@ static char *generar_lista_pids(t_list *cola) {
     list_iterator_destroy(cola_iterator);
     return cadena;
 }
-// Función para inicializar el planificador
+
 void init_scheduler() {
     scheduler = malloc(sizeof(scheduler_t));
     if (scheduler == NULL) {
@@ -55,7 +55,6 @@ static void free_cola_blocked(void *cola_blocked) {
     list_destroy((t_list *)cola_blocked);
 }
 
-// Función para destruir el planificador
 void destroy_scheduler(scheduler_t *scheduler) {
     if (scheduler == NULL)
         return;
@@ -120,7 +119,7 @@ void cola_ready_a_exec() {
 
     log_info(logger, "PID: %d - Estado Anterior: READY - Estado Actual: EXEC", proceso->pid);
 }
-//funcion para cola auxiliar de bloqueados a ejecutados
+
 void cola_aux_blocked_a_exec() {
     pthread_mutex_lock(&scheduler->mutex_aux_blocked);
     while (list_is_empty(scheduler->cola_aux_blocked)) {
@@ -243,12 +242,10 @@ void proceso_exec_a_exit() {
     log_info(logger, "PID: %d - Estado Anterior: EXEC - Estado Actual: EXIT", proceso->pid);
 }
 
-// Función para hacer push (agregar al final) en la lista
 void list_push(t_list* queue, void* element) {
     list_add(queue, element);
 }
 
-// Función para hacer pop (remover del inicio) en la lista
 void* list_pop(t_list* queue) {
     if (list_is_empty(queue))
         return NULL;

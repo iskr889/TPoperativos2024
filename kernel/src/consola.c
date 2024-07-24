@@ -168,7 +168,7 @@ void finalizar_proceso(const String str_pid) {
         enviar_operacion(INTERRUPTED_BY_USER, conexion_interrupt);
         pthread_mutex_unlock(&scheduler->mutex_exec);
         return;
-    }    
+    }
     pthread_mutex_unlock(&scheduler->mutex_exec);
 
     pthread_mutex_lock(&scheduler->mutex_new);

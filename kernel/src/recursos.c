@@ -33,6 +33,18 @@ void inicializar_recursos_proceso(int pid) {
     dictionary_put(recursos_asignados, str_pid, diccionario_recurso_proceso);
 }
 
+void destruir_diccionario_recursos_asignados() {
+    t_list *lista_recursos_asignados = dictionary_elements(recursos_asignados);
+    t_list_iterator *lista_a_iterar = list_iterator_create(lista_recursos_asignados);
+    while (list_iterator_has_next(lista_a_iterar)) {
+        t_dictionary *diccionario_a_eliminar = list_iterator_next(lista_a_iterar);
+        dictionary_destroy_and_destroy_elements(diccionario_a_eliminar, free);
+    }
+    list_iterator_destroy(lista_a_iterar);
+    list_destroy(lista_recursos_asignados);
+    dictionary_destroy(recursos_asignados);
+}
+
 void inicializar_lista_recursos_asignados(t_dictionary *diccionario) {
 
     for (int i = 0; kernel_config->recursos[i]; i++) {
@@ -98,6 +110,7 @@ void liberar_recursos_de_proceso(int pid) {
     snprintf(str_pid, sizeof(str_pid), "%d", pid); 
     t_dictionary *lista_recusos_asignados = dictionary_get(recursos_asignados, str_pid); //Obtengo diccionario de recursos asignados al proceso
     dictionary_iterator(lista_recusos_asignados, liberar_recurso_aux);
+    dictionary_destroy_and_destroy_elements(lista_recusos_asignados, free);
 }
 
 void liberar_recurso_aux(char *key, void *instancia) {

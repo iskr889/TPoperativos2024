@@ -26,6 +26,8 @@ void sumar_recursos(t_dictionary *diccionario, char* recurso, int cantidad);
 
 void inicializar_recursos_proceso(int pid);
 
+void destruir_diccionario_recursos_asignados();
+
 void inicializar_lista_recursos_asignados(t_dictionary *diccionario);
 
 #endif

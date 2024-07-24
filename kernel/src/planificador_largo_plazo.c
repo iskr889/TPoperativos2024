@@ -31,7 +31,7 @@ void *planificador_largo_new_a_ready(){
         sem_wait(&sem_multiprogramacion_ready); 
         
         if (!estado_planificacion_activa) {
-                sem_wait(&sem_planificador_largo_comando);
+            sem_wait(&sem_planificador_largo_comando);
         }
 
         esperar_confirmacion_memoria();
