@@ -8,6 +8,7 @@ extern t_log* logger;
 extern t_log* extra_logger;
 extern int conexion_dispatch, conexion_interrupt;
 volatile int interrupcion = 0; // Agrego esta variable global, puede tomar el estado de FINALIZADO o DESALOJO_QUANTUM
+extern uint16_t pid_solicita_recurso;
 
 void* hilo_ciclo_instruccion() {
 
@@ -17,9 +18,32 @@ void* hilo_ciclo_instruccion() {
 
         pcb_t* pcb = receive_pcb(conexion_dispatch);
 
-        //imprimir_pcb(pcb);
+        if (pcb->pid == pid_solicita_recurso) {
+
+            if (interrupcion == INTERRUPTED_BY_USER) {
+            pcb->estado = EXIT;
+            responder_interrupcion(pcb, INTERRUPTED_BY_USER);
+            log_debug(extra_logger, "INTERRUPCIÓN RECIBIDA: FINALIZADO");
+            pid_solicita_recurso = 0;
+            free(pcb);
+            continue;
+            }
+
+            if (interrupcion == DESALOJO_QUANTUM) {
+            responder_interrupcion(pcb, DESALOJO_QUANTUM);
+            log_debug(extra_logger, "INTERRUPCIÓN RECIBIDA: DESALOJO_QUANTUM");
+            pid_solicita_recurso = 0;
+            free(pcb);
+            continue;
+            }
+
+        }
+
+        pid_solicita_recurso = 0;
 
         ciclo_instruccion(pcb);
+
+        //imprimir_pcb(pcb);
 
         free(pcb);
     }
@@ -45,6 +69,9 @@ void ciclo_instruccion(pcb_t* pcb) {
             break;
 
         if (pcb->estado == BLOCKED)
+            break;
+        
+        if (pid_solicita_recurso != 0)
             break;
 
         if (interrupcion == INTERRUPTED_BY_USER) {

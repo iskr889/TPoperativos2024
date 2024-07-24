@@ -5,6 +5,7 @@ extern int tam_pagina;
 extern int conexion_dispatch;
 extern t_log* logger;
 int size_temp;
+extern uint16_t pid_solicita_recurso;
 
 char* fetch(pcb_t* pcb) {
     solicitar_intruccion(conexion_memoria, pcb->pid, pcb->registros.pc);
@@ -174,11 +175,13 @@ void execute(char* instruccion, pcb_t* pcb) {
             break;
         }
         case I_WAIT:
-            pcb->estado = BLOCKED;
+            //pcb->estado = BLOCKED;
+            pid_solicita_recurso = pcb->pid;
             enviar_contexto(conexion_dispatch, pcb, instruccion, WAIT);
             break;
         case I_SIGNAL:
-            pcb->estado = BLOCKED;
+            //pcb->estado = BLOCKED;
+            pid_solicita_recurso = pcb->pid;
             enviar_contexto(conexion_dispatch, pcb, instruccion, SIGNAL);
             break;
         case I_IO_GEN_SLEEP:

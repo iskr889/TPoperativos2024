@@ -129,6 +129,7 @@ void* manejo_interrupciones_cpu(){
                 if (!dictionary_has_key(interfaces, tokens[1]) || !verificar_instruccion(interfaces, tokens)) {
 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                    liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_INTERFACE", scheduler->proceso_ejecutando->pid);
                     proceso_exec_a_exit();//si No existe
                     aumentar_grado_multiprogramacion();
@@ -151,13 +152,11 @@ void* manejo_interrupciones_cpu(){
 
             case WAIT:
 
-                if (!FIFO_modo) pthread_cancel(thread_quantum);
-
-                if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
-
+                
                 if (!dictionary_has_key(recursos, tokens[1])) {
                     
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                    liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
                     proceso_exec_a_exit();
                     aumentar_grado_multiprogramacion();
@@ -170,6 +169,9 @@ void* manejo_interrupciones_cpu(){
                 }
 
                 if (obtenerInstancia(recursos, tokens[1]) < 0) {
+
+                    if (!FIFO_modo) pthread_cancel(thread_quantum);
+                    if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
 
                     log_info(logger, "PID: %d - Bloqueado por: %s", scheduler->proceso_ejecutando->pid, tokens[1]);
                     proceso_exec_a_blocked(tokens[1]);
@@ -185,13 +187,14 @@ void* manejo_interrupciones_cpu(){
 
             case SIGNAL:
 
-                if (!FIFO_modo) pthread_cancel(thread_quantum);
+                //if (!FIFO_modo) pthread_cancel(thread_quantum);
 
-                if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
+                //if (VRR_modo) actualizar_quantum(scheduler->proceso_ejecutando, kernel_config->quantum);
 
                 if (!dictionary_has_key(recursos, tokens[1])) {
                 
                     finalizar_proceso_en_memoria(scheduler->proceso_ejecutando->pid);
+                    liberar_recursos_de_proceso(scheduler->proceso_ejecutando->pid);
                     log_info(logger, "Finalizo proceso %d - Motivo: INVALID_RESOURCE", scheduler->proceso_ejecutando->pid);
                     proceso_exec_a_exit();
                     aumentar_grado_multiprogramacion();

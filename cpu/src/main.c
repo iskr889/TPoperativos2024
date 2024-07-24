@@ -9,6 +9,7 @@ t_log* logger;
 t_log* extra_logger;
 uint32_t tam_pagina;
 int conexion_memoria, dispatch_server, interrupt_server, conexion_dispatch, conexion_interrupt;
+uint16_t pid_solicita_recurso = 0;
 
 int main(int argc, char* argv[]) {
 
