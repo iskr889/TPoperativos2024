@@ -104,12 +104,7 @@ void *thread_instrucciones_cpu(void *arg) {
 
 void instruccion_process_create(payload_t* payload) {
 
-    char full_path[BUFF_SIZE];
-
-    if (getcwd(full_path, sizeof(full_path)) == NULL) {
-        perror("Error en getcwd()");
-        exit(EXIT_FAILURE);
-    }
+    char full_path[BUFF_SIZE] = {0};
 
     uint16_t pid;
 
@@ -117,7 +112,9 @@ void instruccion_process_create(payload_t* payload) {
 
     String path = payload_read_string(payload);
 
-    strcat(full_path, path); // Concateno en el directorio actual de trabajo la carpeta con el pseudocodigo
+    strcat(full_path, memoria_config->path_intrucciones);
+
+    strcat(full_path, path);
 
     free(path);
 
@@ -162,7 +159,10 @@ void instruccion_pageTable_access(payload_t* payload) {
     if (proceso == NULL) {
         payload_t *payload = payload_create(0);
         paquete_t *respuesta = crear_paquete(MEMORY_INVALID_PID, payload);
-        enviar_paquete(conexion_cpu, respuesta);
+        if(enviar_paquete(conexion_cpu, respuesta) != OK) {
+            fprintf(stderr, "Error al enviar el paquete a la CPU\n");
+            pthread_exit(0);
+        }
         payload_destroy(payload);
         liberar_paquete(respuesta);
         log_error(extra_logger, "No existe en la memoria el proceso con [PID: %d] solicitado por la CPU", pid);
@@ -177,7 +177,10 @@ void instruccion_pageTable_access(payload_t* payload) {
     int cod_op = marco < 0 ? MEMORY_INVALID_FRAME : MEMORY_RESPONSE_OK;
 
     paquete_t *respuesta = crear_paquete(cod_op, payload_marco);
-    enviar_paquete(conexion_cpu, respuesta);
+    if(enviar_paquete(conexion_cpu, respuesta) != OK) {
+        fprintf(stderr, "Error al enviar el paquete a la CPU\n");
+        pthread_exit(0);
+    }
 
     payload_destroy(payload_marco);
     liberar_paquete(respuesta);
@@ -200,7 +203,10 @@ void instruccion_process_resize(payload_t* payload) {
     if (proceso == NULL) {
         payload_t *payload = payload_create(0);
         paquete_t *respuesta = crear_paquete(MEMORY_INVALID_PID, payload);
-        enviar_paquete(conexion_cpu, respuesta);
+        if(enviar_paquete(conexion_cpu, respuesta) != OK) {
+            fprintf(stderr, "Error al enviar el paquete a la CPU\n");
+            pthread_exit(0);
+        }
         payload_destroy(payload);
         liberar_paquete(respuesta);
         log_error(extra_logger, "No existe en la memoria el proceso con [PID: %d] solicitado por la CPU", pid);
@@ -263,7 +269,11 @@ void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
     }
 
     paquete_t *respuesta = crear_paquete(cod_op, payload_respuesta);
-    enviar_paquete(fd_conexion, respuesta);
+    if(enviar_paquete(fd_conexion, respuesta) != OK) {
+        fprintf(stderr, "Error al enviar el paquete\n");
+        free(buffer_data);
+        pthread_exit(0);
+    }
 
     payload_destroy(payload_respuesta);
     liberar_paquete(respuesta);
@@ -271,7 +281,10 @@ void instruccion_userspace_access(payload_t* payload, int fd_conexion) {
 
     log_debug(extra_logger, "Accediendo %d posiciones de memoria desde la dirección %d", size, address);
 
-    log_info(logger, "PID: %d - Accion: %c - Direccion fisica: %d - Tamaño: %d", pid, operacion, address, size); // LOG OBLIGATORIO
+    if(operacion == 'W')
+        log_info(logger, "PID: %d - Accion: ESCRIBIR - Direccion fisica: %d - Tamaño: %d", pid, address, size); // LOG OBLIGATORIO
+    else if(operacion == 'R')
+        log_info(logger, "PID: %d - Accion: LEER - Direccion fisica: %d - Tamaño: %d", pid, address, size); // LOG OBLIGATORIO
 }
 
 void instruccion_enviar_pseudocodigo(payload_t* payload) {
@@ -287,7 +300,10 @@ void instruccion_enviar_pseudocodigo(payload_t* payload) {
     if (proceso == NULL) {
         payload_t *payload = payload_create(0);
         paquete_t *respuesta = crear_paquete(MEMORY_INVALID_PID, payload);
-        enviar_paquete(conexion_cpu, respuesta);
+        if(enviar_paquete(conexion_cpu, respuesta) != OK) {
+            fprintf(stderr, "Error al enviar el pseudocodigo a la CPU\n");
+            pthread_exit(0);
+        }
         payload_destroy(payload);
         liberar_paquete(respuesta);
         log_error(extra_logger, "No existe en la memoria el proceso con [PID: %d] solicitado por la CPU", pid);
@@ -302,7 +318,10 @@ void instruccion_enviar_pseudocodigo(payload_t* payload) {
 
     paquete_t *paquete = crear_paquete(MEMORY_PID_PSEUDOCODE, payload_respuesta);
 
-    enviar_paquete(conexion_cpu, paquete);
+    if(enviar_paquete(conexion_cpu, paquete) != OK) {
+        fprintf(stderr, "Error al enviar el pseudocodigo a la CPU\n");
+        pthread_exit(0);
+    }
 
     payload_destroy(payload_respuesta);
 

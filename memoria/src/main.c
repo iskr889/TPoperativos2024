@@ -82,9 +82,9 @@ void liberar_memoria() {
     config_destroy(config);
     free(memoria_config);
     free(user_memory);
-    free(bitarray_data);
-    bitarray_destroy(frame_bitarray);
     dictionary_destroy_and_destroy_elements(procesos, free_procesos);
+    bitarray_destroy(frame_bitarray);
+    free(bitarray_data);
 }
 
 t_memoria_config* load_memoria_config(String path) {
@@ -178,7 +178,7 @@ void liberar_proceso(uint16_t pid) {
 void liberar_pagina(void *page) {
     PageTable_t *pagina = (PageTable_t *)page;
     if (pagina->asignada)
-            bitarray_clean_bit(frame_bitarray, pagina->marco);
+        bitarray_clean_bit(frame_bitarray, pagina->marco);
     free(pagina);
 }
 

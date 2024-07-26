@@ -154,7 +154,7 @@ void execute(char* instruccion, pcb_t* pcb) {
             uint32_t size = atoi(tokens[1]);
             uint32_t direccion_fisica_si = atoi(tokens[2]);
             uint32_t direccion_fisica_di = atoi(tokens[3]);
-            char* buffer = malloc(size);
+            char* buffer = malloc(size+1);
             if (!buffer) {
                 fprintf(stderr, "[ERROR] No se pudo asignar memoria para el buffer de COPY_STRING\n");
                 break;
@@ -164,6 +164,7 @@ void execute(char* instruccion, pcb_t* pcb) {
                 free(buffer);
                 break;
             }
+            buffer[size] = '\0'; // Para que no imprima basura el log
             log_info(logger, "PID: %d - Acción: LEER - Dirección Física: %d - Valor: %s", pcb->pid, direccion_fisica_si, buffer);
             if (!escribir_memoria(pcb->pid, direccion_fisica_di, buffer, size)) {
                 fprintf(stderr, "[ERROR] Error al escribir en memoria en la dirección física: %d\n", direccion_fisica_di);
