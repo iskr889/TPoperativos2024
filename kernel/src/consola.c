@@ -156,6 +156,12 @@ void finalizar_proceso(const String str_pid) {
         return;
     }
 
+    pcb_t *proceso = dictionary_get(scheduler->procesos, str_pid);
+    if(proceso->estado == EXIT) {
+        log_error(extra_logger, "PROCESO [PID: %s] YA ESTA FINALIZADO", str_pid);
+        return;
+    }
+
     pid_a_finalizar = atoi(str_pid);
 
     if(pid_a_finalizar == 0) {

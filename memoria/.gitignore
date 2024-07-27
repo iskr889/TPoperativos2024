@@ -2,7 +2,6 @@
 bin/
 obj/
 pseudocodigo/
-scripts_memoria/
 *.log
 
 # Eclipse files

@@ -1,4 +1,5 @@
 #include "scheduler.h"
+#include "manejo_interrupciones_cpu.h"
 
 scheduler_t *scheduler = NULL;
 
@@ -221,6 +222,9 @@ void proceso_a_exit(pcb_t* proceso, t_list* cola_actual) {
         return;
 
     list_pop(cola_actual);
+
+    if(proceso->estado != NEW)
+        aumentar_grado_multiprogramacion();
 
     pthread_mutex_lock(&scheduler->mutex_exit);
     proceso->estado = EXIT;
